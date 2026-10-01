@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Family Advance Balance Sheet (Detailed) - 1256701817</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif !important; }
+    @page { size: A4 portrait; margin: 7mm; }
+    body { background: white; font-size: 10px; line-height: 1.4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Screen preview only: show the sheet like a paper */
+    @media screen {
+        body { background: #e5e5e5; }
+        .sheet { width: 210mm; margin: 0 auto; background: #fff; padding: 5mm; border: 1px solid #000; }
+    }
+
+    .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    @media print { .print-btn { display: none !important; } }
+
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 9px; }
+    .header-section > div { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .header-section h1 { font-size: 17px; font-weight: 700; margin-bottom: 1px; color: #000; text-transform: uppercase; }
+    .header-section h2 { font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #000; }
+    .header-section .report-dates { font-size: 9px; font-weight: 700; color: #000; margin-top: 1px; }
+    .header-logo { width: 69px; height: 69px; object-fit: contain; }
+
+    .total-balance-highlight { font-size: 15px; font-weight: 700; color: #000; text-align: center; margin: 0 0 5px 0; letter-spacing: 2px; border-radius: 4px; padding: 3px 0; background: #d1d1d1; }
+    .details-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 10px; border: 1px solid #000; padding: 9px; }
+    .detail-item { display: flex; flex-direction: column; }
+    .detail-label { font-size: 8px; color: #000; font-weight: 600; text-transform: uppercase; }
+    .detail-value { font-size: 11px; color: #000; font-weight: 600; }
+
+    .section-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; color: #000; text-transform: uppercase; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+    .stats-card { border: 1px solid #000; padding: 5px 7px; position: relative; }
+    .stats-label { font-size: 8px; text-transform: uppercase; font-weight: 600; display: block; }
+    .stats-value { font-size: 12px; font-weight: 700; display: block; margin-top: 1px; }
+    .stats-sub { font-size: 8px; font-weight: 600; position: absolute; right: 7px; bottom: 6px; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: left; font-size: 9px; font-weight: 600; color: #000; }
+    th { background-color: #f0f0f0 !important; font-weight: 700; text-transform: uppercase; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    .tfoot td { background-color: #f0f0f0 !important; font-weight: 700; text-transform: uppercase; border-top: 2px solid #000; }
+    .align-right { text-align: right; }
+    .align-center { text-align: center; }
+    .nowrap { white-space: nowrap; }
+
+    .col-no { width: 28px; }
+    .col-date { width: 130px; }
+    .col-amt { width: 72px; }
+    th.col-amt { font-size: 10px; }
+    .dt span + span { margin-left: 10px; }
+    #rows td:nth-child(n+5), #tfDr, #tfCr, #tfBal, #stuBody td:last-child, #stuBody td.align-center:not(:first-child) { font-size: 11px; font-weight: 700; }
+    .split { display: flex; gap: 8px; }
+    .split .r { margin-left: auto; text-align: right; }
+    .sub { display: block; font-size: 8px; font-weight: 400; margin-top: 1px; }
+    td.dash { text-align: center; font-weight: 400; color: #999; }
+
+    .bottom-block { page-break-inside: avoid; break-inside: avoid; }
+    .page-measure { position: absolute; visibility: hidden; height: 281mm; width: 1px; }
+    /* same layout the printer uses, applied only while measuring */
+    body.measuring .sheet { width: 196mm !important; padding: 0 !important; border: 0 !important; margin: 0 !important; }
+
+    .sign-row { display: flex; justify-content: space-between; gap: 30px; margin-top: 50px; }
+    .sign-box { flex: 1; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+    .print-footer { margin-top: 14px; text-align: center; font-size: 9px; color: #000; border-top: 1px dashed #000; padding-top: 8px; font-weight: bold; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="page-measure" id="pageMeasure"></div>
+<button class="print-btn" onclick="window.print()">Print</button>
+
+<div class="sheet">
+
+    <div class="header-section">
+        <img src="https://i.postimg.cc/jqB2gpTG/image.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" />
+        <div>
+            <h1 id="schoolName"></h1>
+            <h2>Family Advance Balance Sheet (Detailed)</h2>
+            <div class="report-dates" id="rangeText"></div>
+        </div>
+        <img src="https://i.postimg.cc/jqB2gpTG/image.png" alt="" class="header-logo" style="opacity:0;" />
+    </div>
+
+    <div class="details-grid">
+        <div class="detail-item"><span class="detail-label">Family Code</span><span class="detail-value" id="fCode"></span></div>
+        <div class="detail-item"><span class="detail-label">Account Name</span><span class="detail-value" id="fName"></span></div>
+        <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value" id="fPhone"></span></div>
+        <div class="detail-item"><span class="detail-label">CNIC</span><span class="detail-value" id="fCnic"></span></div>
+    </div>
+
+    <div class="total-balance-highlight" id="balanceBar"></div>
+
+    <div class="section-title" id="kidsTitle"></div>
+    <table>
+        <thead>
+            <tr><th>G.R Number</th><th>Student Name</th><th>Campus</th><th>Class</th><th>Section</th></tr>
+        </thead>
+        <tbody id="kidsBody"></tbody>
+    </table>
+
+    <div class="section-title">Transaction History</div>
+    <div class="stats-grid">
+        <div class="stats-card"><span class="stats-label">Transactions</span><span class="stats-value" id="stCount"></span></div>
+        <div class="stats-card"><span class="stats-label">Total Credit</span><span class="stats-value" id="stCr"></span><span class="stats-sub" id="stCrN"></span></div>
+        <div class="stats-card"><span class="stats-label">Total Debit</span><span class="stats-value" id="stDr"></span><span class="stats-sub" id="stDrN"></span></div>
+        <div class="stats-card"><span class="stats-label">Closing Balance</span><span class="stats-value" id="stClose"></span></div>
+    </div>
+
+    <table id="mainTable">
+        <thead>
+            <tr>
+                <th class="align-center col-no">#</th>
+                <th class="col-date">Date</th>
+                <th>Title</th>
+                <th><div class="split"><span>Mode / Source</span><span class="r">(User)</span></div></th>
+                <th class="align-right col-amt">Debit</th>
+                <th class="align-right col-amt">Credit</th>
+                <th class="align-right col-amt">Balance</th>
+            </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tbody>
+            <tr class="tfoot">
+                <td colspan="4" class="align-right">Total</td>
+                <td class="align-right" id="tfDr"></td>
+                <td class="align-right" id="tfCr"></td>
+                <td class="align-right" id="tfBal"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div id="pageSpacer"></div>
+    <div class="bottom-block" id="bottomBlock">
+        <div class="section-title">Student-Wise Debit Summary</div>
+        <table>
+            <thead>
+                <tr><th class="align-center col-no">#</th><th>Student</th><th class="align-center">Debit Entries</th><th class="align-right col-amt">Total Debit</th></tr>
+            </thead>
+            <tbody id="stuBody"></tbody>
+        </table>
+
+        <div class="sign-row">
+            <div class="sign-box">Prepared By</div>
+            <div class="sign-box">Checked By</div>
+            <div class="sign-box">Parent Signature</div>
+        </div>
+
+        <div class="print-footer">
+            <p id="genText"></p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* ---------- DUMMY DATA ---------- */
+    var schoolName = "Ai Schooling System";
+    var dateFrom = "", dateTo = "";   // empty = no date filter line
+
+    // Payment channels (id -> name), same data your getModeName / getSourceName read from
+    var paymentChannels = [
+        { _id: "6a2445d5c86857d22353f21b", mode_name: "Credit", sources: [{ _id: "6a2445d5c86857d22353f21c", source: "General" }] },
+        { _id: "6a23166bc0d803e8365bf1d1", mode_name: "Family Advance", sources: [{ _id: "6a23166bc0d803e8365bf1d2", source: "General" }, { _id: "6abe24c6c47ee1a2165d82f4", source: "Bank" }] },
+        { _id: "69f6c1c897658dc43d9bd92d", mode_name: "By Moneey", sources: [{ _id: "69f6c1c897658dc43d9bd92e", source: "General" }, { _id: "69f6c22297658dc43d9bd934", source: "By Jao" }] },
+        { _id: "69f61a250ece5980ea7593e7", mode_name: "Demand Draft", sources: [{ _id: "69f61a250ece5980ea7593e8", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593e5", mode_name: "Pay Order", sources: [{ _id: "69f61a250ece5980ea7593e6", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593df", mode_name: "Bank Deposit", sources: [{ _id: "69f61a250ece5980ea7593e0", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593e1", mode_name: "Bank Scrolling", sources: [{ _id: "69f61a250ece5980ea7593e2", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593e9", mode_name: "POS Machine", sources: [{ _id: "69f61a250ece5980ea7593ea", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593e3", mode_name: "Cheque", sources: [{ _id: "69f61a250ece5980ea7593e4", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593eb", mode_name: "Payment Gateway", sources: [{ _id: "69f61a250ece5980ea7593ec", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593db", mode_name: "Mobile Wallet", sources: [{ _id: "69f61a250ece5980ea7593dc", source: "General" }, { _id: "69f61a600ece5980ea7593f4", source: "Jazz Cash" }] },
+        { _id: "69f61a250ece5980ea7593d9", mode_name: "Cash", sources: [{ _id: "69f61a250ece5980ea7593da", source: "General" }, { _id: "6a99cd3ac6679a85f7c0ab5f", source: "Ayesha" }, { _id: "6a99cd4bc6679a85f7c0ab64", source: "Nimra" }] },
+        { _id: "69f61a250ece5980ea7593dd", mode_name: "Bank Transfer", sources: [{ _id: "69f61a250ece5980ea7593de", source: "General" }] },
+        { _id: "69f61a250ece5980ea7593d7", mode_name: "General", sources: [{ _id: "69f61a250ece5980ea7593d8", source: "General" }] }
+    ];
+
+    var family = {
+        family_code: "1256701817",
+        students: [
+            {
+                general_registration_code: "BSS-STD-898",
+                student_name: "Adnan Ahmed",
+                student_father_name: "Muhammad Kamran",
+                student_father_id_card_number: 3584962094852,
+                student_father_phone: 1256701817,
+                student_campus_name: "IQBAL TOWN",
+                student_class_name: "NINE",
+                student_section_name: "SUPER BARIAN"
+            }
+        ],
+        familyAccount: { available_credit: 78000 }
+    };
+
+    var allRows = [
+        { action:"Debited",  amount:2000, before:80000, after:78000, date:"2026-10-01T09:16:43.183Z", title:"Fee Of June 2025", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:100, before:80100, after:80000, date:"2026-10-01T09:16:34.209Z", title:"Fee Of April 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:3300, before:83400, after:80100, date:"2026-10-01T09:16:34.209Z", title:"Fee Of March 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:3300, before:86700, after:83400, date:"2026-10-01T09:16:34.208Z", title:"Fee Of February 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:3300, before:90000, after:86700, date:"2026-10-01T09:16:34.208Z", title:"Fee Of January 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:2500, before:92500, after:90000, date:"2026-10-01T09:16:20.876Z", title:"Fee Of October 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6abe24c6c47ee1a2165d82f4", received_by:"DEMO" },
+        { action:"Debited",  amount:3000, before:95500, after:92500, date:"2026-10-01T09:15:30.534Z", title:"Fee Of January 2025", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6a23166bc0d803e8365bf1d2", received_by:"DEMO" },
+        { action:"Debited",  amount:1500, before:97000, after:95500, date:"2026-10-01T09:15:15.387Z", title:"CONTEEN FEE 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6a23166bc0d803e8365bf1d2", received_by:"DEMO" },
+        { action:"Debited",  amount:3000, before:100000, after:97000, date:"2026-10-01T09:15:04.150Z", title:"Fee Of November 2026", student_name:"Adnan Ahmed", payment_mode_id:"6a23166bc0d803e8365bf1d1", payment_mode_source_id:"6a23166bc0d803e8365bf1d2", received_by:"DEMO" },
+        { action:"Credited", amount:100000, before:0, after:100000, date:"2026-10-01T09:14:36.810Z", title:"Balance Added", student_name:null, payment_mode_id:"69f61a250ece5980ea7593d9", payment_mode_source_id:"6a99cd3ac6679a85f7c0ab5f", received_by:"DEMO", transactionId:"TXN-882341", notes:"Advance for 2026 session" }
+    ];
+
+    /* ---------- HELPERS ---------- */
+    function $(id) { return document.getElementById(id); }
+    function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+    function getModeName(id) {
+        for (var i = 0; i < paymentChannels.length; i++) if (paymentChannels[i]._id === id) return paymentChannels[i].mode_name;
+        return "";
+    }
+    function getSourceName(id) {
+        for (var i = 0; i < paymentChannels.length; i++) {
+            for (var j = 0; j < paymentChannels[i].sources.length; j++) if (paymentChannels[i].sources[j]._id === id) return paymentChannels[i].sources[j].source;
+        }
+        return "";
+    }
+    function modeSource(r) {
+        if (!r.payment_mode_id) return "";
+        return getModeName(r.payment_mode_id) + (r.payment_mode_source_id ? " / " + getSourceName(r.payment_mode_source_id) : "");
+    }
+    function num(n) { return Number(n || 0).toLocaleString(); }
+    function fmtDate(v) {
+        var d = new Date(v);
+        return isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    }
+    function fmtDateTime(v) {
+        var d = new Date(v);
+        var time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+        return '<span class="dt"><span>' + fmtDate(v) + '</span><span>' + time + '</span></span>';
+    }
+
+    /* ---------- HEADER / FAMILY ---------- */
+    var father = family.students[0];
+    $("schoolName").textContent = schoolName;
+    $("fCode").textContent  = family.family_code;
+    $("fName").textContent  = father.student_father_name || "-";
+    $("fPhone").textContent = father.student_father_phone || "-";
+    $("fCnic").textContent  = father.student_father_id_card_number || "-";
+    $("balanceBar").textContent = "Available Balance = Rs. " + num(family.familyAccount.available_credit);
+    if (dateFrom || dateTo) { $("rangeText").textContent = (dateFrom ? fmtDate(dateFrom) : "Start") + " to " + (dateTo ? fmtDate(dateTo) : "Today"); }
+
+    $("kidsTitle").textContent = "Connected Children (" + family.students.length + ")";
+    $("kidsBody").innerHTML = family.students.length ? family.students.map(function (c) {
+        return "<tr><td>" + esc(c.general_registration_code) + "</td><td>" + esc(c.student_name) + "</td><td>" + (esc(c.student_campus_name) || "-") + "</td><td>" + (esc(c.student_class_name) || "-") + "</td><td>" + (esc(c.student_section_name) || "-") + "</td></tr>";
+    }).join("") : "<tr><td colspan='5' class='align-center'>No Students Found</td></tr>";
+
+    /* ---------- TRANSACTIONS ---------- */
+    var totalCr = 0, totalDr = 0;
+    $("rows").innerHTML = allRows.length ? allRows.map(function (r, i) {
+        var isCr = r.action === "Credited";
+        if (isCr) totalCr += r.amount; else totalDr += r.amount;
+        return "<tr>" +
+            "<td class='align-center'>" + (i + 1) + "</td>" +
+            "<td class='nowrap'>" + fmtDateTime(r.date) + "</td>" +
+            "<td><div class='split'><span>" + (esc(r.title) || "-") + "</span>" + (r.student_name ? "<span class='r'>(" + esc(r.student_name) + ")</span>" : "") + "</div>" + (r.notes ? "<span class='sub'>Note: " + esc(r.notes) + "</span>" : "") + "</td>" +
+            "<td><div class='split'>" + (modeSource(r) ? "<span>" + esc(modeSource(r)) + "</span>" : "") + "<span class='r'>" + (r.received_by ? "(" + esc(r.received_by) + ")" : (modeSource(r) ? "" : "-")) + "</span></div>" + (r.transactionId ? "<span class='sub'>Txn ID: " + esc(r.transactionId) + "</span>" : "") + "</td>" +
+            (isCr ? "<td class='dash'>-</td>" : "<td class='align-right'>" + num(r.amount) + "</td>") +
+            (isCr ? "<td class='align-right'>" + num(r.amount) + "</td>" : "<td class='dash'>-</td>") +
+            "<td class='align-right'>" + num(r.after) + "</td>" +
+        "</tr>";
+    }).join("") : "<tr><td colspan='7' class='align-center'>No transaction history found for this account.</td></tr>";
+
+    var closing = allRows.length ? allRows[0].after : family.familyAccount.available_credit;
+    var crN = allRows.filter(function (r) { return r.action === "Credited"; }).length;
+    var drN = allRows.length - crN;
+
+    $("stCount").textContent = allRows.length;
+    $("stCr").textContent    = "Rs. " + num(totalCr);
+    $("stDr").textContent    = "Rs. " + num(totalDr);
+    $("stCrN").textContent   = crN + " entries";
+    $("stDrN").textContent   = drN + " entries";
+    $("stClose").textContent = "Rs. " + num(closing);
+    $("tfDr").textContent    = num(totalDr);
+    $("tfCr").textContent    = num(totalCr);
+    $("tfBal").textContent   = num(closing);
+
+    /* ---------- STUDENT-WISE DEBIT SUMMARY ---------- */
+    var byStu = {};
+    allRows.forEach(function (r) {
+        if (r.action !== "Debited") return;
+        var k = r.student_name || "Family Account (General)";
+        byStu[k] = byStu[k] || { n: 0, amt: 0 };
+        byStu[k].n++; byStu[k].amt += r.amount;
+    });
+    var stuRows = Object.keys(byStu).map(function (k, i) {
+        return "<tr><td class='align-center'>" + (i + 1) + "</td><td>" + esc(k) + "</td><td class='align-center'>" + byStu[k].n + "</td><td class='align-right'>" + num(byStu[k].amt) + "</td></tr>";
+    });
+    stuRows.push("<tr class='tfoot'><td colspan='2' class='align-right'>Total</td><td class='align-center'>" + drN + "</td><td class='align-right'>" + num(totalDr) + "</td></tr>");
+    $("stuBody").innerHTML = stuRows.join("");
+
+    $("genText").textContent = "Generated on: " + new Date().toLocaleDateString("pt-PT") + " " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }) + " | Powered by Ai Schooling System.com";
+
+    /* ---------- PIN SUMMARY TO THE BOTTOM OF THE LAST PRINTED PAGE ---------- */
+    function fitBottomBlock() {
+        var spacer = $("pageSpacer"), block = $("bottomBlock"), table = $("mainTable");
+        spacer.style.height = "0px";
+        document.body.classList.add("measuring");
+        var pageH = $("pageMeasure").getBoundingClientRect().height;
+        var sheetTop = document.querySelector(".sheet").getBoundingClientRect().top;
+        var theadH = table.querySelector("thead").getBoundingClientRect().height;
+        var rows = table.querySelectorAll("tbody tr");
+        // walk the rows like the printer does: a row that does not fit moves to the next page,
+        // and the table header is repeated at the top of that page
+        var shift = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var rect = rows[i].getBoundingClientRect();
+            var top = rect.top - sheetTop + shift;
+            var bottom = rect.bottom - sheetTop + shift;
+            var page = Math.floor(top / pageH);
+            if (bottom > (page + 1) * pageH) { shift += (page + 1) * pageH + theadH - top; }
+        }
+        var contentEnd = spacer.getBoundingClientRect().top - sheetTop + shift;
+        var blockH = block.getBoundingClientRect().height;
+        var pages = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
+        var spare = pages * pageH - contentEnd - blockH - 20;   // 20px safety
+        spacer.style.height = Math.max(0, spare) + "px";
+        document.body.classList.remove("measuring");
+    }
+    window.addEventListener("beforeprint", fitBottomBlock);
+    window.addEventListener("afterprint", function () { $("pageSpacer").style.height = "0px"; });
+</script>
+</body>
+</html>

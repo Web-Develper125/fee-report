@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Wise Collected Fee Report</title>
+<style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                    font-family: "Poppins", sans-serif !important;
+                }
+                @page {
+                    size: A4 landscape;
+                    margin: 7mm;
+                }
+                html {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                body {
+                    background: white;
+                    font-size: 9px;
+                    line-height: 1.2;
+                    padding: 5px;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .student-report-page {
+                    page-break-after: always;
+                    break-after: page;
+                }
+                .student-report-page.last-page {
+                    page-break-after: auto;
+                    break-after: auto;
+                }
+
+                /* Header Section */
+                .header-section {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 11px;
+                    border: 1px solid #ddd;
+                    padding: 11px;
+                }
+                .header-section h1 {
+                    font-size: 17px;
+                    font-weight: 700;
+                    margin-bottom: 2px;
+                    color: black;
+                }
+                .header-section h2 {
+                    font-size: 12px;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                    color: black;
+                }
+                .header-logo {
+                    width: 71px;
+                    height: 71px;
+                    object-fit: contain;
+                    border-radius: 5px;
+                }
+
+                /* Table Styles */
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 9px;
+                }
+                thead tr {
+                    background-color: #f0f0f0 !important;
+                }
+                th {
+                    text-align: center;
+                    font-size: 9px;
+                    font-weight: 700;
+                    padding: 3px 1px;
+                    border-bottom: 3px double #000;
+                    color: black;
+                }
+                tbody tr:nth-child(odd) {
+                    background-color: #cececeff !important;
+                }
+                tbody tr:nth-child(even) {
+                    background-color: white !important;
+                }
+                td {
+                    text-align: center;
+                    font-size: 9px;
+                    font-weight: 600;
+                    border-bottom: 1px solid #ccc;
+                    color: black;
+                    vertical-align: middle;
+                }
+                td.td-fee-title {
+                    text-align: left;
+                }
+                th.col-total,
+                td.col-total,
+                th.col-paid,
+                td.col-paid,
+                th.col-due,
+                td.col-due {
+                    font-size: 12px !important;
+                    border-left: 1px solid #888888;
+                    border-right: 1px solid #888888;
+                }
+                tr.grand-total td {
+                    background-color: #f0f0f0 !important;
+                    font-weight: 700;
+                    border-top: 2px solid #000;
+                    border-bottom: 2px solid #000;
+                }
+                tr.grand-total td:first-child { text-align: right; text-transform: uppercase; }
+                .green { color: rgb(0, 0, 0) !important; }
+                .red { color: rgb(0, 0, 0) !important; }
+                .blue { color: rgb(0, 0, 0) !important; }
+
+                /* Status Badge */
+                .status-badge {
+                    padding: 2px 5px;
+                    border-radius: 9px;
+                    font-size: 9px;
+                    font-weight: 700;
+                }
+                .status-paid { background-color: #dcfce7; color: #15803d; }
+                .status-clear { background-color: #dbeafe; color: #1d4ed8; }
+                .status-unpaid { background-color: #fee2e2; color: #dc2626; }
+                .status-not-created { background-color: #f3f4f6; color: #374151; }
+
+                /* History chain */
+                .chain { display: flex; align-items: center; justify-content: center; gap: 2px; flex-wrap: wrap; color: black; }
+                .chain small { font-size: 9px; color: black; }
+                .chain .arrow { font-size: 8px; color: #555; }
+                .chain .total-val { font-size: 10px; font-weight: 700; color: black; }
+                .th-sub {
+                    display: block;
+                    font-size: 7px;
+                    font-weight: 500;
+                    color: #3d3d3d;
+                    margin-top: 1px;
+                }
+
+                /* Student Details + Fee Summary (compact, black & white) */
+                .top-band {
+                    display: flex;
+                    gap: 6px;
+                    margin-bottom: 8px;
+                }
+                .info-grid {
+                    flex: 3;
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 5px 10px;
+                    align-content: space-between;
+                    border: 1px solid #000;
+                    padding: 6px 8px;
+                }
+                .info-item { display: flex; flex-direction: column; }
+                .info-label {
+                    font-size: 8px;
+                    font-weight: 600;
+                    color: #000;
+                    text-transform: uppercase;
+                }
+                .info-value {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #000;
+                }
+                .summary-grid {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    border: 1px solid #000;
+                }
+                .summary-card {
+                    flex: 1;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 3px 8px;
+                    border-top: 1px solid #000;
+                }
+                .summary-card:first-child { border-top: none; }
+                .summary-label {
+                    font-size: 8px;
+                    font-weight: 600;
+                    color: #000;
+                    text-transform: uppercase;
+                }
+                .summary-value {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: #000;
+                }
+                .summary-section {
+                    border: 1px solid #ddd;
+                    margin: 11px 0;
+                    padding: 9px;
+                    background-color: #f9f9f9;
+                    border-radius: 5px;
+                }
+                .summary-section h3 {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: black;
+                    text-align: center;
+                    margin-bottom: 7px;
+                }
+                .summary-section ul {
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                .summary-section li {
+                    font-size: 9px;
+                    color: black;
+                    margin-bottom: 2px;
+                    font-weight: 600;
+                    line-height: 1.35;
+                }
+                .print-footer {
+                    margin-top: 11px;
+                    padding-top: 7px;
+                    font-size: 10px;
+                    color: rgb(56, 56, 56);
+                    text-align: center;
+                    font-weight: 700;
+                }
+            
+    /* preview only */
+    .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    @media print { .print-btn { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">Print</button>
+
+<script>
+    /* ================= DUMMY DATA (same shape as your APIs) ================= */
+    var systemSettings = { school_name: "Ai Schooling System", school_logo: "https://i.postimg.cc/jqB2gpTG/image.png" };
+    var FA = "6a23166bc0d803e8365bf1d1", FA_GEN = "6a23166bc0d803e8365bf1d2", FA_BANK = "6abe24c6c47ee1a2165d82f4";
+
+    // Payment channels (id -> name), the same data getModeName / getSourceName read from
+    var paymentChannels = [
+        { _id: FA, mode_name: "Family Advance", sources: [{ _id: FA_GEN, source: "General" }, { _id: FA_BANK, source: "Bank" }] },
+        { _id: "69f61a250ece5980ea7593d9", mode_name: "Cash", sources: [{ _id: "69f61a250ece5980ea7593da", source: "General" }, { _id: "6a99cd3ac6679a85f7c0ab5f", source: "Ayesha" }, { _id: "6a99cd4bc6679a85f7c0ab64", source: "Nimra" }] },
+        { _id: "69f61a250ece5980ea7593db", mode_name: "Mobile Wallet", sources: [{ _id: "69f61a250ece5980ea7593dc", source: "General" }, { _id: "69f61a600ece5980ea7593f4", source: "Jazz Cash" }] },
+        { _id: "69f61a250ece5980ea7593dd", mode_name: "Bank Transfer", sources: [{ _id: "69f61a250ece5980ea7593de", source: "General" }] }
+    ];
+
+    var studentDataFromOfFee = {
+        student_name: "Adnan Ahmed", student_father_name: "Muhammad Kamran", general_registration_code: "BSS-STD-898",
+        student_class_name: "NINE", student_section_name: "SUPER BARIAN", student_campus_name: "IQBAL TOWN",
+        student_father_phone: 1256701817, student_status: "Active", family_credit: 78000,
+        siblings_count: 2   // other children of this family (the app can take it from the family list: totalStudent.length - 1)
+    };
+
+    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var DISC_PAY = "2026-10-01T09:16:33.948Z";
+    function mfee(i, year, o) {
+        var m = MONTHS[i], mm = ("0" + (i + 1)).slice(-2), cur = year === "2026";
+        var after = o.after != null ? o.after : 3000;
+        return {
+            fee_month: m, fee_year: year,
+            due_date: cur ? year + "-" + mm + "-10T00:00:00.000Z" : "2026-10-08T00:00:00.000Z",
+            late_fine: cur ? 300 : 0,
+            fee_status: o.status || "Unpaid",
+            fee_generation_date: cur ? year + "-" + mm + "-01T00:00:00.000Z" : "2026-10-01T00:00:00.000Z",
+            actual_monthly_fee: 3000, monthly_fee_discount: o.disc || 0, paying_date: o.paying || null,
+            monthly_fee_after_discount: after, message_cost: 0, paid_amount: o.paid || 0,
+            partial_payment_history: o.partial || [], further_discount_history: o.further || [],
+            due_date_history: [], late_fee_fine_discount_history: o.fineDisc || [],
+            payment_method: o.paid ? "Family Credit" : undefined,
+            payment_mode_id: o.mode, payment_mode_source_id: o.src, payment_recieved_by: o.by
+        };
+    }
+    var paidFull = function (paying, src) { return { status: "Paid", paying: paying, paid: 3300, mode: FA, src: src, by: "DEMO" }; };
+
+    var studentDues = {
+        monthlyFee: [{ student: "67d6c5e7548e557c580d5959", fees: [
+            mfee(0, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(1, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(2, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(3, "2026", { paid: 100, partial: [{ amount: 100, date: DISC_PAY, payment_mode_id: FA, payment_mode_source_id: FA_BANK, payment_recieved_by: "DEMO" }] }),
+            mfee(4, "2026", {}), mfee(5, "2026", {}), mfee(6, "2026", {}), mfee(7, "2026", {}), mfee(8, "2026", {}),
+            mfee(9, "2026", { paid: 2500, partial: [{ amount: 2500, date: "2026-10-01T09:16:20.620Z", payment_mode_id: FA, payment_mode_source_id: FA_BANK, payment_recieved_by: "DEMO" }] }),
+            mfee(10, "2026", { status: "Paid", paying: "2026-10-01T09:15:04.079Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO" }),
+            mfee(11, "2026", {}),
+            mfee(0, "2025", { status: "Paid", paying: "2026-10-01T09:15:30.246Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO",
+                fineDisc: [{ date: "2026-10-01T09:15:30.246Z", amount: 0, reason: "Paid Without Fine", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            mfee(1, "2025", {}), mfee(2, "2025", {}), mfee(3, "2025", {}), mfee(4, "2025", {}),
+            mfee(5, "2025", { status: "Paid", paying: "2026-10-01T09:16:42.926Z", paid: 2000, after: 2000, disc: 33, mode: FA, src: FA_BANK, by: "DEMO",
+                further: [{ date: "2026-10-01T09:16:42.926Z", amount: 1000, reason: "Pay And Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            mfee(6, "2025", {}), mfee(7, "2025", {}), mfee(8, "2025", {}), mfee(9, "2025", {}), mfee(10, "2025", {}), mfee(11, "2025", {})
+        ] }],
+        customFee: [
+            { custom_fee_name: "CONTEEN FEE 2026", custom_fee_generate_date: "2026-10-31T19:05:36.930Z", actual_custom_fee: 4500, custom_fee_discount: 0,
+              custom_fee_after_discount: 4500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
+              custom_fee_status: "Unpaid", paid_amount: 1500, payment_method: "Family Credit",
+              partial_payment_history: [{ amount: 1500, date: "2026-10-01T09:15:15.255Z", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO" }],
+              further_discount_history: [], late_fee_fine_discount_history: [] },
+            { custom_fee_name: "STATIONARY FEE 2026", custom_fee_generate_date: "2026-10-31T19:06:38.125Z", actual_custom_fee: 1500, custom_fee_discount: 0,
+              custom_fee_after_discount: 1500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
+              custom_fee_status: "Unpaid", paid_amount: 0, partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
+        ],
+        transferFee: []
+    };
+
+    /* ================= SAME LOGIC AS Fee Payment.jsx ================= */
+    function getModeName(id) {
+        for (var i = 0; i < paymentChannels.length; i++) if (paymentChannels[i]._id === id) return paymentChannels[i].mode_name;
+        return "";
+    }
+    function getSourceName(id) {
+        for (var i = 0; i < paymentChannels.length; i++)
+            for (var j = 0; j < paymentChannels[i].sources.length; j++) if (paymentChannels[i].sources[j]._id === id) return paymentChannels[i].sources[j].source;
+        return "";
+    }
+    function toDateCA(v) { return v ? new Date(v).toLocaleDateString("en-CA") : ""; }
+    function isFeeOverdue(o) {
+        var due = toDateCA(o.dueDate);
+        if (!due) return false;
+        if (o.feeStatus === "Paid") return toDateCA(o.payingDate) > due;
+        if (o.feeStatus === "Clear") return toDateCA(o.clearFeeDate) > due;
+        return toDateCA(o.compareDate) > due;
+    }
+
+    // Build the rows exactly like getFeePaymentData does
+    var today = new Date().toLocaleDateString("en-CA");
+    var totalData = [];
+    studentDues.monthlyFee.forEach(function (mf) {
+        mf.fees.forEach(function (e) {
+            var due = isFeeOverdue({ dueDate: e.due_date, compareDate: today, feeStatus: e.fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+            totalData.push({
+                title: "Fee Of " + e.fee_month + " " + e.fee_year, fee_generation_date: new Date(e.fee_generation_date), due: due, due_date: e.due_date,
+                actual_fee: e.actual_monthly_fee, discount: e.monthly_fee_discount, fee_after_discount: e.monthly_fee_after_discount, fine: e.late_fine,
+                total: due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount,
+                dues: (due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount) - e.paid_amount,
+                status: e.fee_status, paid_amount: e.paid_amount, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date,
+                payment_method: e.payment_method, further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+                payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+            });
+        });
+    });
+    studentDues.customFee.forEach(function (e) {
+        var due = isFeeOverdue({ dueDate: e.custom_fee_due_date, compareDate: today, feeStatus: e.custom_fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+        totalData.push({
+            title: e.custom_fee_name, fee_generation_date: new Date(e.custom_fee_generate_date), due: due, due_date: e.custom_fee_due_date,
+            actual_fee: e.actual_custom_fee, discount: e.custom_fee_discount, fee_after_discount: e.custom_fee_after_discount, fine: e.custom_fee_fine,
+            paid_amount: e.paid_amount,
+            total: due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount,
+            dues: (due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount) - e.paid_amount,
+            status: e.custom_fee_status, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date, payment_method: e.payment_method,
+            further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+            payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+        });
+    });
+    var statusOrder = { Unpaid: 1, Paid: 2, Clear: 3 };
+    totalData.sort(function (a, b) {
+        var diff = new Date(b.fee_generation_date) - new Date(a.fee_generation_date);
+        return diff !== 0 ? diff : statusOrder[a.status] - statusOrder[b.status];
+    });
+
+
+    /* ================= SAME CODE AS Fee Payment.jsx (formatTime / formatDateTime) ================= */
+    function formatTime(isoDate) {
+        if (!isoDate) return null;
+    
+        const date = new Date(isoDate);
+    
+        if (isNaN(date.getTime())) return null;
+    
+        // Don't return anything for 00:00:00
+        if (
+            date.getUTCHours() === 0 &&
+            date.getUTCMinutes() === 0 &&
+            date.getUTCSeconds() === 0
+        ) {
+            return null;
+        }
+    
+        return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
+    }
+    
+    function formatDateTime(isoDate) {
+        if (!isoDate) return null;
+    
+        const date = new Date(isoDate);
+        if (isNaN(date.getTime())) return null;
+    
+        const dateString = date.toLocaleDateString("pt-PT");
+        const timeString = formatTime(isoDate);
+        return timeString ? `${dateString} ${timeString}` : dateString;
+    }
+    
+    
+
+    /* ================= SAME CODE AS handlePrintReport (design copied as it is) ================= */
+    var checkFamilyToggle = false;
+    var printPages = [{ studentData: studentDataFromOfFee, feeData: totalData }];
+        const getModeSourceStr = (i) => {
+            const segments = [];
+
+            if (i?.partial_payment_history?.length > 0) {
+                segments.push(...i.partial_payment_history.map(p => ({
+                    amount: p.amount,
+                    mode_id: p.payment_mode_id,
+                    date: p.date,
+                    source_id: p.payment_mode_source_id,
+                    recieved_by: p.payment_recieved_by,
+                    type: 'partial'
+                })));
+            }
+
+            const partialSum = i?.partial_payment_history?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+            const quickPayAmount = (i.paid_amount || 0) - partialSum;
+            if (quickPayAmount > 0) {
+                segments.push({
+                    amount: quickPayAmount,
+                    mode_id: i.payment_mode_id,
+                    date: i.paying_date,
+                    source_id: i.payment_mode_source_id,
+                    recieved_by: i.payment_recieved_by,
+                    type: 'quick'
+                });
+            }
+
+            if (segments.length === 0) {
+                const mode = i.payment_mode_id ? getModeName(i.payment_mode_id) : '-';
+                const source = i.payment_mode_source_id ? getSourceName(i.payment_mode_source_id) : '';
+                return `${mode}${source ? ` / ${source}` : ''} ${i.payment_recieved_by ? `(${i.payment_recieved_by})` : ''}`;
+            }
+
+            if (segments.length === 1 && segments[0].type === 'quick') {
+                const mode = segments[0].mode_id ? getModeName(segments[0].mode_id) : '-';
+                const source = segments[0].source_id ? getSourceName(segments[0].source_id) : '';
+                return `${mode}${source ? ` / ${source}` : ''} ${segments[0].recieved_by ? `(${segments[0].recieved_by})` : ''}`;
+            }
+
+            return segments.map(seg => {
+                const mode = seg.mode_id ? getModeName(seg.mode_id) : '-';
+                const source = seg.source_id ? getSourceName(seg.source_id) : '';
+                return `${seg.amount} = ${mode}${source ? ` / ${source}` : ''} ${seg.date ? `(${formatDateTime(seg.date)})` : ''} ${seg.recieved_by ? `(${seg.recieved_by})` : ''}`;
+            }).join('<br/>');
+        };
+
+        const getAmountDateHistoryStr = (history) => {
+            if (!history?.length) return null;
+            return history.map(entry => {
+                const dateStr = entry.date ? new Date(entry.date).toLocaleDateString("pt-PT") : '-';
+                return `dis ${entry.amount} (${dateStr})`;
+            }).join('<br/>');
+        };
+
+        const getFinePrintStr = (item) => {
+            const fineHistory = item.late_fee_fine_discount_history || [];
+            const currentFine = Number(item.fine || 0).toLocaleString();
+
+            if (fineHistory.length > 0) {
+                const totalFineDiscount = fineHistory.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const fineSteps = [];
+                let runningFine = (item.fine || 0) + totalFineDiscount;
+
+                fineSteps.push(runningFine);
+                fineHistory.forEach(h => {
+                    runningFine -= Number(h.amount || 0);
+                    fineSteps.push(runningFine);
+                });
+
+                const formatDashDate = (date) => {
+                    if (!date) return '-';
+                    const d = new Date(date);
+                    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                };
+
+                const startLine = `Initial Fine: ${Number(fineSteps[0]).toLocaleString()}`;
+                const historyLines = fineHistory.map((entry, i) => {
+                    const fineAtStep = Number(fineSteps[i + 1]).toLocaleString();
+                    return `dis ${entry.amount} (${formatDashDate(entry.date)})`;
+                }).join('<br/>');
+
+                return `${startLine}<br/>${historyLines}<br/>Current Fine: ${currentFine}`;
+            }
+
+            return currentFine;
+        };
+
+        const buildStudentReportPage = (currentStudentData, studentFeeData, isLastPage) => {
+            let totalExpectedFeePrint = 0;
+            let totalCollectedFeePrint = 0;
+            let totalPendingFeePrint = 0;
+            let totalDiscountPrint = 0;
+            let totalActualFeePrint = 0;
+            let totalFeeAfterDiscountPrint = 0;
+            let totalFurtherDiscountPrint = 0;
+            let totalFinePrint = 0;
+            let totalFineDiscountPrint = 0;
+
+            studentFeeData.forEach(item => {
+                totalExpectedFeePrint += item.total || 0;
+                totalCollectedFeePrint += item.paid_amount || 0;
+                totalPendingFeePrint += item.dues || 0;
+
+                // Discount = fee discount + further discount (actual fee - fee after discount) + fine discount
+                const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
+                const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                totalDiscountPrint += feeDiscountAmount + fineDiscountAmount;
+
+                // Grand total row (same figures the table columns show)
+                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                totalActualFeePrint += Number(item.actual_fee || 0);
+                totalFeeAfterDiscountPrint += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
+                totalFurtherDiscountPrint += furtherDiscountAmount;
+                totalFinePrint += Number(item.fine || 0);
+                totalFineDiscountPrint += fineDiscountAmount;
+            });
+
+            // Collection Percentage stat (commented out, not used for now)
+            // const collectionPercPrint = totalExpectedFeePrint > 0
+            //     ? Math.round((totalCollectedFeePrint / totalExpectedFeePrint) * 100)
+            //     : 0;
+
+            return `
+            <div class="student-report-page${isLastPage ? ' last-page' : ''}">
+                <!-- Header Section -->
+                <div class="header-section">
+                    <div>
+                        ${systemSettings?.school_logo ? `<img src="${systemSettings.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                    </div>
+                    <div style="text-align: center; flex: 1;">
+                        <h1>${systemSettings?.school_name || 'School Management System'}</h1>
+                        <h2>Student Wise Collected Fee Report</h2>
+                    </div>
+                    <div style="opacity: 0; width: 71px;"></div>
+                </div>
+
+                <!-- Student Details + Fee Summary (one row) -->
+                <div class="top-band">
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-label">Student Name</span><span class="info-value">${currentStudentData?.student_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Father Name</span><span class="info-value">${currentStudentData?.student_father_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Reg #</span><span class="info-value">${currentStudentData?.general_registration_code || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Status</span><span class="info-value">${currentStudentData?.student_status || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Class / Section</span><span class="info-value">${currentStudentData?.student_class_name || '-'} / ${currentStudentData?.student_section_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Campus</span><span class="info-value">${currentStudentData?.student_campus_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Phone</span><span class="info-value">${currentStudentData?.student_father_phone || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Family Advance Balance (Sibling: ${Number(currentStudentData?.siblings_count || 0)})</span><span class="info-value">Rs. ${Number(currentStudentData?.family_credit || 0).toLocaleString()}</span></div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">Rs. ${Number((totalExpectedFeePrint || 0) + (totalDiscountPrint || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Discount</span><span class="summary-value">Rs. ${Number(totalDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Received</span><span class="summary-value">Rs. ${Number(totalCollectedFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Dues</span><span class="summary-value">Rs. ${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div>
+                    ${'' /* <div class="summary-card"><span class="summary-label">Collection Percentage</span><span class="summary-value">${collectionPercPrint}%</span></div> */}
+                </div>
+                </div>
+
+                <!-- Summary Section
+                <div class="summary-section">
+                    <h3>Summary (Calculation Formula)</h3>
+                    <ul>
+                        <li>Net Receivable = Sum Of All Total (If fee is overdue, fine is included).</li>
+                        <li>Received = Sum Of Paid Amount.</li>
+                        <li>Dues = Sum Of Dues (Total - Paid).</li>
+                        <li>Collection Percentage = (Collected Fee ÷ Expected Fee) x 100.</li>
+                    </ul>
+                </div>-->
+
+                <!-- Data Table -->
+                <div style="overflow: auto; margin-bottom: 11px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sr #</th>
+                                <th>Fee Title</th>
+                                ${'' /* <th>Status</th> */}
+                                <th>Due Date</th>
+                                <th>Paying Date</th>
+                                <th>Mode / Source (User)</th>
+                                <th>Due</th>
+                                <th>Actual Fee</th>
+                                ${'' /* <th>Disc</th> */}
+                                <th>Fee After Discount</th>
+                                <th>Further Disc</th>
+                                <th>Fine</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Fee Dues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${studentFeeData?.length > 0 ? studentFeeData.map((item, index) => {
+                const fdHistory = item.further_discount_history || [];
+                const furtherDiscountHtml = getAmountDateHistoryStr(fdHistory) || '0';
+                const fineHtml = getFinePrintStr(item);
+                const furtherDiscountTotal = fdHistory.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
+                return `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td class="td-fee-title">${item.title}</td>
+                                        ${'' /* <td>${item.status}${item.payment_method === 'Online Payment' ? ' (Online)' : ''}</td> */}
+                                        <td>${item.due_date ? new Date(item.due_date).toLocaleDateString("pt-PT") : '-'}</td>
+                                        <td>${formatDateTime(item.paying_date) || '-'}</td>
+                                        <td class="blue">${getModeSourceStr(item)}</td>
+                                        <td>${item.due ? 'Yes' : 'No'}</td>
+                                        <td>${Number(item.actual_fee || 0).toLocaleString()}</td>
+                                        ${'' /* <td class="blue">${item.discount || 0}%</td> */}
+                                        <td class="blue">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>                                        <td class="blue">${furtherDiscountHtml}</td>
+                                        <td class="${item.due ? 'red' : 'green'}">${fineHtml}</td>
+                                        <td class="col-total">${Number(item.total || 0).toLocaleString()}</td>
+                                        <td class="col-paid">${Number(item.paid_amount || 0).toLocaleString()}</td>
+                                        <td class="col-due">${Number(item.dues || 0).toLocaleString()}</td>
+                                    </tr>
+                                `;
+            }).join('') : `<tr><td colspan="13" style="text-align: center; padding: 17px; font-size: 9px;">No Records Found!</td></tr>`}
+                        </tbody>
+                        ${studentFeeData?.length > 0 ? `
+                        <tbody class="grand-total-body">
+                            <tr class="grand-total">
+                                <td colspan="6">Grand Total</td>
+                                <td>${totalActualFeePrint.toLocaleString()}</td>
+                                <td>${totalFeeAfterDiscountPrint.toLocaleString()}</td>
+                                <td>${totalFurtherDiscountPrint.toLocaleString()}</td>
+                                <td>${totalFinePrint.toLocaleString()}<br/>dis ${totalFineDiscountPrint.toLocaleString()}</td>
+                                <td class="col-total">${Number(totalExpectedFeePrint || 0).toLocaleString()}</td>
+                                <td class="col-paid">${Number(totalCollectedFeePrint || 0).toLocaleString()}</td>
+                                <td class="col-due">${Number(totalPendingFeePrint || 0).toLocaleString()}</td>
+                            </tr>
+                        </tbody>` : ''}
+                    </table>
+                </div>
+                <div class="print-footer">
+                    Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                </div>
+            </div>
+            `;
+        };
+
+
+    var pagesWithFees = printPages.filter(function (page) { return page.feeData.length > 0; });
+    var pagesToRender = pagesWithFees.length > 0 ? pagesWithFees : printPages;
+    document.body.insertAdjacentHTML("beforeend", pagesToRender.map(function (page, index) { return buildStudentReportPage(page.studentData, page.feeData, index === pagesToRender.length - 1); }).join(""));
+</script>
+</body>
+</html>
