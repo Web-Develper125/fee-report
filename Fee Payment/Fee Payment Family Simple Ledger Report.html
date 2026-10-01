@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Family Wise Ledger Report</title>
+<style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                    font-family: "Poppins", sans-serif !important;
+                }
+                @page {
+                    size: A4 portrait;
+                    margin: 7mm;
+                }
+                html {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                body {
+                    background: white;
+                    font-size: 9px;
+                    line-height: 1.2;
+                    padding: 5px;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .student-report-page {
+                    page-break-after: always;
+                    break-after: page;
+                }
+                .student-report-page.last-page {
+                    page-break-after: auto;
+                    break-after: auto;
+                }
+
+                /* Header Section */
+                .header-section {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #000;
+                    padding: 0 0 8px;
+                }
+                .report-sub { font-size: 9px; font-weight: 600; color: #000; margin-top: 1px; }
+                .header-section h1 {
+                    font-size: 17px;
+                    font-weight: 700;
+                    margin-bottom: 2px;
+                    color: black;
+                }
+                .header-section h2 {
+                    font-size: 12px;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                    color: black;
+                }
+                .header-logo {
+                    width: 56px;
+                    height: 56px;
+                    object-fit: contain;
+                    border-radius: 5px;
+                }
+
+                /* Table Styles (same bordered, plain table as the Family Advance Ledger report) */
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    border: 1px solid #999;
+                    padding: 4px;
+                    text-align: left;
+                    font-weight: 600;
+                    color: #000;
+                    vertical-align: middle;
+                }
+                /* header cells: original size */
+                th {
+                    font-size: 9px;
+                    background-color: #f0f0f0 !important;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
+                /* body cells: original size */
+                td {
+                    font-size: 9px;
+                }
+                thead { display: table-header-group; }
+                tr { page-break-inside: avoid; }
+                .align-right { text-align: right; }
+                .align-center { text-align: center; }
+                .nowrap { white-space: nowrap; }
+                tr.row td { border-top: 1px solid #d4d4d4; border-bottom: 1px solid #d4d4d4; }
+                tr.row td, tr.band td, tr.subtotal td { padding-top: 3px; padding-bottom: 3px; }
+                td s { margin-right: 5px; }
+                /* group bands: Overdue / Not Yet Due / Paid, each with its own subtotal */
+                tr.band td { background-color: #e6e6e6 !important; font-weight: 700; text-transform: uppercase; border-top: 1px solid #666; border-bottom: 1px solid #666; }
+                tr.subtotal td { background-color: #f3f3f3 !important; font-weight: 700; border-top: 1px solid #666; }
+                tr.subtotal td:first-child { text-align: right; text-transform: uppercase; }
+                th.col-total,
+                th.col-paid,
+                th.col-due { font-size: 10px; }
+                td.col-total,
+                td.col-paid,
+                td.col-due,
+                tr.grand-total td.col-total,
+                tr.grand-total td.col-paid,
+                tr.grand-total td.col-due { font-size: 11px; font-weight: 700; }
+                tr.grand-total td {
+                    background-color: #f0f0f0 !important;
+                    font-weight: 700;
+                    border-top: 2px solid #999;
+                }
+                tr.grand-total td:first-child { text-align: right; text-transform: uppercase; }
+                tr.grand-total td.col-due { font-size: 13px; border-bottom: 3px double #000; }
+                .zero-dash { color: #999; font-size: 9px; font-weight: 400; }
+                .dt span + span { margin-left: 8px; }
+                td.fine-applied { font-weight: 700; }
+                td.fine-na { color: #999; font-weight: 400; }
+                .fine-legend { margin-top: 4px; font-size: 8px; font-weight: 600; color: #000; }
+                .green { color: #000 !important; }
+                .red { color: #000 !important; }
+                .blue { color: #000 !important; }
+
+                /* Status Badge */
+                .status-badge {
+                    padding: 2px 5px;
+                    border-radius: 9px;
+                    font-size: 9px;
+                    font-weight: 700;
+                }
+                .status-paid { background-color: #dcfce7; color: #15803d; }
+                .status-clear { background-color: #dbeafe; color: #1d4ed8; }
+                .status-unpaid { background-color: #fee2e2; color: #dc2626; }
+                .status-not-created { background-color: #f3f4f6; color: #374151; }
+
+                /* History chain */
+                .chain { display: flex; align-items: center; justify-content: center; gap: 2px; flex-wrap: wrap; color: black; }
+                .chain small { font-size: 9px; color: black; }
+                .chain .arrow { font-size: 8px; color: #555; }
+                .chain .total-val { font-size: 10px; font-weight: 700; color: black; }
+                .th-sub {
+                    display: block;
+                    font-size: 7px;
+                    font-weight: 500;
+                    color: #3d3d3d;
+                    margin-top: 1px;
+                }
+
+                /* Student Details + Fee Summary (compact, black & white) */
+                .top-band {
+                    display: flex;
+                    gap: 6px;
+                    margin-bottom: 8px;
+                }
+                .info-grid {
+                    flex: 3;
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 5px 10px;
+                    align-content: space-between;
+                    border: 1px solid #000;
+                    padding: 6px 8px;
+                }
+                .info-item { display: flex; flex-direction: column; }
+                /* highlighted field (Family Advance): grey box with a border, bigger value */
+                .info-item.info-highlight { background-color: #e6e6e6 !important; border: 1px solid #000; padding: 2px 6px; }
+                .info-item.info-highlight .info-label { font-weight: 700; }
+                .info-item.info-highlight .info-value { font-size: 13px; }
+                .info-label {
+                    white-space: nowrap;
+                    font-size: 8px;
+                    font-weight: 600;
+                    color: #000;
+                    text-transform: uppercase;
+                }
+                .info-value {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #000;
+                }
+                .summary-grid {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    border: 1px solid #000;
+                }
+                .summary-card {
+                    flex: 1;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 3px 8px;
+                    border-top: 1px solid #000;
+                }
+                .summary-card:first-child { border-top: none; }
+                .summary-card.dues { background-color: #e6e6e6 !important; border-top: 2px solid #000; }
+                .summary-card.dues .summary-label { font-weight: 700; }
+                .summary-card.dues .summary-value { font-size: 15px; }
+                .summary-label {
+                    font-size: 8px;
+                    font-weight: 600;
+                    color: #000;
+                    text-transform: uppercase;
+                }
+                .summary-value {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: #000;
+                }
+                .summary-section {
+                    border: 1px solid #ddd;
+                    margin: 11px 0;
+                    padding: 9px;
+                    background-color: #f9f9f9;
+                    border-radius: 5px;
+                }
+                .summary-section h3 {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: black;
+                    text-align: center;
+                    margin-bottom: 7px;
+                }
+                .summary-section ul {
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                .summary-section li {
+                    font-size: 9px;
+                    color: black;
+                    margin-bottom: 2px;
+                    font-weight: 600;
+                    line-height: 1.35;
+                }
+                .print-footer {
+                    margin-top: 11px;
+                    padding-top: 7px;
+                    font-size: 10px;
+                    color: rgb(56, 56, 56);
+                    text-align: center;
+                    font-weight: 700;
+                }
+            
+                .report-bottom { page-break-inside: avoid; break-inside: avoid; display: flow-root; }
+                .breakdown-title { font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 4px; }
+                .breakdown-table { width: 52%; margin-bottom: 0; }
+                .sign-row { display: flex; justify-content: space-between; gap: 30px; margin: 34px 0 10px; }
+                .sign-box { flex: 1; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+                .page-measure { position: absolute; visibility: hidden; height: 281mm; width: 1px; }
+                /* same width the printer uses (page 210mm - 2 x 7mm margin - body padding), applied only while measuring */
+                body.measuring .student-report-page { width: calc(196mm - 10px) !important; }
+                .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 4px; }
+                .family-info-grid { grid-template-columns: repeat(3, 1fr); }
+                /* the stats box is taller (6 rows); the details box keeps its height */
+                .top-band .family-info-grid { align-self: flex-start; height: 87px; }
+                .children-table { margin-bottom: 10px; }
+                .student-section { margin-bottom: 10px; }
+                .student-title { display: flex; gap: 8px; font-size: 11px; font-weight: 700; margin: 0 0 4px; page-break-after: avoid; break-after: avoid; }
+                .student-title .r { margin-left: auto; text-align: right; }
+    /* preview only */
+    .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    @media print { .print-btn { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="page-measure" id="pageMeasure"></div>
+<button class="print-btn" onclick="window.print()">Print</button>
+
+<script>
+    /* ================= DUMMY DATA (same shape as your APIs) ================= */
+    var systemSettings = { school_name: "Ai Schooling System", school_logo: "https://i.postimg.cc/jqB2gpTG/image.png" };
+    var FA = "6a23166bc0d803e8365bf1d1", FA_GEN = "6a23166bc0d803e8365bf1d2", FA_BANK = "6abe24c6c47ee1a2165d82f4";
+
+    // Payment channels (id -> name), the same data getModeName / getSourceName read from
+    var paymentChannels = [
+        { _id: FA, mode_name: "Family Advance", sources: [{ _id: FA_GEN, source: "General" }, { _id: FA_BANK, source: "Bank" }] },
+        { _id: "69f61a250ece5980ea7593d9", mode_name: "Cash", sources: [{ _id: "69f61a250ece5980ea7593da", source: "General" }, { _id: "6a99cd3ac6679a85f7c0ab5f", source: "Ayesha" }, { _id: "6a99cd4bc6679a85f7c0ab64", source: "Nimra" }] },
+        { _id: "69f61a250ece5980ea7593db", mode_name: "Mobile Wallet", sources: [{ _id: "69f61a250ece5980ea7593dc", source: "General" }, { _id: "69f61a600ece5980ea7593f4", source: "Jazz Cash" }] },
+        { _id: "69f61a250ece5980ea7593dd", mode_name: "Bank Transfer", sources: [{ _id: "69f61a250ece5980ea7593de", source: "General" }] }
+    ];
+
+    // The family (father details, shared by all siblings) and its siblings
+    var familyInfo = {
+        family_code: "1256701817", father_name: "Muhammad Kamran", phone: 1256701817, cnic: 3584962094852,
+        family_credit: 78000,
+        students: [
+            { student_name: "Adnan Ahmed", general_registration_code: "BSS-STD-898", student_class_name: "NINE", student_section_name: "SUPER BARIAN", student_campus_name: "IQBAL TOWN", student_status: "Active" },
+            { student_name: "Hamza Ahmed", general_registration_code: "BSS-STD-899", student_class_name: "SEVEN", student_section_name: "JINNAH", student_campus_name: "IQBAL TOWN", student_status: "Active" }
+        ]
+    };
+
+    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var DISC_PAY = "2026-10-01T09:16:33.948Z";
+    function mfee(i, year, o) {
+        var m = MONTHS[i], mm = ("0" + (i + 1)).slice(-2), cur = year === "2026";
+        var after = o.after != null ? o.after : (o.base || 3000);
+        return {
+            fee_month: m, fee_year: year,
+            due_date: cur ? year + "-" + mm + "-10T00:00:00.000Z" : "2026-10-08T00:00:00.000Z",
+            late_fine: o.fine != null ? o.fine : (cur ? 300 : 0),
+            fee_status: o.status || "Unpaid",
+            fee_generation_date: cur ? year + "-" + mm + "-01T00:00:00.000Z" : "2026-10-01T00:00:00.000Z",
+            actual_monthly_fee: o.base || 3000, monthly_fee_discount: o.disc || 0, paying_date: o.paying || null,
+            monthly_fee_after_discount: after, message_cost: 0, paid_amount: o.paid || 0,
+            partial_payment_history: o.partial || [], further_discount_history: o.further || [],
+            due_date_history: [], late_fee_fine_discount_history: o.fineDisc || [],
+            payment_method: o.paid ? "Family Credit" : undefined,
+            payment_mode_id: o.mode, payment_mode_source_id: o.src, payment_recieved_by: o.by
+        };
+    }
+    var paidFull = function (paying, src) { return { status: "Paid", paying: paying, paid: 3300, mode: FA, src: src, by: "DEMO" }; };
+
+    // First sibling (Adnan Ahmed): monthly fee 3,000
+    var studentDues1 = {
+        monthlyFee: [{ student: "67d6c5e7548e557c580d5959", fees: [
+            mfee(0, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(1, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(2, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(3, "2026", { paid: 100, partial: [{ amount: 100, date: DISC_PAY, payment_mode_id: FA, payment_mode_source_id: FA_BANK, payment_recieved_by: "DEMO" }] }),
+            mfee(4, "2026", { fine: 200, fineDisc: [{ date: "2026-09-20T09:20:00.000Z", amount: 100, reason: "Fine Discount", discount_by: "DEMO", approved_by: "DEMO" }] }), mfee(5, "2026", {}), mfee(6, "2026", {}), mfee(7, "2026", {}), mfee(8, "2026", {}),
+            mfee(9, "2026", { paid: 2500, partial: [{ amount: 2500, date: "2026-09-15T09:16:20.620Z", payment_mode_id: FA, payment_mode_source_id: FA_BANK, payment_recieved_by: "DEMO" }] }),
+            mfee(10, "2026", { status: "Paid", paying: "2026-10-01T09:15:04.079Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO" }),
+            mfee(11, "2026", {}),
+            mfee(0, "2025", { status: "Paid", paying: "2026-10-01T09:15:30.246Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO",
+                fineDisc: [{ date: "2026-10-01T09:15:30.246Z", amount: 0, reason: "Paid Without Fine", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            mfee(1, "2025", {}), mfee(2, "2025", {}), mfee(3, "2025", {}), mfee(4, "2025", {}),
+            mfee(5, "2025", { status: "Paid", paying: "2026-10-01T09:16:42.926Z", paid: 2000, after: 2000, disc: 33, mode: FA, src: FA_BANK, by: "DEMO",
+                further: [{ date: "2026-10-01T09:16:42.926Z", amount: 1000, reason: "Pay And Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            mfee(6, "2025", {}), mfee(7, "2025", {}), mfee(8, "2025", {}), mfee(9, "2025", {}), mfee(10, "2025", {}), mfee(11, "2025", {})
+        ] }],
+        customFee: [
+            { custom_fee_name: "CONTEEN FEE 2026", custom_fee_generate_date: "2026-10-31T19:05:36.930Z", actual_custom_fee: 4500, custom_fee_discount: 0,
+              custom_fee_after_discount: 4500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
+              custom_fee_status: "Unpaid", paid_amount: 1500, payment_method: "Family Credit",
+              partial_payment_history: [{ amount: 1500, date: "2026-09-01T09:15:15.255Z", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO" }],
+              further_discount_history: [], late_fee_fine_discount_history: [] },
+            { custom_fee_name: "STATIONARY FEE 2026", custom_fee_generate_date: "2026-10-31T19:06:38.125Z", actual_custom_fee: 1500, custom_fee_discount: 0,
+              custom_fee_after_discount: 1500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
+              custom_fee_status: "Unpaid", paid_amount: 0, partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
+        ],
+        transferFee: []
+    };
+
+    // Second sibling (Hamza Ahmed): monthly fee 2,500
+    var studentDues2 = {
+        monthlyFee: [{ student: "67d6c5e7548e557c580d5960", fees: [
+            mfee(0, "2026", { base: 2500, status: "Paid", paying: "2026-09-01T10:00:00.000Z", paid: 2800, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(1, "2026", { base: 2500, status: "Paid", paying: "2026-09-01T10:00:00.000Z", paid: 2800, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(2, "2026", { base: 2500, after: 2000, disc: 20, status: "Paid", paying: "2026-09-15T11:00:00.000Z", paid: 2300, mode: FA, src: FA_GEN, by: "DEMO",
+                further: [{ date: "2026-09-15T11:00:00.000Z", amount: 500, reason: "Pay And Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            mfee(3, "2026", { base: 2500 }), mfee(4, "2026", { base: 2500 }), mfee(5, "2026", { base: 2500 }),
+            mfee(6, "2026", { base: 2500 }), mfee(7, "2026", { base: 2500 }), mfee(8, "2026", { base: 2500 }),
+            mfee(9, "2026", { base: 2500 }), mfee(10, "2026", { base: 2500 }), mfee(11, "2026", { base: 2500 })
+        ] }],
+        customFee: [
+            { custom_fee_name: "STATIONARY FEE 2026", custom_fee_generate_date: "2026-10-31T19:06:38.125Z", actual_custom_fee: 1500, custom_fee_discount: 0,
+              custom_fee_after_discount: 1500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: "2026-09-20T09:00:00.000Z",
+              custom_fee_status: "Paid", paid_amount: 1500, payment_method: "Family Credit", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO",
+              partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
+        ],
+        transferFee: []
+    };
+
+    /* ================= SAME LOGIC AS Fee Payment.jsx ================= */
+    function getModeName(id) {
+        for (var i = 0; i < paymentChannels.length; i++) if (paymentChannels[i]._id === id) return paymentChannels[i].mode_name;
+        return "";
+    }
+    function getSourceName(id) {
+        for (var i = 0; i < paymentChannels.length; i++)
+            for (var j = 0; j < paymentChannels[i].sources.length; j++) if (paymentChannels[i].sources[j]._id === id) return paymentChannels[i].sources[j].source;
+        return "";
+    }
+    function toDateCA(v) { return v ? new Date(v).toLocaleDateString("en-CA") : ""; }
+    function isFeeOverdue(o) {
+        var due = toDateCA(o.dueDate);
+        if (!due) return false;
+        if (o.feeStatus === "Paid") return toDateCA(o.payingDate) > due;
+        if (o.feeStatus === "Clear") return toDateCA(o.clearFeeDate) > due;
+        return toDateCA(o.compareDate) > due;
+    }
+
+    // Build the rows of one student exactly like getFeePaymentData does
+    var today = new Date().toLocaleDateString("en-CA");
+    var statusOrder = { Unpaid: 1, Paid: 2, Clear: 3 };
+    function buildFeeRows(studentDues) {
+        var totalData = [];
+        studentDues.monthlyFee.forEach(function (mf) {
+            mf.fees.forEach(function (e) {
+                var due = isFeeOverdue({ dueDate: e.due_date, compareDate: today, feeStatus: e.fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+                totalData.push({
+                    title: "Fee Of " + e.fee_month + " " + e.fee_year, fee_month: e.fee_month, fee_year: e.fee_year, fee_generation_date: new Date(e.fee_generation_date), due: due, due_date: e.due_date,
+                    actual_fee: e.actual_monthly_fee, discount: e.monthly_fee_discount, fee_after_discount: e.monthly_fee_after_discount, fine: e.late_fine,
+                    total: due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount,
+                    dues: (due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount) - e.paid_amount,
+                    status: e.fee_status, paid_amount: e.paid_amount, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date,
+                    payment_method: e.payment_method, further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+                    payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+                });
+            });
+        });
+        studentDues.customFee.forEach(function (e) {
+            var due = isFeeOverdue({ dueDate: e.custom_fee_due_date, compareDate: today, feeStatus: e.custom_fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+            totalData.push({
+                title: e.custom_fee_name, fee_generation_date: new Date(e.custom_fee_generate_date), due: due, due_date: e.custom_fee_due_date,
+                actual_fee: e.actual_custom_fee, discount: e.custom_fee_discount, fee_after_discount: e.custom_fee_after_discount, fine: e.custom_fee_fine,
+                paid_amount: e.paid_amount,
+                total: due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount,
+                dues: (due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount) - e.paid_amount,
+                status: e.custom_fee_status, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date, payment_method: e.payment_method,
+                further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+                payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+            });
+        });
+        totalData.sort(function (a, b) {
+            var diff = new Date(b.fee_generation_date) - new Date(a.fee_generation_date);
+            return diff !== 0 ? diff : statusOrder[a.status] - statusOrder[b.status];
+        });
+        return totalData;
+    }
+
+    /* ================= SAME CODE AS Fee Payment.jsx (formatTime / formatDateTime) ================= */
+    function formatTime(isoDate) {
+        if (!isoDate) return null;
+    
+        const date = new Date(isoDate);
+    
+        if (isNaN(date.getTime())) return null;
+    
+        // Don't return anything for 00:00:00
+        if (
+            date.getUTCHours() === 0 &&
+            date.getUTCMinutes() === 0 &&
+            date.getUTCSeconds() === 0
+        ) {
+            return null;
+        }
+    
+        return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
+    }
+    
+    function formatDateTime(isoDate) {
+        if (!isoDate) return null;
+    
+        const date = new Date(isoDate);
+        if (isNaN(date.getTime())) return null;
+    
+        const dateString = date.toLocaleDateString("pt-PT");
+        const timeString = formatTime(isoDate);
+        return timeString ? `${dateString} ${timeString}` : dateString;
+    }
+    
+    
+
+    /* ================= SAME CODE AS handlePrintReport (design copied as it is) ================= */
+    // one entry per sibling: the sibling + that sibling's fee rows
+    var familyPages = familyInfo.students.map(function (st, i) { return { studentData: st, feeData: buildFeeRows(i === 0 ? studentDues1 : studentDues2) }; });
+        const getModeSourceStr = (i) => {
+            const segments = [];
+
+            if (i?.partial_payment_history?.length > 0) {
+                segments.push(...i.partial_payment_history.map(p => ({
+                    amount: p.amount,
+                    mode_id: p.payment_mode_id,
+                    date: p.date,
+                    source_id: p.payment_mode_source_id,
+                    recieved_by: p.payment_recieved_by,
+                    type: 'partial'
+                })));
+            }
+
+            const partialSum = i?.partial_payment_history?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+            const quickPayAmount = (i.paid_amount || 0) - partialSum;
+            if (quickPayAmount > 0) {
+                segments.push({
+                    amount: quickPayAmount,
+                    mode_id: i.payment_mode_id,
+                    date: i.paying_date,
+                    source_id: i.payment_mode_source_id,
+                    recieved_by: i.payment_recieved_by,
+                    type: 'quick'
+                });
+            }
+
+            if (segments.length === 0) {
+                const mode = i.payment_mode_id ? getModeName(i.payment_mode_id) : '-';
+                const source = i.payment_mode_source_id ? getSourceName(i.payment_mode_source_id) : '';
+                return `${mode}${source ? ` / ${source}` : ''} ${i.payment_recieved_by ? `(${i.payment_recieved_by})` : ''}`;
+            }
+
+            if (segments.length === 1 && segments[0].type === 'quick') {
+                const mode = segments[0].mode_id ? getModeName(segments[0].mode_id) : '-';
+                const source = segments[0].source_id ? getSourceName(segments[0].source_id) : '';
+                return `${mode}${source ? ` / ${source}` : ''} ${segments[0].recieved_by ? `(${segments[0].recieved_by})` : ''}`;
+            }
+
+            return segments.map(seg => {
+                const mode = seg.mode_id ? getModeName(seg.mode_id) : '-';
+                const source = seg.source_id ? getSourceName(seg.source_id) : '';
+                return `${seg.amount} = ${mode}${source ? ` / ${source}` : ''} ${seg.date ? `(${formatDateTime(seg.date)})` : ''} ${seg.recieved_by ? `(${seg.recieved_by})` : ''}`;
+            }).join('<br/>');
+        };
+
+        const getAmountDateHistoryStr = (history) => {
+            if (!history?.length) return null;
+            return history.map(entry => {
+                const dateStr = entry.date ? new Date(entry.date).toLocaleDateString("pt-PT") : '-';
+                return `dis ${entry.amount} (${dateStr})`;
+            }).join('<br/>');
+        };
+
+        const getFinePrintStr = (item) => {
+            const fineHistory = item.late_fee_fine_discount_history || [];
+            const currentFine = Number(item.fine || 0).toLocaleString();
+
+            if (fineHistory.length > 0) {
+                const totalFineDiscount = fineHistory.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                const fineSteps = [];
+                let runningFine = (item.fine || 0) + totalFineDiscount;
+
+                fineSteps.push(runningFine);
+                fineHistory.forEach(h => {
+                    runningFine -= Number(h.amount || 0);
+                    fineSteps.push(runningFine);
+                });
+
+                const formatDashDate = (date) => {
+                    if (!date) return '-';
+                    const d = new Date(date);
+                    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                };
+
+                const startLine = `Initial Fine: ${Number(fineSteps[0]).toLocaleString()}`;
+                const historyLines = fineHistory.map((entry, i) => {
+                    const fineAtStep = Number(fineSteps[i + 1]).toLocaleString();
+                    return `dis ${entry.amount} (${formatDashDate(entry.date)})`;
+                }).join('<br/>');
+
+                return `${startLine}<br/>${historyLines}<br/>Current Fine: ${currentFine}`;
+            }
+
+            return currentFine;
+        };
+
+        // Simple report helpers
+        const formatLedgerDate = (value) => {
+            if (!value) return '-';
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? '-' : d.toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' });
+        };
+        const formatLedgerDateTime = (value) => {
+            if (!value) return '<span class="zero-dash">-</span>';
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return '<span class="zero-dash">-</span>';
+            const midnight = d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0;   // no time stored
+            const time = midnight ? '' : d.toLocaleTimeString("en-US", { hour: 'numeric', minute: '2-digit', hour12: true });
+            return `<span class="dt"><span>${formatLedgerDate(value)}</span>${time ? `<span>${time}</span>` : ''}</span>`;
+        };
+        const amountOrDash = (value) => (Number(value || 0) !== 0 ? Number(value).toLocaleString() : '<span class="zero-dash">-</span>');
+
+        // ---------- Family report: father details on top, siblings, then one ledger per sibling ----------
+        const computeStats = (feeData) => {
+            const st = { expected: 0, collected: 0, pending: 0, discount: 0, actual: 0, afterDiscount: 0, further: 0, fine: 0 };
+            feeData.forEach(item => {
+                st.expected += item.total || 0;
+                st.collected += item.paid_amount || 0;
+                st.pending += item.dues || 0;
+                // Discount = fee discount + further discount (actual fee - fee after discount) + fine discount
+                const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
+                const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                st.discount += feeDiscountAmount + fineDiscountAmount;
+                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                st.actual += Number(item.actual_fee || 0);
+                st.afterDiscount += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
+                st.further += furtherDiscountAmount;
+                st.fine += item.due ? Number(item.fine || 0) : 0;   // only fines that are included in Total
+            });
+            return st;
+        };
+
+        // Sorted in this order: Overdue (unpaid and past due), Not Yet Due (unpaid, due date in the future), Paid
+        const monthOrder = (i) => (i.fee_month && i.fee_year ? Number(i.fee_year) * 12 + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].indexOf(i.fee_month) : 0);
+        const byDueDate = (a, b) => (new Date(a.due_date) - new Date(b.due_date)) || (monthOrder(a) - monthOrder(b)) || (new Date(a.fee_generation_date) - new Date(b.fee_generation_date)) || String(a.title).localeCompare(String(b.title));
+        const sortFees = (feeData) => [
+            ...feeData.filter(i => Number(i.dues || 0) > 0 && i.due).sort(byDueDate),
+            ...feeData.filter(i => Number(i.dues || 0) > 0 && !i.due).sort(byDueDate),
+            ...feeData.filter(i => Number(i.dues || 0) <= 0).sort(byDueDate),
+        ];
+
+        const renderFeeRow = (item, srNo) => {
+            const furtherDiscountTotal = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+            // Fine states: applied (overdue, included in Total) = bold + underlined, waived = struck-through original,
+            // not applicable (fee not overdue) = light grey dash
+            const currentFine = Number(item.fine || 0);
+            const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+            const fineClass = item.due ? 'fine-applied' : 'fine-na';
+            const fineHtml = fineDiscountAmount > 0
+                ? `<s>${(currentFine + fineDiscountAmount).toLocaleString()}</s> ${item.due ? `<u>${currentFine.toLocaleString()}</u>` : currentFine.toLocaleString()}`
+                : (item.due ? `<u>${currentFine.toLocaleString()}</u>` : '-');
+            return `
+                                    <tr class="row">
+                                        <td class="align-center">${srNo}</td>
+                                        <td class="td-fee-title">${item.title}</td>
+                                        <td class="nowrap">${item.due ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)}</td>
+                                        <td class="nowrap">${formatLedgerDateTime(item.paying_date)}</td>
+                                        <td class="align-right">${Number(item.actual_fee || 0).toLocaleString()}</td>
+                                        <td class="align-right">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>
+                                        <td class="align-right">${amountOrDash(furtherDiscountTotal)}</td>
+                                        <td class="align-right ${fineClass}">${fineHtml}</td>
+                                        <td class="align-right col-total">${Number(item.total || 0).toLocaleString()}</td>
+                                        <td class="align-right col-paid">${amountOrDash(item.paid_amount)}</td>
+                                        <td class="align-right col-due">${amountOrDash(item.dues)}</td>
+                                    </tr>`;
+        };
+
+        // One student's ledger (title bar + table + that student's total row)
+        const renderStudentLedger = (student, feeData) => {
+            const st = computeStats(feeData);
+            const ordered = sortFees(feeData);
+            return `
+                <div class="student-section">
+                    <div class="student-title">
+                        <span>${student.student_name || '-'} (${student.general_registration_code || '-'})</span>
+                        <span class="r">${student.student_class_name || '-'} / ${student.student_section_name || '-'}</span>
+                    </div>
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th class="align-center">Sr #</th>
+                                <th>Fee Title</th>
+                                <th>Due Date</th>
+                                <th>Paying Date</th>
+                                <th class="align-right">Actual Fee</th>
+                                <th class="align-right">After Discount</th>
+                                <th class="align-right">Further Disc</th>
+                                <th class="align-right">Fine</th>
+                                <th class="align-right col-total">Total</th>
+                                <th class="align-right col-paid">Paid</th>
+                                <th class="align-right col-due">Fee Dues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ordered.length > 0 ? ordered.map((item, index) => renderFeeRow(item, index + 1)).join('') : `<tr><td colspan="11" style="text-align: center; padding: 17px; font-size: 9px;">No Records Found!</td></tr>`}
+                        </tbody>
+                        ${ordered.length > 0 ? `
+                        <tbody class="grand-total-body">
+                            <tr class="grand-total">
+                                <td colspan="4">Student Total</td>
+                                <td class="align-right">${st.actual.toLocaleString()}</td>
+                                <td class="align-right">${st.afterDiscount.toLocaleString()}</td>
+                                <td class="align-right">${st.further.toLocaleString()}</td>
+                                <td class="align-right">${st.fine.toLocaleString()}</td>
+                                <td class="align-right col-total">${Number(st.expected || 0).toLocaleString()}</td>
+                                <td class="align-right col-paid">${Number(st.collected || 0).toLocaleString()}</td>
+                                <td class="align-right col-due">${Number(st.pending || 0).toLocaleString()}</td>
+                            </tr>
+                        </tbody>` : ''}
+                    </table>
+                </div>`;
+        };
+
+        const buildFamilyReportPage = (family, studentPages) => {
+            const allFees = studentPages.reduce((all, p) => all.concat(p.feeData), []);
+            const familyStats = computeStats(allFees);
+
+            // Date wise breakdown (all siblings together): how much was paid and how much discount was given on each date
+            const dateBreakdown = {};
+            const addToDate = (value, field, amount) => {
+                const n = Number(amount || 0);
+                if (!value || !n) return;
+                const key = new Date(value).toLocaleDateString('en-CA');
+                dateBreakdown[key] = dateBreakdown[key] || { received: 0, discount: 0 };
+                dateBreakdown[key][field] += n;
+            };
+            allFees.forEach(item => {
+                const partials = item.partial_payment_history || [];
+                const partialSum = partials.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+                partials.forEach(p => addToDate(p.date, 'received', p.amount));
+                addToDate(item.paying_date, 'received', Number(item.paid_amount || 0) - partialSum);   // full / quick payment
+                (item.further_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
+                (item.late_fee_fine_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
+            });
+            const breakdownDates = Object.keys(dateBreakdown).sort();
+            const datedReceived = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].received, 0);
+            const datedDiscount = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].discount, 0);
+            // amounts that have no date (for example the discount given when the fee was generated)
+            const undatedReceived = Math.max(0, familyStats.collected - datedReceived);
+            const undatedDiscount = Math.max(0, familyStats.discount - datedDiscount);
+
+            // Family advance is subtracted from the dues. If the advance is bigger than the dues, what is left of the advance is shown instead.
+            const familyAdvance = Number(family.family_credit || 0);
+            const duesAfterAdvance = Number(familyStats.pending || 0) - familyAdvance;
+            const advanceCoversDues = duesAfterAdvance < 0;
+
+            return `
+            <div class="student-report-page last-page">
+                <!-- Header Section -->
+                <div class="header-section">
+                    <div>
+                        ${systemSettings?.school_logo ? `<img src="${systemSettings.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                    </div>
+                    <div style="text-align: center; flex: 1;">
+                        <h1>${systemSettings?.school_name || 'School Management System'}</h1>
+                        <h2>Family Wise Ledger Report</h2>
+                        ${'' /* <div class="report-sub">${family.father_name || '-'} (Family ${family.family_code || '-'}) &nbsp;|&nbsp; As of ${formatLedgerDate(new Date())}</div> */}
+                    </div>
+                    <div style="opacity: 0; width: 56px;"></div>
+                </div>
+
+                <!-- Father details + family fee summary (one row) -->
+                <div class="top-band">
+                <div class="info-grid family-info-grid">
+                    <div class="info-item"><span class="info-label">Family Code</span><span class="info-value">${family.family_code || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Account Name</span><span class="info-value">${family.father_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Phone</span><span class="info-value">${family.phone || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">CNIC</span><span class="info-value">${family.cnic || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Siblings</span><span class="info-value">${family.students.length}</span></div>
+                    <div class="info-item info-highlight"><span class="info-label">Family Advance</span><span class="info-value">Rs. ${Number(family.family_credit || 0).toLocaleString()}</span></div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card"><span class="summary-label">Receivable =</span><span class="summary-value">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Discount =</span><span class="summary-value">${Number(familyStats.discount || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Received =</span><span class="summary-value">${Number(familyStats.collected || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Remaining =</span><span class="summary-value">${Number(familyStats.pending || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Family Advance =</span><span class="summary-value">- ${familyAdvance.toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">${advanceCoversDues ? 'Advance Left =' : 'Net Dues ='}</span><span class="summary-value">${Math.abs(duesAfterAdvance).toLocaleString()}</span></div>
+                </div>
+                </div>
+
+                <!-- Siblings -->
+                <div class="section-heading">Siblings (${family.students.length})</div>
+                <table class="children-table">
+                    <thead>
+                        <tr>
+                            <th class="align-center">Sr #</th>
+                            <th>Reg #</th>
+                            <th>Student Name</th>
+                            <th>Class / Section</th>
+                            <th>Campus</th>
+                            <th>Status</th>
+                            <th class="align-right">Receivable</th>
+                            <th class="align-right">Received</th>
+                            <th class="align-right">Dues</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${studentPages.map((p, index) => {
+                            const st = computeStats(p.feeData);
+                            return `
+                        <tr class="row">
+                            <td class="align-center">${index + 1}</td>
+                            <td class="nowrap">${p.studentData.general_registration_code || '-'}</td>
+                            <td>${p.studentData.student_name || '-'}</td>
+                            <td class="nowrap">${p.studentData.student_class_name || '-'} / ${p.studentData.student_section_name || '-'}</td>
+                            <td>${p.studentData.student_campus_name || '-'}</td>
+                            <td>${p.studentData.student_status || '-'}</td>
+                            <td class="align-right">${Number((st.expected || 0) + (st.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${amountOrDash(st.collected)}</td>
+                            <td class="align-right col-due">${amountOrDash(st.pending)}</td>
+                        </tr>`;
+                        }).join('')}
+                        <tr class="grand-total">
+                            <td colspan="6">Family Total</td>
+                            <td class="align-right">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${Number(familyStats.collected || 0).toLocaleString()}</td>
+                            <td class="align-right col-due">${Number(familyStats.pending || 0).toLocaleString()}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- One ledger for each sibling -->
+                ${studentPages.map(p => renderStudentLedger(p.studentData, p.feeData)).join('')}
+
+                <div class="bottom-spacer"></div>
+                <div class="report-bottom">
+                    ${(breakdownDates.length > 0 || undatedReceived > 0 || undatedDiscount > 0) ? `
+                    <div class="breakdown-title">Date Wise Breakdown (All Siblings)</div>
+                    <table class="breakdown-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th class="align-right">Discount</th>
+                                <th class="align-right">Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${breakdownDates.map(k => `
+                            <tr>
+                                <td class="nowrap">${formatLedgerDate(k + 'T12:00:00')}</td>
+                                <td class="align-right">${amountOrDash(dateBreakdown[k].discount)}</td>
+                                <td class="align-right">${amountOrDash(dateBreakdown[k].received)}</td>
+                            </tr>`).join('')}
+                            ${(undatedReceived > 0 || undatedDiscount > 0) ? `
+                            <tr>
+                                <td>Date not recorded</td>
+                                <td class="align-right">${amountOrDash(undatedDiscount)}</td>
+                                <td class="align-right">${amountOrDash(undatedReceived)}</td>
+                            </tr>` : ''}
+                            <tr class="grand-total">
+                                <td>Total</td>
+                                <td class="align-right">${Number(familyStats.discount || 0).toLocaleString()}</td>
+                                <td class="align-right">${Number(familyStats.collected || 0).toLocaleString()}</td>
+                            </tr>
+                        </tbody>
+                    </table>` : ''}
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </div>
+            `;
+        };
+
+    document.body.insertAdjacentHTML("beforeend", buildFamilyReportPage(familyInfo, familyPages));
+
+
+    /* ================= RUNNING HEADER (family) + PAGE NUMBERS, printed in the page margin ================= */
+    (function () {
+        var name = ("Family " + familyInfo.family_code + " | " + familyInfo.father_name).split('"').join("");
+        var css = "@page { @top-left { content: \"" + name + "\"; font-size: 8px; color: #444; } @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8px; color: #444; } }" +
+                  "@page :first { @top-left { content: \"\"; } }";
+        var st = document.createElement("style");
+        st.textContent = css;
+        document.head.appendChild(st);
+    })();
+
+    /* ================= PIN THE GENERATED LINE (and the date wise breakdown) TO THE END OF THE LAST PRINTED PAGE ================= */
+    function fitBottomBlocks() {
+        var pageH = document.getElementById("pageMeasure").getBoundingClientRect().height;
+        var pages = document.querySelectorAll(".student-report-page");
+        pages.forEach(function (pg) { pg.querySelector(".bottom-spacer").style.height = "0px"; });
+        document.body.classList.add("measuring");
+        pages.forEach(function (pg) {
+            var spacer = pg.querySelector(".bottom-spacer"), block = pg.querySelector(".report-bottom");
+            var pageTop = pg.getBoundingClientRect().top;
+            // walk the rows of every table like the printer does: a row that does not fit moves to the next page,
+            // and the header of its table is repeated at the top of that page
+            var rows = pg.querySelectorAll(".children-table tbody tr, .ledger-table tbody tr");
+            var shift = 0;
+            for (var i = 0; i < rows.length; i++) {
+                var rect = rows[i].getBoundingClientRect();
+                var theadH = rows[i].closest("table").querySelector("thead").getBoundingClientRect().height;
+                var top = rect.top - pageTop + shift;
+                var bottom = rect.bottom - pageTop + shift;
+                var page = Math.floor(top / pageH);
+                if (bottom > (page + 1) * pageH) { shift += (page + 1) * pageH + theadH - top; }
+            }
+            var contentEnd = spacer.getBoundingClientRect().top - pageTop + shift;
+            var blockH = block.getBoundingClientRect().height;
+            var pagesNeeded = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
+            var spare = pagesNeeded * pageH - contentEnd - blockH - 24;   // 24px safety
+            spacer.style.height = Math.max(0, spare) + "px";
+        });
+        document.body.classList.remove("measuring");
+    }
+    window.addEventListener("beforeprint", fitBottomBlocks);
+    window.addEventListener("afterprint", function () {
+        document.querySelectorAll(".bottom-spacer").forEach(function (sp) { sp.style.height = "0px"; });
+    });
+</script>
+</body>
+</html>
