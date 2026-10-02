@@ -2,8 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Student Ledger Report (Detailed)</title>
-<!-- old title: Student Wise Collected Fee Report -->
+<title>Family Ledger Report (Detailed)</title>
+<!-- old title (copy of the student report): Student Ledger Report (Detailed) -->
 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
                 * {
@@ -23,7 +23,7 @@
                 body {
                     background: white;
                     font-size: 9px;
-                    line-height: 1.2;
+                    line-height: 1.1;   /* old: 1.2 */
                     padding: 5px;
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
@@ -42,9 +42,9 @@
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     border-bottom: 1px solid #000;
-                    padding: 0 0 8px;
+                    padding: 0 0 5px;
                     /* old: border: 1px solid #ddd; padding: 11px; margin-bottom: 11px; */
                 }
                 .header-section h1 {
@@ -60,8 +60,8 @@
                     color: black;
                 }
                 .header-logo {
-                    width: 56px;
-                    height: 56px;
+                    width: 44px;   /* old: 56px */
+                    height: 44px;
                     object-fit: contain;
                     border-radius: 5px;
                 }
@@ -160,7 +160,7 @@
                 .top-band {
                     display: flex;
                     gap: 6px;
-                    margin-bottom: 8px;
+                    margin-bottom: 5px;   /* old: 8px */
                 }
                 .info-grid {
                     flex: 3;
@@ -245,8 +245,8 @@
                     line-height: 1.35;
                 }
                 .print-footer {
-                    margin-top: 11px;
-                    padding-top: 7px;
+                    margin-top: 4px;   /* old: 11px */
+                    padding-top: 2px;   /* old: 7px */
                     font-size: 10px;
                     color: rgb(56, 56, 56);
                     text-align: center;
@@ -257,9 +257,9 @@
                 /* fixed column widths (see the colgroup of the table): the Fine and Further Disc columns are wider than before (Fine 11% -> 13.5%, Further Disc 15.5% -> 14.5% with a shorter Mode / Source). old: automatic widths made the history columns too wide */
                 .ledger-table { table-layout: fixed; }
                 .breakdown-title { font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 4px; }
-                .breakdown-table { width: 40%; margin-bottom: 0; }
+                .breakdown-table { width: 40%; margin-bottom: 0; }   /* the dates are one single column again (the side by side layout is switched off, GROUPS = 1 below) */
                 /* Mode / Source: one line per history, only a small number in front (hanging indent so a wrapped line stays under its own text) */
-                .hist-item { display: flex; gap: 3px; align-items: flex-start; }
+                .hist-item { display: flex; gap: 3px; align-items: flex-start; line-height: 1.05; }
                 .hist-no { flex: none; font-size: 7px; line-height: 12px; }
                 .hist-sub { font-size: 8px; font-weight: 600; }   /* old: bold number (1. 2. 3.) */
                 /* Overdue / Not Yet Due / Paid totals: one thin bordered line under the stat boxes */
@@ -271,12 +271,23 @@
                 .group-item + .group-item { border-left: 1px solid #000; }
                 .group-label { font-size: 8px; font-weight: 600; text-transform: uppercase; }
                 .group-value { font-size: 11px; font-weight: 700; }
-                .fine-legend { margin: -4px 0 8px; font-size: 8px; font-weight: 600; color: #000; }
+                .fine-legend { margin: -2px 0 4px; font-size: 8px; font-weight: 600; color: #000; }
                 .sign-row { display: flex; justify-content: space-between; gap: 30px; margin: 34px 0 10px; }
                 .sign-box { flex: 1; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
                 .page-measure { position: absolute; visibility: hidden; height: 196mm; width: 1px; }
                 /* same width the printer uses (landscape page 297mm - 2 x 7mm margin - body padding), applied only while measuring */
                 body.measuring .student-report-page { width: calc(283mm - 10px) !important; }
+                /* ---- Family report ---- */
+                .section-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 4px; }
+                .family-info-grid { grid-template-columns: repeat(3, 1fr); }
+                /* the stats box is taller (6 rows); the family details box keeps its own height with the Overdue / Not Yet Due line under it */
+                .top-band .family-info-grid { align-self: flex-start; height: 87px; }
+                .top-left { align-self: flex-start; }
+                .top-left .family-info-grid { align-self: stretch; flex: none; }
+                .children-table { margin-bottom: 10px; }
+                .student-section { margin-bottom: 10px; }
+                .student-title { display: flex; gap: 8px; font-size: 11px; font-weight: 700; margin: 0 0 4px; page-break-after: avoid; break-after: avoid; }
+                .student-title .r { margin-left: auto; text-align: right; }
     /* preview only */
     .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; }
     @media print { .print-btn { display: none !important; } }
@@ -299,25 +310,28 @@
         { _id: "69f61a250ece5980ea7593dd", mode_name: "Bank Transfer", sources: [{ _id: "69f61a250ece5980ea7593de", source: "General" }] }
     ];
 
-    var studentDataFromOfFee = {
-        student_name: "Adnan Ahmed", student_father_name: "Muhammad Kamran", general_registration_code: "BSS-STD-898",
-        student_class_name: "NINE", student_section_name: "SUPER BARIAN", student_campus_name: "IQBAL TOWN",
-        student_father_phone: 1256701817, student_status: "Active", family_credit: 78000,
-        siblings_count: 2   // other children of this family (the app can take it from the family list: totalStudent.length - 1)
+    // The family (father details, shared by all siblings) and its siblings
+    var familyInfo = {
+        family_code: "1256701817", father_name: "Muhammad Kamran", phone: 1256701817, cnic: 3584962094852,
+        family_credit: 78000,
+        students: [
+            { _id: "S1", student_name: "Adnan Ahmed", general_registration_code: "BSS-STD-898", student_class_name: "NINE", student_section_name: "SUPER BARIAN", student_campus_name: "IQBAL TOWN", student_status: "Active" },
+            { _id: "S2", student_name: "Hamza Ahmed", general_registration_code: "BSS-STD-899", student_class_name: "SEVEN", student_section_name: "JINNAH", student_campus_name: "IQBAL TOWN", student_status: "Active" }
+        ]
     };
 
     var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     var DISC_PAY = "2026-10-01T09:16:33.948Z";
     function mfee(i, year, o) {
         var m = MONTHS[i], mm = ("0" + (i + 1)).slice(-2), cur = year === "2026";
-        var after = o.after != null ? o.after : 3000;
+        var after = o.after != null ? o.after : (o.base || 3000);
         return {
             fee_month: m, fee_year: year,
             due_date: cur ? year + "-" + mm + "-10T00:00:00.000Z" : "2026-10-08T00:00:00.000Z",
-            late_fine: cur ? 300 : 0,
+            late_fine: o.fine != null ? o.fine : (cur ? 300 : 0),
             fee_status: o.status || "Unpaid",
             fee_generation_date: cur ? year + "-" + mm + "-01T00:00:00.000Z" : "2026-10-01T00:00:00.000Z",
-            actual_monthly_fee: 3000, monthly_fee_discount: o.disc || 0, paying_date: o.paying || null,
+            actual_monthly_fee: o.base || 3000, monthly_fee_discount: o.disc || 0, paying_date: o.paying || null,
             monthly_fee_after_discount: after, message_cost: 0, paid_amount: o.paid || 0,
             partial_payment_history: o.partial || [], further_discount_history: o.further || [],
             due_date_history: [], late_fee_fine_discount_history: o.fineDisc || [],
@@ -327,10 +341,12 @@
     }
     var paidFull = function (paying, src) { return { status: "Paid", paying: paying, paid: 3300, mode: FA, src: src, by: "DEMO" }; };
 
-    var studentDues = {
+    // First sibling (Adnan Ahmed): monthly fee 3,000
+    var studentDues1 = {
         monthlyFee: [{ student: "67d6c5e7548e557c580d5959", fees: [
-            mfee(0, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
-            mfee(1, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            // removed (less content): Fee Of January 2026 and Fee Of February 2026 ->
+            // mfee(0, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
+            // mfee(1, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
             mfee(2, "2026", { status: "Paid", paying: DISC_PAY, paid: 3300, mode: FA, src: FA_BANK, by: "DEMO" }),
             // Fee Of April 2026: three partial payments (three Mode / Source history lines)
             mfee(3, "2026", { paid: 1000, partial: [
@@ -342,30 +358,60 @@
             mfee(4, "2026", { fine: 200, fineDisc: [
                 { date: "2026-09-20T09:20:00.000Z", amount: 60, reason: "Fine Discount", discount_by: "DEMO", approved_by: "DEMO" },
                 { date: "2026-09-28T16:45:00.000Z", amount: 40, reason: "Fine Discount", discount_by: "Ayesha", approved_by: "DEMO" }
-            ] }), mfee(5, "2026", {}), mfee(6, "2026", {}), mfee(7, "2026", {}), mfee(8, "2026", {}),
+            ] }), mfee(5, "2026", {}), /* removed: Fee Of July 2026 -> mfee(6, "2026", {}), */ mfee(7, "2026", {}), /* removed: Fee Of September 2026 -> mfee(8, "2026", {}), */
             mfee(9, "2026", { paid: 2500, partial: [{ amount: 2500, date: "2026-10-01T09:16:20.620Z", payment_mode_id: FA, payment_mode_source_id: FA_BANK, payment_recieved_by: "DEMO" }] }),
             mfee(10, "2026", { status: "Paid", paying: "2026-10-01T09:15:04.079Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO" }),
             mfee(11, "2026", {}),
-            mfee(0, "2025", { status: "Paid", paying: "2026-10-01T09:15:30.246Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO",
-                fineDisc: [{ date: "2026-10-01T09:15:30.246Z", amount: 0, reason: "Paid Without Fine", discount_by: "DEMO", approved_by: "DEMO" }] }),
-            mfee(1, "2025", {}), mfee(2, "2025", {}), mfee(3, "2025", {}), mfee(4, "2025", {}),
+            // removed (less content): Fee Of January 2025 ->
+            // mfee(0, "2025", { status: "Paid", paying: "2026-10-01T09:15:30.246Z", paid: 3000, mode: FA, src: FA_GEN, by: "DEMO",
+            //     fineDisc: [{ date: "2026-10-01T09:15:30.246Z", amount: 0, reason: "Paid Without Fine", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            /* removed: Fee Of February 2025 -> mfee(1, "2025", {}), */ /* removed: Fee Of March 2025 and Fee Of April 2025 -> mfee(2, "2025", {}), mfee(3, "2025", {}), */ mfee(4, "2025", {}),
             mfee(5, "2025", { status: "Paid", paying: "2026-10-01T09:16:42.926Z", paid: 2000, after: 2000, disc: 33, mode: FA, src: FA_BANK, by: "DEMO",
                 further: [{ date: "2026-10-01T09:16:42.926Z", amount: 1000, reason: "Pay And Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
             // Fee Of July 2025: two further discounts
             mfee(6, "2025", { after: 2000, disc: 33, further: [
                 { date: "2026-09-12T11:10:00.000Z", amount: 600, reason: "Further Discount", discount_by: "DEMO", approved_by: "DEMO" },
                 { date: "2026-09-22T13:25:00.000Z", amount: 400, reason: "Further Discount", discount_by: "Nimra", approved_by: "DEMO" }
-            ] }), mfee(7, "2025", {}), mfee(8, "2025", {}), mfee(9, "2025", {}), mfee(10, "2025", {}), mfee(11, "2025", {})
+            ] }), /* removed: Fee Of August 2025 -> mfee(7, "2025", {}), */ mfee(8, "2025", {}), mfee(9, "2025", {}), /* removed: Fee Of November 2025 -> mfee(10, "2025", {}), */ mfee(11, "2025", {})
         ] }],
         customFee: [
-            { custom_fee_name: "CONTEEN FEE 2026", custom_fee_generate_date: "2026-10-31T19:05:36.930Z", actual_custom_fee: 4500, custom_fee_discount: 0,
-              custom_fee_after_discount: 4500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
-              custom_fee_status: "Unpaid", paid_amount: 1500, payment_method: "Family Credit",
-              partial_payment_history: [{ amount: 1500, date: "2026-10-01T09:15:15.255Z", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO" }],
-              further_discount_history: [], late_fee_fine_discount_history: [] },
+            // removed: CONTEEN FEE 2026 (kept here as a comment):
+            // { custom_fee_name: "CONTEEN FEE 2026", custom_fee_generate_date: "2026-10-31T19:05:36.930Z", actual_custom_fee: 4500, custom_fee_discount: 0,
+            // custom_fee_after_discount: 4500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
+            // custom_fee_status: "Unpaid", paid_amount: 1500, payment_method: "Family Credit",
+            // partial_payment_history: [{ amount: 1500, date: "2026-10-01T09:15:15.255Z", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO" }],
+            // further_discount_history: [], late_fee_fine_discount_history: [] },
             { custom_fee_name: "STATIONARY FEE 2026", custom_fee_generate_date: "2026-10-31T19:06:38.125Z", actual_custom_fee: 1500, custom_fee_discount: 0,
               custom_fee_after_discount: 1500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: null,
               custom_fee_status: "Unpaid", paid_amount: 0, partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
+        ],
+        transferFee: []
+    };
+
+    // Second sibling (Hamza Ahmed): monthly fee 2,500
+    var studentDues2 = {
+        monthlyFee: [{ student: "67d6c5e7548e557c580d5960", fees: [
+            mfee(0, "2026", { base: 2500, status: "Paid", paying: "2026-09-01T10:00:00.000Z", paid: 2800, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(1, "2026", { base: 2500, status: "Paid", paying: "2026-09-01T10:00:00.000Z", paid: 2800, mode: FA, src: FA_BANK, by: "DEMO" }),
+            mfee(2, "2026", { base: 2500, after: 2000, disc: 20, status: "Paid", paying: "2026-09-15T11:00:00.000Z", paid: 2300, mode: FA, src: FA_GEN, by: "DEMO",
+                further: [{ date: "2026-09-15T11:00:00.000Z", amount: 500, reason: "Pay And Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            // Fee Of April 2026: two partial payments
+            mfee(3, "2026", { base: 2500, paid: 1000, partial: [
+                { amount: 600, date: "2026-09-12T10:15:00.000Z", payment_mode_id: "69f61a250ece5980ea7593d9", payment_mode_source_id: "6a99cd3ac6679a85f7c0ab5f", payment_recieved_by: "Ayesha" },
+                { amount: 400, date: "2026-09-20T15:40:00.000Z", payment_mode_id: "69f61a250ece5980ea7593dd", payment_mode_source_id: "69f61a250ece5980ea7593de", payment_recieved_by: "Nimra" }
+            ] }),
+            // Fee Of May 2026: one fine discount
+            mfee(4, "2026", { base: 2500, fine: 200, fineDisc: [{ date: "2026-09-22T11:30:00.000Z", amount: 100, reason: "Fine Discount", discount_by: "DEMO", approved_by: "DEMO" }] }),
+            // removed (less content): Fee Of June, July, August, September and December 2026 of Hamza Ahmed ->
+            // mfee(5, "2026", { base: 2500 }), mfee(6, "2026", { base: 2500 }), mfee(7, "2026", { base: 2500 }), mfee(8, "2026", { base: 2500 }), mfee(11, "2026", { base: 2500 })
+            // removed (less content): Fee Of October 2026 of Hamza Ahmed -> mfee(9, "2026", { base: 2500 }),
+            mfee(10, "2026", { base: 2500 })
+        ] }],
+        customFee: [
+            { custom_fee_name: "STATIONARY FEE 2026", custom_fee_generate_date: "2026-10-31T19:06:38.125Z", actual_custom_fee: 1500, custom_fee_discount: 0,
+              custom_fee_after_discount: 1500, custom_fee_fine: 300, custom_fee_due_date: "2026-11-10T00:00:00.000Z", paying_date: "2026-09-20T09:00:00.000Z",
+              custom_fee_status: "Paid", paid_amount: 1500, payment_method: "Family Credit", payment_mode_id: FA, payment_mode_source_id: FA_GEN, payment_recieved_by: "DEMO",
+              partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
         ],
         transferFee: []
     };
@@ -389,41 +435,46 @@
         return toDateCA(o.compareDate) > due;
     }
 
-    // Build the rows exactly like getFeePaymentData does
+    // Build the rows of one student exactly like getFeePaymentData does
     var today = new Date().toLocaleDateString("en-CA");
-    var totalData = [];
-    studentDues.monthlyFee.forEach(function (mf) {
-        mf.fees.forEach(function (e) {
-            var due = isFeeOverdue({ dueDate: e.due_date, compareDate: today, feeStatus: e.fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+    var statusOrder = { Unpaid: 1, Paid: 2, Clear: 3 };
+    function buildFeeRows(studentDues, student) {
+        var totalData = [];
+        studentDues.monthlyFee.forEach(function (mf) {
+            mf.fees.forEach(function (e) {
+                var due = isFeeOverdue({ dueDate: e.due_date, compareDate: today, feeStatus: e.fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
+                totalData.push({
+                    student: student,
+                    title: "Fee Of " + e.fee_month + " " + e.fee_year, fee_month: e.fee_month, fee_year: e.fee_year, fee_generation_date: new Date(e.fee_generation_date), due: due, due_date: e.due_date,
+                    actual_fee: e.actual_monthly_fee, discount: e.monthly_fee_discount, fee_after_discount: e.monthly_fee_after_discount, fine: e.late_fine,
+                    total: due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount,
+                    dues: (due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount) - e.paid_amount,
+                    status: e.fee_status, paid_amount: e.paid_amount, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date,
+                    payment_method: e.payment_method, further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+                    payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+                });
+            });
+        });
+        studentDues.customFee.forEach(function (e) {
+            var due = isFeeOverdue({ dueDate: e.custom_fee_due_date, compareDate: today, feeStatus: e.custom_fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
             totalData.push({
-                title: "Fee Of " + e.fee_month + " " + e.fee_year, fee_month: e.fee_month, fee_year: e.fee_year, fee_generation_date: new Date(e.fee_generation_date), due: due, due_date: e.due_date,
-                actual_fee: e.actual_monthly_fee, discount: e.monthly_fee_discount, fee_after_discount: e.monthly_fee_after_discount, fine: e.late_fine,
-                total: due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount,
-                dues: (due ? e.monthly_fee_after_discount + e.late_fine : e.monthly_fee_after_discount) - e.paid_amount,
-                status: e.fee_status, paid_amount: e.paid_amount, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date,
-                payment_method: e.payment_method, further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
+                student: student,
+                title: e.custom_fee_name, fee_generation_date: new Date(e.custom_fee_generate_date), due: due, due_date: e.custom_fee_due_date,
+                actual_fee: e.actual_custom_fee, discount: e.custom_fee_discount, fee_after_discount: e.custom_fee_after_discount, fine: e.custom_fee_fine,
+                paid_amount: e.paid_amount,
+                total: due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount,
+                dues: (due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount) - e.paid_amount,
+                status: e.custom_fee_status, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date, payment_method: e.payment_method,
+                further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
                 payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
             });
         });
-    });
-    studentDues.customFee.forEach(function (e) {
-        var due = isFeeOverdue({ dueDate: e.custom_fee_due_date, compareDate: today, feeStatus: e.custom_fee_status, payingDate: e.paying_date, clearFeeDate: e.clear_fee_date });
-        totalData.push({
-            title: e.custom_fee_name, fee_generation_date: new Date(e.custom_fee_generate_date), due: due, due_date: e.custom_fee_due_date,
-            actual_fee: e.actual_custom_fee, discount: e.custom_fee_discount, fee_after_discount: e.custom_fee_after_discount, fine: e.custom_fee_fine,
-            paid_amount: e.paid_amount,
-            total: due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount,
-            dues: (due ? e.custom_fee_after_discount + e.custom_fee_fine : e.custom_fee_after_discount) - e.paid_amount,
-            status: e.custom_fee_status, partial_payment_history: e.partial_payment_history, paying_date: e.paying_date, payment_method: e.payment_method,
-            further_discount_history: e.further_discount_history, late_fee_fine_discount_history: e.late_fee_fine_discount_history,
-            payment_mode_id: e.payment_mode_id, payment_mode_source_id: e.payment_mode_source_id, payment_recieved_by: e.payment_recieved_by
+        totalData.sort(function (a, b) {
+            var diff = new Date(b.fee_generation_date) - new Date(a.fee_generation_date);
+            return diff !== 0 ? diff : statusOrder[a.status] - statusOrder[b.status];
         });
-    });
-    var statusOrder = { Unpaid: 1, Paid: 2, Clear: 3 };
-    totalData.sort(function (a, b) {
-        var diff = new Date(b.fee_generation_date) - new Date(a.fee_generation_date);
-        return diff !== 0 ? diff : statusOrder[a.status] - statusOrder[b.status];
-    });
+        return totalData;
+    }
 
 
     /* ================= SAME CODE AS Fee Payment.jsx (formatTime / formatDateTime) ================= */
@@ -464,8 +515,9 @@
     
 
     /* ================= SAME CODE AS handlePrintReport (design copied as it is) ================= */
-    var checkFamilyToggle = false;
-    var printPages = [{ studentData: studentDataFromOfFee, feeData: totalData }];
+    // one entry per sibling: the sibling + that sibling's fee rows
+    var familyPages = familyInfo.students.map(function (st, i) { return { studentData: st, feeData: buildFeeRows(i === 0 ? studentDues1 : studentDues2, st) }; });
+    var LEDGER_COLS = '<col style="width:3%"><col style="width:11%"><col style="width:7%"><col style="width:11%"><col style="width:16.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:13%"><col style="width:12.5%"><col style="width:5%"><col style="width:5%"><col style="width:5.5%">';
         const getModeSourceStr = (i) => {
             const segments = [];
 
@@ -615,52 +667,122 @@
             ...feeData.filter(i => Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)),   // old: .sort(byDueDate)
         ];
 
-        const buildStudentReportPage = (currentStudentData, studentFeeData, isLastPage) => {
-            let totalExpectedFeePrint = 0;
-            let totalCollectedFeePrint = 0;
-            let totalPendingFeePrint = 0;
-            let totalDiscountPrint = 0;
-            let totalActualFeePrint = 0;
-            let totalFeeAfterDiscountPrint = 0;
-            let totalFurtherDiscountPrint = 0;
-            let totalFinePrint = 0;
-            let totalFineDiscountPrint = 0;
-            // Group totals: Overdue = dues of unpaid fees that are past their due date, Not Yet Due = dues of unpaid fees that are not due yet,
-            // Paid = what was received (Overdue + Not Yet Due = Dues)
-            let overdueDuesPrint = 0, overdueCountPrint = 0, notYetDueDuesPrint = 0, notYetDueCountPrint = 0;
-            studentFeeData.forEach(item => {
+        // ---------- Family report: father details on top, siblings, then one detailed ledger per sibling ----------
+        // Totals of a list of fee rows (same formulas as the Student Detailed report):
+        //   expected = sum of Total, collected = sum of Paid, pending = sum of Dues, discount = (actual fee - fee after discount) + fine discounts,
+        //   afterDiscount = fee after discount + further discounts, fine = fines included in Total (overdue fees only)
+        const computeStats = (feeData) => {
+            const st = { expected: 0, collected: 0, pending: 0, discount: 0, actual: 0, afterDiscount: 0, further: 0, fine: 0, fineDiscount: 0 };
+            feeData.forEach(item => {
+                st.expected += item.total || 0;
+                st.collected += item.paid_amount || 0;
+                st.pending += item.dues || 0;
+                const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
+                const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                st.discount += feeDiscountAmount + fineDiscountAmount;
+                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                st.actual += Number(item.actual_fee || 0);
+                st.afterDiscount += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
+                st.further += furtherDiscountAmount;
+                st.fine += item.due ? Number(item.fine || 0) : 0;
+                st.fineDiscount += fineDiscountAmount;
+            });
+            return st;
+        };
+
+        // One fee row of the detailed ledger (same row as the Student Detailed report)
+        const renderFeeRow = (item, srNo) => {
+            const fdHistory = item.further_discount_history || [];
+            const furtherDiscountHtml = getAmountDateHistoryStr(fdHistory) || dash;
+            // Fine states: applicable (fee is overdue, fine is included in Total) = fine + check mark,
+            // not applicable (fee is not overdue) = fine + cross mark
+            const hasFineHistory = (item.late_fee_fine_discount_history || []).length > 0;
+            let fineHtml;
+            if (Number(item.fine || 0) === 0 && !hasFineHistory) {
+                fineHtml = dash;
+            } else if (!item.due && !hasFineHistory) {
+                fineHtml = `<span class="fine-na">${Number(item.fine || 0).toLocaleString()} &#10007;</span>`;   // fine amount + cross mark
+            } else if (item.due) {
+                fineHtml = hasFineHistory ? getFinePrintStr(item, true) : `${getFinePrintStr(item)} <span class="fine-ok">&#10003;</span>`;
+            } else {
+                fineHtml = getFinePrintStr(item);
+            }
+            const furtherDiscountTotal = fdHistory.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+            const modeSourceHtml = getModeSourceStr(item).trim();
+            return `
+                                    <tr class="row">
+                                        <td class="align-center">${srNo}</td>
+                                        <td class="td-fee-title">${item.title}</td>
+                                        <td class="nowrap">${item.due_date ? (item.due ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)) : dash}</td>   ${'' /* overdue due date = underlined (item.due) */}
+                                        <td>${formatPayingDate(item.paying_date)}</td>   <!-- old: class="nowrap", the text could run out of the cell -->
+                                        <td>${modeSourceHtml === '-' || modeSourceHtml === '' ? dash : modeSourceHtml}</td>
+                                        <td class="align-right">${Number(item.actual_fee || 0).toLocaleString()}</td>
+                                        <td class="align-right">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>
+                                        <td class="${fdHistory.length > 0 ? 'align-left' : 'align-right'}">${furtherDiscountHtml}</td>
+                                        <td class="${hasFineHistory ? 'align-left' : 'align-right'}">${fineHtml}</td>
+                                        <td class="align-right col-total">${Number(item.total || 0).toLocaleString()}</td>
+                                        <td class="align-right col-paid">${amountOrDash(item.paid_amount)}</td>
+                                        <td class="align-right col-due">${amountOrDash(item.dues)}</td>
+                                    </tr>`;
+        };
+
+        // One student's detailed ledger table (rows + the student's total row)
+        const renderLedgerTable = (feeData, totalLabel) => {
+            const st = computeStats(feeData);
+            const ordered = sortFees(feeData);
+            return `
+                    <table class="ledger-table">
+                        <colgroup>${LEDGER_COLS}</colgroup>
+                        <thead>
+                            <tr>
+                                <th class="align-center">Sr #</th>
+                                <th>Fee Title</th>
+                                <th>Due Date</th>
+                                <th>Paying Date</th>
+                                <th>Mode / Source (User)</th>
+                                <th class="align-right">Actual Fee</th>
+                                <th class="align-right">After Discount</th>
+                                <th class="align-right">Further Disc</th>
+                                <th class="align-right">Fine</th>
+                                <th class="align-right col-total">Total</th>
+                                <th class="align-right col-paid">Paid</th>
+                                <th class="align-right col-due">Fee Dues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ordered.length > 0 ? ordered.map((item, index) => renderFeeRow(item, index + 1)).join('') : `<tr><td colspan="12" style="text-align: center; padding: 17px; font-size: 9px;">No Records Found!</td></tr>`}
+                        </tbody>
+                        ${ordered.length > 0 ? `
+                        <tbody class="grand-total-body">
+                            <tr class="grand-total">
+                                <td colspan="5">${totalLabel}</td>
+                                <td class="align-right">${st.actual.toLocaleString()}</td>
+                                <td class="align-right">${st.afterDiscount.toLocaleString()}</td>
+                                <td class="align-right">${amountOrDash(st.further)}</td>
+                                <td class="align-right">${amountOrDash(st.fine)}${st.fineDiscount > 0 ? `<br/>dis ${st.fineDiscount.toLocaleString()}` : ''}</td>
+                                <td class="align-right col-total">${Number(st.expected || 0).toLocaleString()}</td>
+                                <td class="align-right col-paid">${Number(st.collected || 0).toLocaleString()}</td>
+                                <td class="align-right col-due">${Number(st.pending || 0).toLocaleString()}</td>
+                            </tr>
+                        </tbody>` : ''}
+                    </table>`;
+        };
+
+        const buildFamilyReportPage = (family, studentPages) => {
+            const allFees = studentPages.reduce((all, p) => all.concat(p.feeData), []);
+            const familyStats = computeStats(allFees);
+
+            // Group totals of the whole family: Overdue = dues of unpaid fees past their due date, Not Yet Due = dues of unpaid fees not due yet
+            // (Overdue + Not Yet Due = Remaining)
+            let overdueDues = 0, overdueCount = 0, notYetDueDues = 0, notYetDueCount = 0;
+            allFees.forEach(item => {
                 if (Number(item.dues || 0) > 0) {
-                    if (item.due) { overdueDuesPrint += Number(item.dues || 0); overdueCountPrint++; }
-                    else { notYetDueDuesPrint += Number(item.dues || 0); notYetDueCountPrint++; }
+                    if (item.due) { overdueDues += Number(item.dues || 0); overdueCount++; }
+                    else { notYetDueDues += Number(item.dues || 0); notYetDueCount++; }
                 }
             });
 
-            studentFeeData.forEach(item => {
-                totalExpectedFeePrint += item.total || 0;
-                totalCollectedFeePrint += item.paid_amount || 0;
-                totalPendingFeePrint += item.dues || 0;
-
-                // Discount = fee discount + further discount (actual fee - fee after discount) + fine discount
-                const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
-                const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
-                totalDiscountPrint += feeDiscountAmount + fineDiscountAmount;
-
-                // Grand total row (same figures the table columns show)
-                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
-                totalActualFeePrint += Number(item.actual_fee || 0);
-                totalFeeAfterDiscountPrint += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
-                totalFurtherDiscountPrint += furtherDiscountAmount;
-                totalFinePrint += item.due ? Number(item.fine || 0) : 0;   // only fines that are included in Total (overdue fees)
-                // old: totalFinePrint += Number(item.fine || 0);
-                totalFineDiscountPrint += fineDiscountAmount;
-            });
-
-            // Collection Percentage stat (commented out, not used for now)
-            // const collectionPercPrint = totalExpectedFeePrint > 0
-            //     ? Math.round((totalCollectedFeePrint / totalExpectedFeePrint) * 100)
-            //     : 0;
-
-            // Date wise breakdown: how much was received and how much discount was given on each date
+            // Date wise breakdown (all siblings together): how much was paid and how much discount was given on each date
             const dateBreakdown = {};
             const addToDate = (value, field, amount) => {
                 const n = Number(amount || 0);
@@ -669,7 +791,7 @@
                 dateBreakdown[key] = dateBreakdown[key] || { received: 0, discount: 0 };
                 dateBreakdown[key][field] += n;
             };
-            studentFeeData.forEach(item => {
+            allFees.forEach(item => {
                 const partials = item.partial_payment_history || [];
                 const partialSum = partials.reduce((sum, p) => sum + Number(p.amount || 0), 0);
                 partials.forEach(p => addToDate(p.date, 'received', p.amount));
@@ -681,11 +803,16 @@
             const datedReceived = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].received, 0);
             const datedDiscount = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].discount, 0);
             // amounts that have no date (for example the discount given when the fee was generated)
-            const undatedReceived = Math.max(0, totalCollectedFeePrint - datedReceived);
-            const undatedDiscount = Math.max(0, totalDiscountPrint - datedDiscount);
+            const undatedReceived = Math.max(0, familyStats.collected - datedReceived);
+            const undatedDiscount = Math.max(0, familyStats.discount - datedDiscount);
+
+            // Family advance is subtracted from the dues. If the advance is bigger than the dues, what is left of the advance is shown instead.
+            const familyAdvance = Number(family.family_credit || 0);
+            const duesAfterAdvance = Number(familyStats.pending || 0) - familyAdvance;
+            const advanceCoversDues = duesAfterAdvance < 0;
 
             return `
-            <div class="student-report-page${isLastPage ? ' last-page' : ''}">
+            <div class="student-report-page last-page">
                 <!-- Header Section -->
                 <div class="header-section">
                     <div>
@@ -693,169 +820,126 @@
                     </div>
                     <div style="text-align: center; flex: 1;">
                         <h1>${systemSettings?.school_name || 'School Management System'}</h1>
-                        <h2>Student Ledger Report (Detailed)</h2>
-                        ${'' /* old heading: Student Wise Collected Fee Report */}
+                        <h2>Family Ledger Report (Detailed)</h2>
                     </div>
-                    <div style="opacity: 0; width: 56px;"></div>
+                    <div style="opacity: 0; width: 44px;"></div>
                 </div>
 
-                <!-- Student Details + Fee Summary (one row) -->
+                <!-- Father details + family fee summary (one row) -->
                 <div class="top-band">
                 <div class="top-left">
-                <div class="info-grid">
-                    <div class="info-item"><span class="info-label">Student Name</span><span class="info-value">${currentStudentData?.student_name || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Father Name</span><span class="info-value">${currentStudentData?.student_father_name || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Reg #</span><span class="info-value">${currentStudentData?.general_registration_code || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Status</span><span class="info-value">${currentStudentData?.student_status || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Class / Section</span><span class="info-value">${currentStudentData?.student_class_name || '-'} / ${currentStudentData?.student_section_name || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Campus</span><span class="info-value">${currentStudentData?.student_campus_name || '-'}</span></div>
-                    <div class="info-item"><span class="info-label">Phone</span><span class="info-value">${currentStudentData?.student_father_phone || '-'}</span></div>
-                    <div class="info-item info-highlight"><span class="info-label">Family Advance (Sibling: ${Number(currentStudentData?.siblings_count || 0)})</span><span class="info-value">Rs. ${Number(currentStudentData?.family_credit || 0).toLocaleString()}</span></div>
+                <div class="info-grid family-info-grid">
+                    <div class="info-item"><span class="info-label">Family Code</span><span class="info-value">${family.family_code || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Account Name</span><span class="info-value">${family.father_name || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Phone</span><span class="info-value">${family.phone || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">CNIC</span><span class="info-value">${family.cnic || '-'}</span></div>
+                    <div class="info-item"><span class="info-label">Siblings</span><span class="info-value">${family.students.length}</span></div>
+                    <div class="info-item info-highlight"><span class="info-label">Family Advance</span><span class="info-value">Rs. ${familyAdvance.toLocaleString()}</span></div>
                 </div>
 
-                <!-- Overdue / Not Yet Due / Paid totals -->
+                <!-- Overdue / Not Yet Due totals -->
                 <div class="group-summary">
-                    <div class="group-item"><span class="group-label">Overdue (${overdueCountPrint} ${overdueCountPrint === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(overdueDuesPrint)}</span></div>
-                    <div class="group-item"><span class="group-label">Not Yet Due (${notYetDueCountPrint} ${notYetDueCountPrint === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(notYetDueDuesPrint)}</span></div>
-                    ${'' /* <div class="group-item"><span class="group-label">Paid =</span><span class="group-value">${amountOrDash(totalCollectedFeePrint)}</span></div> */}
+                    <div class="group-item"><span class="group-label">Overdue (${overdueCount} ${overdueCount === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(overdueDues)}</span></div>
+                    <div class="group-item"><span class="group-label">Not Yet Due (${notYetDueCount} ${notYetDueCount === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(notYetDueDues)}</span></div>
                 </div>
                 </div>
 
                 <div class="summary-grid">
-                    <div class="summary-card"><span class="summary-label">Receivable =</span><span class="summary-value">${Number((totalExpectedFeePrint || 0) + (totalDiscountPrint || 0)).toLocaleString()}</span></div>
-                    <div class="summary-card"><span class="summary-label">Discount =</span><span class="summary-value">${Number(totalDiscountPrint || 0).toLocaleString()}</span></div>
-                    <div class="summary-card"><span class="summary-label">Received =</span><span class="summary-value">${Number(totalCollectedFeePrint || 0).toLocaleString()}</span></div>
-                    <div class="summary-card dues"><span class="summary-label">Dues =</span><span class="summary-value">${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div>
-                    ${'' /* <div class="summary-card"><span class="summary-label">Collection Percentage</span><span class="summary-value">${collectionPercPrint}%</span></div> */}
+                    <div class="summary-card"><span class="summary-label">Receivable =</span><span class="summary-value">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Discount =</span><span class="summary-value">${Number(familyStats.discount || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Received =</span><span class="summary-value">${Number(familyStats.collected || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Remaining =</span><span class="summary-value">${Number(familyStats.pending || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Family Advance =</span><span class="summary-value">- ${familyAdvance.toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">${advanceCoversDues ? 'Advance Left =' : 'Net Dues ='}</span><span class="summary-value">${Math.abs(duesAfterAdvance).toLocaleString()}</span></div>
                 </div>
                 </div>
 
-                <!-- Summary Section
-                <div class="summary-section">
-                    <h3>Summary (Calculation Formula)</h3>
-                    <ul>
-                        <li>Net Receivable = Sum Of All Total (If fee is overdue, fine is included).</li>
-                        <li>Received = Sum Of Paid Amount.</li>
-                        <li>Dues = Sum Of Dues (Total - Paid).</li>
-                        <li>Collection Percentage = (Collected Fee ÷ Expected Fee) x 100.</li>
-                    </ul>
-                </div>-->
+                <!-- Siblings -->
+                <div class="section-heading">Siblings (${family.students.length})</div>
+                <table class="children-table">
+                    <thead>
+                        <tr>
+                            <th class="align-center">Sr #</th>
+                            <th>Reg #</th>
+                            <th>Student Name</th>
+                            <th>Class / Section</th>
+                            <th>Campus</th>
+                            <th>Status</th>
+                            <th class="align-right">Receivable</th>
+                            <th class="align-right">Received</th>
+                            <th class="align-right">Dues</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${studentPages.map((p, index) => {
+                            const st = computeStats(p.feeData);
+                            return `
+                        <tr class="row">
+                            <td class="align-center">${index + 1}</td>
+                            <td class="nowrap">${p.studentData?.general_registration_code || '-'}</td>
+                            <td>${p.studentData?.student_name || '-'}</td>
+                            <td class="nowrap">${p.studentData?.student_class_name || '-'} / ${p.studentData?.student_section_name || '-'}</td>
+                            <td>${p.studentData?.student_campus_name || '-'}</td>
+                            <td>${p.studentData?.student_status || '-'}</td>
+                            <td class="align-right">${Number((st.expected || 0) + (st.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${amountOrDash(st.collected)}</td>
+                            <td class="align-right col-due">${amountOrDash(st.pending)}</td>
+                        </tr>`;
+                        }).join('')}
+                        <tr class="grand-total">
+                            <td colspan="6">Family Total</td>
+                            <td class="align-right">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${Number(familyStats.collected || 0).toLocaleString()}</td>
+                            <td class="align-right col-due">${Number(familyStats.pending || 0).toLocaleString()}</td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                <!-- Data Table -->
-                <div style="overflow: auto; margin-bottom: 11px;">
-                    <table class="ledger-table">
-                        <colgroup><col style="width:3%"><col style="width:11%"><col style="width:7%"><col style="width:11%"><col style="width:16.5%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:13%"><col style="width:12.5%"><col style="width:5%"><col style="width:5%"><col style="width:5.5%"></colgroup>
-                        <thead>
-                            <tr>
-                                <th class="align-center">Sr #</th>
-                                <th>Fee Title</th>
-                                ${'' /* <th>Status</th> */}
-                                <th>Due Date</th>
-                                <th>Paying Date</th>
-                                <th>Mode / Source (User)</th>
-                                ${'' /* <th class="align-center">Due</th> */}
-                                <th class="align-right">Actual Fee</th>
-                                ${'' /* <th>Disc</th> */}
-                                <th class="align-right">After Discount</th>   ${'' /* old heading: Fee After Discount */}
-                                <th class="align-right">Further Disc</th>
-                                <th class="align-right">Fine</th>
-                                <th class="align-right col-total">Total</th>
-                                <th class="align-right col-paid">Paid</th>
-                                <th class="align-right col-due">Fee Dues</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${studentFeeData?.length > 0 ? sortFees(studentFeeData).map((item, index) => {   /* old order: studentFeeData.map (newest fee first) */
-                const fdHistory = item.further_discount_history || [];
-                const furtherDiscountHtml = getAmountDateHistoryStr(fdHistory) || dash;   // old: || '0'
-                // Fine states: applicable (fee is overdue, fine is included in Total) = underlined fine + check mark,
-                // not applicable (fee is not overdue) = light grey cross mark
-                const hasFineHistory = (item.late_fee_fine_discount_history || []).length > 0;
-                let fineHtml;
-                if (Number(item.fine || 0) === 0 && !hasFineHistory) {
-                    fineHtml = dash;
-                } else if (!item.due && !hasFineHistory) {
-                    fineHtml = `<span class="fine-na">${Number(item.fine || 0).toLocaleString()} &#10007;</span>`;   // fine amount + cross mark
-                } else if (item.due) {
-                    // fine applicable: underlined + check mark (with a fine history the current fine line gets them)
-                    fineHtml = hasFineHistory ? getFinePrintStr(item, true) : `${getFinePrintStr(item)} <span class="fine-ok">&#10003;</span>`;   // old: the fine was underlined (<u>...</u>)
-                } else {
-                    fineHtml = getFinePrintStr(item);
-                }
-                // old: const fineHtml = Number(item.fine || 0) === 0 && !hasFineHistory ? dash : getFinePrintStr(item);
-                const furtherDiscountTotal = fdHistory.reduce((sum, d) => sum + Number(d.amount || 0), 0);
-                const modeSourceHtml = getModeSourceStr(item).trim();
+                <!-- One detailed ledger for each sibling -->
+                ${studentPages.map(p => `
+                <div class="student-section">
+                    <div class="student-title">
+                        <span>${p.studentData?.student_name || '-'} (${p.studentData?.general_registration_code || '-'})</span>
+                        <span class="r">${p.studentData?.student_class_name || '-'} / ${p.studentData?.student_section_name || '-'}</span>
+                    </div>
+                    ${renderLedgerTable(p.feeData, 'Student Total')}
+                </div>`).join('')}
 
-                return `
-                                    <tr class="row">
-                                        <td class="align-center">${index + 1}</td>
-                                        <td class="td-fee-title">${item.title}</td>
-                                        ${'' /* <td>${item.status}${item.payment_method === 'Online Payment' ? ' (Online)' : ''}</td> */}
-                                        <td class="nowrap">${item.due_date ? (item.due ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)) : dash}</td>   ${'' /* overdue due date = underlined (item.due) */}
-                                        <td>${formatPayingDate(item.paying_date)}</td>   <!-- old: class="nowrap", the text could run out of the cell -->
-                                        ${'' /* old format (01/10/2026 02:15 PM): <td class="nowrap">${formatDateTime(item.paying_date) || dash}</td> */}
-                                        <td>${modeSourceHtml === '-' || modeSourceHtml === '' ? dash : modeSourceHtml}</td>
-                                        ${'' /* <td class="align-center">${item.due ? 'Yes' : 'No'}</td> */}
-                                        <td class="align-right">${Number(item.actual_fee || 0).toLocaleString()}</td>
-                                        ${'' /* <td class="blue">${item.discount || 0}%</td> */}
-                                        <td class="align-right">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>
-                                        <td class="${fdHistory.length > 0 ? 'align-left' : 'align-right'}">${furtherDiscountHtml}</td>
-                                        <td class="${hasFineHistory ? 'align-left' : 'align-right'}">${fineHtml}</td>
-                                        <td class="align-right col-total">${Number(item.total || 0).toLocaleString()}</td>
-                                        <td class="align-right col-paid">${amountOrDash(item.paid_amount)}</td>
-                                        <td class="align-right col-due">${amountOrDash(item.dues)}</td>
-                                    </tr>
-                                `;
-            }).join('') : `<tr><td colspan="12" style="text-align: center; padding: 17px; font-size: 9px;">No Records Found!</td></tr>`}
-                        </tbody>
-                        ${studentFeeData?.length > 0 ? `
-                        <tbody class="grand-total-body">
-                            <tr class="grand-total">
-                                <td colspan="5">Grand Total</td>
-                                <td class="align-right">${totalActualFeePrint.toLocaleString()}</td>
-                                <td class="align-right">${totalFeeAfterDiscountPrint.toLocaleString()}</td>
-                                <td class="align-right">${amountOrDash(totalFurtherDiscountPrint)}</td>
-                                <td class="align-right">${amountOrDash(totalFinePrint)}${totalFineDiscountPrint > 0 ? `<br/>dis ${totalFineDiscountPrint.toLocaleString()}` : ''}</td>
-                                <td class="align-right col-total">${Number(totalExpectedFeePrint || 0).toLocaleString()}</td>
-                                <td class="align-right col-paid">${Number(totalCollectedFeePrint || 0).toLocaleString()}</td>
-                                <td class="align-right col-due">${Number(totalPendingFeePrint || 0).toLocaleString()}</td>
-                            </tr>
-                        </tbody>` : ''}
-                    </table>
-                </div>
                 <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div>
                 <div class="bottom-spacer"></div>
                 <div class="report-bottom">
                     ${(breakdownDates.length > 0 || undatedReceived > 0 || undatedDiscount > 0) ? `
-                    <div class="breakdown-title">Date Wise Breakdown</div>
+                    <div class="breakdown-title">Date Wise Breakdown (All Siblings)</div>
+                    ${(() => {
+                        // GROUPS = 1: one single column of dates. (the dates can be split in 2 or 3 parts that sit side by side by setting GROUPS to 2 or 3, and the width above to 100%)
+                        const GROUPS = 1;
+                        const items = breakdownDates.map(k => ({ label: formatLedgerDate(k + 'T12:00:00'), discount: dateBreakdown[k].discount, received: dateBreakdown[k].received }));
+                        if (undatedReceived > 0 || undatedDiscount > 0) items.push({ label: 'Date not recorded', discount: undatedDiscount, received: undatedReceived });
+                        const per = Math.ceil(items.length / GROUPS);
+                        const cells = (it) => it
+                            ? `<td class="nowrap">${it.label}</td><td class="align-right">${amountOrDash(it.discount)}</td><td class="align-right">${amountOrDash(it.received)}</td>`
+                            : `<td></td><td></td><td></td>`;
+                        let bodyRows = '';
+                        for (let i = 0; i < per; i++) bodyRows += `<tr>${Array.from({ length: GROUPS }, (_, g) => cells(items[i + g * per])).join('')}</tr>`;
+                        const headGroup = `<th>Date</th><th class="align-right">Discount</th><th class="align-right">Paid</th>`;
+                        return `
                     <table class="breakdown-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th class="align-right">Discount</th>
-                                <th class="align-right">Paid</th>
+                                ${headGroup.repeat(GROUPS)}
                             </tr>
                         </thead>
                         <tbody>
-                            ${breakdownDates.map(k => `
-                            <tr>
-                                <td class="nowrap">${formatLedgerDate(k + 'T12:00:00')}</td>
-                                <td class="align-right">${amountOrDash(dateBreakdown[k].discount)}</td>
-                                <td class="align-right">${amountOrDash(dateBreakdown[k].received)}</td>
-                            </tr>`).join('')}
-                            ${(undatedReceived > 0 || undatedDiscount > 0) ? `
-                            <tr>
-                                <td>Date not recorded</td>
-                                <td class="align-right">${amountOrDash(undatedDiscount)}</td>
-                                <td class="align-right">${amountOrDash(undatedReceived)}</td>
-                            </tr>` : ''}
+                            ${bodyRows}
                             <tr class="grand-total">
                                 <td>Total</td>
-                                <td class="align-right">${Number(totalDiscountPrint || 0).toLocaleString()}</td>
-                                <td class="align-right">${Number(totalCollectedFeePrint || 0).toLocaleString()}</td>
+                                <td class="align-right">${Number(familyStats.discount || 0).toLocaleString()}</td>
+                                <td class="align-right">${Number(familyStats.collected || 0).toLocaleString()}</td>
+                                ${GROUPS > 1 ? `<td colspan="${(GROUPS - 1) * 3}"></td>` : ''}
                             </tr>
                         </tbody>
-                    </table>` : ''}
+                    </table>`;
+                    })()}` : ''}
                     <div class="sign-row">
                         <div class="sign-box">Prepared By</div>
                         <div class="sign-box">Checked By</div>
@@ -869,16 +953,13 @@
             `;
         };
 
+    document.body.insertAdjacentHTML("beforeend", buildFamilyReportPage(familyInfo, familyPages));
 
-    var pagesWithFees = printPages.filter(function (page) { return page.feeData.length > 0; });
-    var pagesToRender = pagesWithFees.length > 0 ? pagesWithFees : printPages;
-    document.body.insertAdjacentHTML("beforeend", pagesToRender.map(function (page, index) { return buildStudentReportPage(page.studentData, page.feeData, index === pagesToRender.length - 1); }).join(""));
-
-    /* ================= RUNNING HEADER (student) + PAGE NUMBERS, printed in the page margin ================= */
-    (function () {
-        var first = pagesToRender[0] && pagesToRender[0].studentData;
-        var name = pagesToRender.length === 1 && first ? String(first.student_name || "") + " | " + String(first.general_registration_code || "") : "Student Fee Ledger";
-        name = name.split('"').join("");
+    /* ================= RUNNING HEADER (family) + PAGE NUMBERS, printed in the page margin ================= */
+    // switched off: no "Family ... | ..." header and no "Page X of Y" on the printed pages. Set this to true to show them again.
+    var SHOW_PAGE_HEADER_AND_NUMBERS = false;
+    if (SHOW_PAGE_HEADER_AND_NUMBERS) (function () {
+        var name = ("Family " + familyInfo.family_code + " | " + familyInfo.father_name).split('"').join("");
         var css = "@page { @top-left { content: \"" + name + "\"; font-size: 8px; color: #444; } @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8px; color: #444; } }" +
                   "@page :first { @top-left { content: \"\"; } }";
         var st = document.createElement("style");
@@ -893,15 +974,15 @@
         pages.forEach(function (pg) { pg.querySelector(".bottom-spacer").style.height = "0px"; });
         document.body.classList.add("measuring");
         pages.forEach(function (pg) {
-            var spacer = pg.querySelector(".bottom-spacer"), block = pg.querySelector(".report-bottom"), table = pg.querySelector(".ledger-table");
+            var spacer = pg.querySelector(".bottom-spacer"), block = pg.querySelector(".report-bottom");
             var pageTop = pg.getBoundingClientRect().top;
-            var theadH = table ? table.querySelector("thead").getBoundingClientRect().height : 0;
-            var rows = table ? table.querySelectorAll("tbody tr") : [];
-            // walk the rows like the printer does: a row that does not fit moves to the next page,
-            // and the table header is repeated at the top of that page
+            // walk the rows of every table like the printer does: a row that does not fit moves to the next page,
+            // and the header of its table is repeated at the top of that page
+            var rows = pg.querySelectorAll(".children-table tbody tr, .ledger-table tbody tr");
             var shift = 0;
             for (var i = 0; i < rows.length; i++) {
                 var rect = rows[i].getBoundingClientRect();
+                var theadH = rows[i].closest("table").querySelector("thead").getBoundingClientRect().height;
                 var top = rect.top - pageTop + shift;
                 var bottom = rect.bottom - pageTop + shift;
                 var page = Math.floor(top / pageH);
@@ -910,7 +991,7 @@
             var contentEnd = spacer.getBoundingClientRect().top - pageTop + shift;
             var blockH = block.getBoundingClientRect().height;
             var pagesNeeded = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
-            var spare = pagesNeeded * pageH - contentEnd - blockH - 80;   // 80px safety (landscape needs more room than portrait)
+            var spare = pagesNeeded * pageH - contentEnd - blockH - 80;   // 80px safety (landscape)
             spacer.style.height = Math.max(0, spare) + "px";
         });
         document.body.classList.remove("measuring");
