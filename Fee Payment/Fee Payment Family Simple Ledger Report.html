@@ -2,7 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Family Wise Ledger Report</title>
+<title>Family Ledger Report (Simple)</title>
+<!-- old title: Family Wise Ledger Report -->
 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
                 * {
@@ -94,6 +95,7 @@
                 .align-right { text-align: right; }
                 .align-center { text-align: center; }
                 .nowrap { white-space: nowrap; }
+                .ledger-table th:first-child { white-space: nowrap; }   /* Sr # stays on one line */
                 tr.row td { border-top: 1px solid #d4d4d4; border-bottom: 1px solid #d4d4d4; }
                 tr.row td, tr.band td, tr.subtotal td { padding-top: 3px; padding-bottom: 3px; }
                 td s { margin-right: 5px; }
@@ -118,10 +120,11 @@
                 tr.grand-total td:first-child { text-align: right; text-transform: uppercase; }
                 tr.grand-total td.col-due { font-size: 13px; border-bottom: 3px double #000; }
                 .zero-dash { color: #999; font-size: 9px; font-weight: 400; }
+                .dt span { white-space: nowrap; }   /* the date and the time stay whole, the time moves to the next line when the cell is too narrow */
                 .dt span + span { margin-left: 8px; }
                 td.fine-applied { font-weight: 700; }
-                td.fine-na { color: #999; font-weight: 400; }
-                .fine-legend { margin-top: 4px; font-size: 8px; font-weight: 600; color: #000; }
+                td.fine-na { color: #000; font-weight: 600; }   /* old: color #999; font-weight 400 (light grey dash) */
+                .fine-legend { margin: 0 0 8px; font-size: 8px; font-weight: 600; color: #000; }
                 .green { color: #000 !important; }
                 .red { color: #000 !important; }
                 .blue { color: #000 !important; }
@@ -260,6 +263,16 @@
                 .family-info-grid { grid-template-columns: repeat(3, 1fr); }
                 /* the stats box is taller (6 rows); the details box keeps its height */
                 .top-band .family-info-grid { align-self: flex-start; height: 87px; }
+                /* left column of the top band: the family details box with the Overdue / Not Yet Due line under it (same width as the details box) */
+                .top-left { flex: 3; display: flex; flex-direction: column; gap: 6px; align-self: flex-start; }
+                .top-left .family-info-grid { align-self: stretch; flex: none; }
+                .group-summary { display: flex; border: 1px solid #000; }
+                .group-item { flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 3px 8px; }
+                .group-item + .group-item { border-left: 1px solid #000; }
+                .group-label { font-size: 8px; font-weight: 600; text-transform: uppercase; }
+                .group-value { font-size: 11px; font-weight: 700; }
+                /* fixed column widths of the sibling ledger tables (see the colgroup). old: automatic widths */
+                .ledger-table { table-layout: fixed; }
                 .children-table { margin-bottom: 10px; }
                 .student-section { margin-bottom: 10px; }
                 .student-title { display: flex; gap: 8px; font-size: 11px; font-weight: 700; margin: 0 0 4px; page-break-after: avoid; break-after: avoid; }
@@ -595,7 +608,7 @@
         const sortFees = (feeData) => [
             ...feeData.filter(i => Number(i.dues || 0) > 0 && i.due).sort(byDueDate),
             ...feeData.filter(i => Number(i.dues || 0) > 0 && !i.due).sort(byDueDate),
-            ...feeData.filter(i => Number(i.dues || 0) <= 0).sort(byDueDate),
+            ...feeData.filter(i => Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)),   // old: .sort(byDueDate)
         ];
 
         const renderFeeRow = (item, srNo) => {
@@ -605,15 +618,17 @@
             const currentFine = Number(item.fine || 0);
             const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
             const fineClass = item.due ? 'fine-applied' : 'fine-na';
-            const fineHtml = fineDiscountAmount > 0
-                ? `<s>${(currentFine + fineDiscountAmount).toLocaleString()}</s> ${item.due ? `<u>${currentFine.toLocaleString()}</u>` : currentFine.toLocaleString()}`
-                : (item.due ? `<u>${currentFine.toLocaleString()}</u>` : '-');
+            // only the current fine is shown (the struck-through original fine, before the fine discount, is not shown any more).
+            // old: fineDiscountAmount > 0 ? `<s>${(currentFine + fineDiscountAmount).toLocaleString()}</s> ${...current fine...}` : ...
+            // applicable (fee overdue, included in Total) = fine + check mark, not applicable (fee not overdue) = fine + cross mark, zero fine = light grey dash
+            // old: applicable = bold underlined fine, not applicable = light grey dash
+            const fineHtml = currentFine === 0 ? '<span class="zero-dash">-</span>' : (item.due ? `${currentFine.toLocaleString()} &#10003;` : `${currentFine.toLocaleString()} &#10007;`);
             return `
                                     <tr class="row">
                                         <td class="align-center">${srNo}</td>
                                         <td class="td-fee-title">${item.title}</td>
-                                        <td class="nowrap">${item.due ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)}</td>
-                                        <td class="nowrap">${formatLedgerDateTime(item.paying_date)}</td>
+                                        <td class="nowrap">${item.due ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)}</td>   ${'' /* overdue due date = underlined (item.due) */}
+                                        <td>${formatLedgerDateTime(item.paying_date)}</td>   <!-- old: class="nowrap", the text could run out of the cell -->
                                         <td class="align-right">${Number(item.actual_fee || 0).toLocaleString()}</td>
                                         <td class="align-right">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>
                                         <td class="align-right">${amountOrDash(furtherDiscountTotal)}</td>
@@ -635,6 +650,7 @@
                         <span class="r">${student.student_class_name || '-'} / ${student.student_section_name || '-'}</span>
                     </div>
                     <table class="ledger-table">
+                        <colgroup><col style="width:5%"><col style="width:16%"><col style="width:10%"><col style="width:16.5%"><col style="width:6.5%"><col style="width:8%"><col style="width:7.5%"><col style="width:8%"><col style="width:7%"><col style="width:7%"><col style="width:8.5%"></colgroup>
                         <thead>
                             <tr>
                                 <th class="align-center">Sr #</th>
@@ -673,6 +689,14 @@
         const buildFamilyReportPage = (family, studentPages) => {
             const allFees = studentPages.reduce((all, p) => all.concat(p.feeData), []);
             const familyStats = computeStats(allFees);
+            // Group totals: Overdue = dues of unpaid fees past their due date, Not Yet Due = dues of unpaid fees not due yet (Overdue + Not Yet Due = Remaining)
+            let overdueDues = 0, overdueCount = 0, notYetDueDues = 0, notYetDueCount = 0;
+            allFees.forEach(item => {
+                if (Number(item.dues || 0) > 0) {
+                    if (item.due) { overdueDues += Number(item.dues || 0); overdueCount++; }
+                    else { notYetDueDues += Number(item.dues || 0); notYetDueCount++; }
+                }
+            });
 
             // Date wise breakdown (all siblings together): how much was paid and how much discount was given on each date
             const dateBreakdown = {};
@@ -712,7 +736,8 @@
                     </div>
                     <div style="text-align: center; flex: 1;">
                         <h1>${systemSettings?.school_name || 'School Management System'}</h1>
-                        <h2>Family Wise Ledger Report</h2>
+                        <h2>Family Ledger Report (Simple)</h2>
+                        ${'' /* old heading: Family Wise Ledger Report */}
                         ${'' /* <div class="report-sub">${family.father_name || '-'} (Family ${family.family_code || '-'}) &nbsp;|&nbsp; As of ${formatLedgerDate(new Date())}</div> */}
                     </div>
                     <div style="opacity: 0; width: 56px;"></div>
@@ -720,6 +745,7 @@
 
                 <!-- Father details + family fee summary (one row) -->
                 <div class="top-band">
+                <div class="top-left">
                 <div class="info-grid family-info-grid">
                     <div class="info-item"><span class="info-label">Family Code</span><span class="info-value">${family.family_code || '-'}</span></div>
                     <div class="info-item"><span class="info-label">Account Name</span><span class="info-value">${family.father_name || '-'}</span></div>
@@ -727,6 +753,13 @@
                     <div class="info-item"><span class="info-label">CNIC</span><span class="info-value">${family.cnic || '-'}</span></div>
                     <div class="info-item"><span class="info-label">Siblings</span><span class="info-value">${family.students.length}</span></div>
                     <div class="info-item info-highlight"><span class="info-label">Family Advance</span><span class="info-value">Rs. ${Number(family.family_credit || 0).toLocaleString()}</span></div>
+                </div>
+
+                <!-- Overdue / Not Yet Due totals -->
+                <div class="group-summary">
+                    <div class="group-item"><span class="group-label">Overdue (${overdueCount} ${overdueCount === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(overdueDues)}</span></div>
+                    <div class="group-item"><span class="group-label">Not Yet Due (${notYetDueCount} ${notYetDueCount === 1 ? 'fee' : 'fees'}) =</span><span class="group-value">${amountOrDash(notYetDueDues)}</span></div>
+                </div>
                 </div>
 
                 <div class="summary-grid">
@@ -783,6 +816,7 @@
                 <!-- One ledger for each sibling -->
                 ${studentPages.map(p => renderStudentLedger(p.studentData, p.feeData)).join('')}
 
+                <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div>
                 <div class="bottom-spacer"></div>
                 <div class="report-bottom">
                     ${(breakdownDates.length > 0 || undatedReceived > 0 || undatedDiscount > 0) ? `
