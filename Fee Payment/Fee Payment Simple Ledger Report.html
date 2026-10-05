@@ -13,7 +13,7 @@
                     font-family: "Poppins", sans-serif !important;
                 }
                 @page {
-                    size: A4 portrait;
+                    size: A4 auto;
                     margin: 7mm;
                 }
                 html {
@@ -98,7 +98,23 @@
                 .ledger-table th:first-child { white-space: nowrap; }   /* Sr # stays on one line */
                 tr.row td { border-top: 1px solid #d4d4d4; border-bottom: 1px solid #d4d4d4; }
                 tr.row td, tr.band td, tr.subtotal td { padding-top: 3px; padding-bottom: 3px; }
-                td s { margin-right: 5px; }
+                /* struck-through fine at the left, current fine at the right. When the cell is too narrow for both, the current fine moves to a second line (still at the right) */
+                .fine-split { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 3px; }
+                .fine-split > s, .fine-split > span { white-space: nowrap; }
+                .fine-split > span { margin-left: auto; }
+                /* Grand Total, Fine cell: two small boxes side by side, APL (fine applied) and DISC (fine discount), each with its amount under it */
+                /* the waived (discounted) fine amount is not bold: the struck-through original fine in the rows and the DISC box in the Grand Total row */
+                .fine-split > s { font-weight: 400; }
+                .fine-pair b { font-weight: 400; }   /* both amounts (DISC and APL) are normal weight. old: only DISC was normal, APL was bold (700) */
+                td.fine-pair-cell { padding: 0 !important; }
+                .fine-pair { display: flex; }
+                .fine-pair > div { flex: 1; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
+                .fine-pair > div + div { border-left: 1px solid #999; }
+                .fine-pair span { font-size: 7px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #999; padding: 1px 2px; background: #e6e6e6; }
+                .fine-pair b { font-size: 9px; /* old: 11px */ font-weight: 400; /* old: 700 */ padding: 2px; white-space: nowrap; }
+                /* the old fine (strike line thinner now: 0.7px, old 1.2px): instead of the horizontal strike line, a slanted line that runs exactly from the bottom left corner of the number to its top right corner */
+                .fine-split > s { text-decoration: none; position: relative; }
+                .fine-split > s::after { content: ""; position: absolute; left: 0; right: 0; top: 1.5px; bottom: 1px; background: linear-gradient(to bottom right, transparent calc(50% - 0.35px), #000 calc(50% - 0.35px), #000 calc(50% + 0.35px), transparent calc(50% + 0.35px)); }
                 /* group bands: Overdue / Not Yet Due / Paid, each with its own subtotal */
                 tr.band td { background-color: #e6e6e6 !important; font-weight: 700; text-transform: uppercase; border-top: 1px solid #666; border-bottom: 1px solid #666; }
                 tr.subtotal td { background-color: #f3f3f3 !important; font-weight: 700; border-top: 1px solid #666; }
@@ -119,11 +135,18 @@
                 }
                 tr.grand-total td:first-child { text-align: right; text-transform: uppercase; }
                 tr.grand-total td.col-due { font-size: 13px; border-bottom: 3px double #000; }
+                /* Grand Total row: Actual Class Fee, Fee After Discount and Further Fee Disc totals (and the Fine total) are normal weight. old: all bold. Total / Paid / Dues stay bold */
+                .ledger-table tr.grand-total td.align-right:not(.col-total):not(.col-paid):not(.col-due) { font-weight: 400; }   /* only the ledger table, the date wise breakdown total keeps its bold */
                 .zero-dash { color: #999; font-size: 9px; font-weight: 400; }
                 .dt span { white-space: nowrap; }   /* the date and the time stay whole, the time moves to the next line when the cell is too narrow */
                 .dt span + span { margin-left: 8px; }
-                td.fine-applied { font-weight: 700; }
-                td.fine-na { color: #000; font-weight: 600; }   /* old: color #999; font-weight 400 (light grey dash) */
+                /* fine not applied (fee not overdue, cross mark): the value is at the center of the cell instead of the right. If a waived (struck-through) amount is also there, it stays at the left and the value is still at the center */
+                td.fine-na { text-align: center; }
+                td.fine-na.fine-zero { text-align: right; }
+                td.fine-na .fine-split { position: relative; }
+                td.fine-na .fine-split > span { position: absolute; left: 0; right: 0; text-align: center; margin-left: 0; }
+                td.fine-applied { font-weight: 400; }   /* old: 700 (bold applied fine like 500 ✓) */
+                td.fine-na { color: #000; font-weight: 400; }   /* old: 600 */   /* old: color #999; font-weight 400 (light grey dash) */
                 .fine-legend { margin: -4px 0 8px; font-size: 8px; font-weight: 600; color: #000; }
                 /* left column of the top band: the details box with the Overdue / Not Yet Due line under it (same width as the details box) */
                 .top-left { flex: 3; display: flex; flex-direction: column; gap: 6px; }
@@ -210,6 +233,12 @@
                     border-top: 1px solid #000;
                 }
                 .summary-card:first-child { border-top: none; }
+                .summary-card { border-top: 1px dotted #999; }
+                .summary-card.result { border-top: 1px solid #000; }
+                .summary-card.result .summary-label { font-weight: 700; }
+                .summary-card.note { border-top: 1px solid #000; background-color: #f0f0f0 !important; }
+                .summary-card.note .summary-label { font-weight: 400; font-style: italic; text-transform: none; }
+                .summary-card.note .summary-value { font-size: 10px; font-weight: 600; }
                 .summary-card.dues { background-color: #e6e6e6 !important; border-top: 2px solid #000; }
                 .summary-card.dues .summary-label { font-weight: 700; }
                 .summary-card.dues .summary-value { font-size: 15px; }
@@ -221,9 +250,10 @@
                 }
                 .summary-value {
                     font-size: 12px;
-                    font-weight: 700;
+                    font-weight: 400;   /* old: 700 for every amount. Now only Net Fee, Net Receivable and Dues are bold */
                     color: #000;
                 }
+                .summary-card.result .summary-value, .summary-card.dues .summary-value { font-weight: 700; }
                 .summary-section {
                     border: 1px solid #ddd;
                     margin: 11px 0;
@@ -291,6 +321,67 @@
         { _id: "69f61a250ece5980ea7593dd", mode_name: "Bank Transfer", sources: [{ _id: "69f61a250ece5980ea7593de", source: "General" }] }
     ];
 
+    /* ===== REAL DATA of the student (Rehan Ali), from the API response of the page. The old dummy data is kept below, commented out ===== */
+    var FC = "6a23166bc0d803e8365bf1d1", FCS = "6a23166bc0d803e8365bf1d2", CA = "69f61a250ece5980ea7593d7", CAS = "69f61a250ece5980ea7593d8";
+    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var fd = (date, amount, reason) => ({ date, amount, reason, discount_by: "DEMO", approved_by: "DEMO" });
+    var pp = (amount, date, mode, src) => ({ amount, date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: "DEMO" });
+    function M(month, year, due, gen, fine, paying, after, paid, disc, o) {
+        o = o || {};
+        return {
+            fee_month: month, fee_year: year, due_date: due + "T00:00:00.000Z", late_fine: fine, fee_status: "Paid", fee_generation_date: gen + "T00:00:00.000Z",
+            actual_monthly_fee: 2850, monthly_fee_discount: disc, paying_date: paying, monthly_fee_after_discount: after, message_cost: 0, paid_amount: paid,
+            partial_payment_history: o.partial || [], further_discount_history: o.further || [], due_date_history: [], late_fee_fine_discount_history: o.fineDisc || [],
+            payment_method: o.noMethod ? undefined : "Family Credit", payment_mode_id: o.mode || FC, payment_mode_source_id: o.src || FCS, payment_recieved_by: "DEMO"
+        };
+    }
+    var P929 = "2026-09-29T19:52:36.018Z";
+    var monthlyFees = [
+        M("January", "2026", "2026-01-10", "2026-01-01", 0, P929, 2300, 2300, 19, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("February", "2026", "2026-02-10", "2026-02-01", 0, P929, 2300, 2300, 19, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("March", "2026", "2026-03-10", "2026-03-01", 300, "2026-09-28T19:04:21.007Z", 2300, 2600, 19),
+        M("April", "2026", "2026-04-10", "2026-04-01", 0, P929, 2300, 2300, 19, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("May", "2026", "2026-05-10", "2026-05-01", 0, P929, 2300, 2300, 19, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("June", "2026", "2026-06-10", "2026-06-01", 0, P929, 2300, 2300, 19, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("July", "2026", "2026-07-10", "2026-07-01", 0, "2026-09-27T08:51:02.224Z", 1500, 1500, 47, { further: [fd("2026-09-27T08:51:02.224Z", 800, "Pay And Discount")], fineDisc: [fd("2026-09-27T08:51:02.224Z", 300, "Pay And Discount")] }),
+        M("August", "2026", "2026-08-10", "2026-08-01", 0, "2026-09-27T08:50:41.271Z", 2300, 2300, 19, { fineDisc: [fd("2026-09-27T08:50:41.271Z", 300, "Paid Without Fine")] }),
+        M("September", "2026", "2026-09-10", "2026-09-01", 0, P929, 2300, 2300, 19, { partial: [pp(1000, "2026-09-27T08:50:11.435Z", FC, FCS)], fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        M("October", "2026", "2026-10-10", "2026-10-01", 300, "2026-09-27T08:50:19.217Z", 2300, 2300, 19, { partial: [pp(1000, "2026-09-27T08:49:34.943Z", CA, CAS)] }),
+        M("November", "2026", "2026-11-10", "2026-11-01", 300, "2026-09-27T08:48:48.326Z", 2300, 2300, 19, { noMethod: true, mode: CA, src: CAS }),
+        M("December", "2026", "2026-12-10", "2026-12-01", 300, "2026-09-27T08:48:39.436Z", 2300, 2300, 19),
+        M("February", "2027", "2026-12-10", "2026-12-01", 300, "2026-09-30T10:03:14.083Z", 2300, 2300, 19),
+        M("March", "2027", "2026-12-10", "2026-12-01", 300, "2026-09-30T10:03:14.083Z", 2300, 2300, 19),
+        M("October", "2025", "2026-10-08", "2026-10-01", 0, "2026-10-28T20:01:34.105Z", 2300, 2300, 19, { mode: CA, src: CAS, noMethod: true }),
+        M("September", "2025", "2026-10-08", "2026-10-01", 0, "2026-10-28T20:01:34.105Z", 1700, 1700, 40, { further: [fd("2026-10-28T20:01:34.105Z", 600, "Pay Full And Discount")], mode: CA, src: CAS, noMethod: true }),
+        M("December", "2025", "2026-10-08", "2026-10-01", 0, "2026-09-30T20:02:41.173Z", 2300, 2300, 19, { mode: CA, src: CAS, noMethod: true }),
+        M("March", "2025", "2026-10-08", "2026-10-01", 0, "2026-09-30T20:02:41.173Z", 1700, 1700, 40, { further: [fd("2026-09-30T20:02:41.173Z", 600, "Pay Full And Discount")], mode: CA, src: CAS, noMethod: true }),
+    ];
+    function C(name, gen, actual, fine, due, paying, paid, o) {
+        return {
+            custom_fee_name: name, custom_fee_generate_date: gen, actual_custom_fee: actual, custom_fee_discount: 0, custom_fee_after_discount: actual, custom_fee_fine: fine,
+            custom_fee_due_date: due + "T00:00:00.000Z", paying_date: paying, custom_fee_status: "Paid", paid_amount: paid,
+            partial_payment_history: (o && o.partial) || [], further_discount_history: [], due_date_history: [], late_fee_fine_discount_history: (o && o.fineDisc) || [],
+            payment_method: "Family Credit", payment_mode_id: (o && o.mode) || FC, payment_mode_source_id: (o && o.src) || FCS, payment_recieved_by: "DEMO"
+        };
+    }
+    var customFees = [
+        C("A.C CHARGES 2026", "2026-09-30T10:13:58.737Z", 5000, 500, "2026-09-29", "2026-09-30T17:13:09.136Z", 5500, { partial: [pp(2360, "2026-09-30T10:14:21.965Z", FC, FCS)], mode: "69f61a250ece5980ea7593d9", src: "69f61a250ece5980ea7593da" }),
+        C("CONTEEN FEE 2026", "2026-10-31T19:05:35.749Z", 4500, 0, "2026-11-10", P929, 4500, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        C("STATIONARY FEE 2026", "2026-10-31T19:06:30.843Z", 1500, 0, "2026-11-10", P929, 1500, { fineDisc: [fd(P929, 300, "Paid Without Fine")] }),
+        C("WASHRROM FEE 2026", "2026-09-30T10:05:03.651Z", 30000, 0, "2026-09-29", "2026-09-30T10:09:52.645Z", 30000, { partial: [pp(24360, "2026-09-30T10:05:38.760Z", FC, FCS)], fineDisc: [fd("2026-09-30T10:09:52.645Z", 500, "Paid Without Fine")] }),
+    ];
+    var studentDuesReal = { monthlyFee: [{ student: "67cad98adf568083a5255fcf", fees: monthlyFees }], customFee: customFees, transferFee: [] };
+    var studentReal = {
+        student_name: "Rehan Ali", student_father_name: "Muhammad Akram", general_registration_code: "BSS-STD-1",
+        student_class_name: "-", student_section_name: "-", student_campus_name: "-",   // the pasted data has only the ids of these three
+        student_father_phone: 1311662542, student_status: "Active", family_credit: 500, siblings_count: 0
+    };
+
+
+    var studentDues = studentDuesReal;
+    var studentDataFromOfFee = studentReal;
+
+    /* ===== old dummy data (commented out) =====
     var studentDataFromOfFee = {
         student_name: "Adnan Ahmed", student_father_name: "Muhammad Kamran", general_registration_code: "BSS-STD-898",
         student_class_name: "NINE", student_section_name: "SUPER BARIAN", student_campus_name: "IQBAL TOWN",
@@ -348,6 +439,7 @@
         ],
         transferFee: []
     };
+    ===== end of the old dummy data ===== */
 
     /* ================= SAME LOGIC AS Fee Payment.jsx ================= */
     function getModeName(id) {
@@ -558,9 +650,11 @@
             let totalFurtherDiscountPrint = 0;
             let totalFinePrint = 0;
             let totalFineDiscountPrint = 0;
+            let clearedWaivedPrint = 0;   // amount waived by "Clear Fee" (Total - Paid of the cleared fees), used by the step by step stat box
             // Group totals: Overdue = dues of unpaid fees past their due date, Not Yet Due = dues of unpaid fees not due yet (Overdue + Not Yet Due = Dues)
             let overdueDuesPrint = 0, overdueCountPrint = 0, notYetDueDuesPrint = 0, notYetDueCountPrint = 0;
             studentFeeData.forEach(item => {
+                if (item.status === 'Clear') return;   // a cleared fee waives its dues, so it is not Overdue / Not Yet Due
                 if (Number(item.dues || 0) > 0) {
                     if (item.due) { overdueDuesPrint += Number(item.dues || 0); overdueCountPrint++; }
                     else { notYetDueDuesPrint += Number(item.dues || 0); notYetDueCountPrint++; }
@@ -568,17 +662,25 @@
             });
 
             studentFeeData.forEach(item => {
-                totalExpectedFeePrint += item.total || 0;
+                // a cleared fee waives the remaining amount: Net Receivable counts what was paid, Dues is 0
+                const isClearedItem = item.status === 'Clear';
+                if (isClearedItem) clearedWaivedPrint += Number(item.total || 0) - Number(item.paid_amount || 0);
+                totalExpectedFeePrint += isClearedItem ? (item.paid_amount || 0) : (item.total || 0);
                 totalCollectedFeePrint += item.paid_amount || 0;
-                totalPendingFeePrint += item.dues || 0;
+                totalPendingFeePrint += isClearedItem ? 0 : (item.dues || 0);
+                // old: totalExpectedFeePrint += item.total || 0;
+                // old: totalPendingFeePrint += item.dues || 0;
 
-                // Discount = fee discount + further discount (actual fee - fee after discount) + fine discount
-                const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
-                const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
-                totalDiscountPrint += feeDiscountAmount + fineDiscountAmount;
+                // Discount = further discounts + fine discounts (a fine discount counts only when that fine is inside Total, i.e. the fee is overdue).
+                // The monthly fee discount (percent) is not part of it.
+                // old: const feeDiscountAmount = Math.max(0, Number(item.actual_fee || 0) - Number(item.fee_after_discount || 0));
+                // old: const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                // old: totalDiscountPrint += feeDiscountAmount + fineDiscountAmount;
+                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                const fineDiscountAmount = item.due ? (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0) : 0;
+                totalDiscountPrint += furtherDiscountAmount + fineDiscountAmount;
 
                 // Grand total row (same figures the table columns show)
-                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
                 totalActualFeePrint += Number(item.actual_fee || 0);
                 totalFeeAfterDiscountPrint += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
                 totalFurtherDiscountPrint += furtherDiscountAmount;
@@ -606,7 +708,7 @@
                 partials.forEach(p => addToDate(p.date, 'received', p.amount));
                 addToDate(item.paying_date, 'received', Number(item.paid_amount || 0) - partialSum);   // full / quick payment
                 (item.further_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
-                (item.late_fee_fine_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
+                if (item.due) (item.late_fee_fine_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));   // old: counted for every fee
             });
             const breakdownDates = Object.keys(dateBreakdown).sort();
             const datedReceived = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].received, 0);
@@ -619,9 +721,9 @@
             const monthOrder = (i) => (i.fee_month && i.fee_year ? Number(i.fee_year) * 12 + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].indexOf(i.fee_month) : 0);
             const byDueDate = (a, b) => (new Date(a.due_date) - new Date(b.due_date)) || (monthOrder(a) - monthOrder(b)) || (new Date(a.fee_generation_date) - new Date(b.fee_generation_date)) || String(a.title).localeCompare(String(b.title));
             const feeGroups = [
-                { label: 'Overdue', rows: studentFeeData.filter(i => Number(i.dues || 0) > 0 && i.due).sort(byDueDate) },
-                { label: 'Not Yet Due', rows: studentFeeData.filter(i => Number(i.dues || 0) > 0 && !i.due).sort(byDueDate) },
-                { label: 'Paid', rows: studentFeeData.filter(i => Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)) },   // old: .sort(byDueDate)
+                { label: 'Overdue', rows: studentFeeData.filter(i => i.status !== 'Clear' && Number(i.dues || 0) > 0 && i.due).sort(byDueDate) },
+                { label: 'Not Yet Due', rows: studentFeeData.filter(i => i.status !== 'Clear' && Number(i.dues || 0) > 0 && !i.due).sort(byDueDate) },
+                { label: 'Paid', rows: studentFeeData.filter(i => i.status === 'Clear' || Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)) },   // old: .sort(byDueDate)
             ].filter(g => g.rows.length > 0);
             const orderedFees = [];
             // The fees are only sorted in this order (Overdue, Not Yet Due, Paid). Set this to true to show
@@ -678,11 +780,38 @@
                 </div>
                 </div>
 
+                <!-- Step by step amounts: every line is one column of the Grand Total row, read from top to bottom
+                     Fee After Discount, Discount (further + fine), Fine Applied = Net Receivable (= Total column), - Received (= Paid column) = Dues -->
                 <div class="summary-grid">
+                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number(totalFeeAfterDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Disc (Further Fee + Fine)</span><span class="summary-value">${((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)) ? '-' : ''}${Number((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Fine Applied</span><span class="summary-value">${(totalFinePrint || 0) ? '+' : ''}${Number(totalFinePrint || 0).toLocaleString()}</span></div>
+                    ${clearedWaivedPrint !== 0 ? `<div class="summary-card"><span class="summary-label">Cleared Fee Waived</span><span class="summary-value">${clearedWaivedPrint > 0 ? "-" : "+"}${Math.abs(clearedWaivedPrint).toLocaleString()}</span></div>` : ''}
+                    <div class="summary-card result"><span class="summary-label">= Net Receivable</span><span class="summary-value">${Number(totalExpectedFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Received</span><span class="summary-value">${Number(totalCollectedFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">= Dues</span><span class="summary-value">${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div>
+                    ${'' /* previous version (commented out): + Fine and - Discount (Further + Fine) lines with + / - signs in the labels:
+                    <div class="summary-card"><span class="summary-label">Fee After Discount</span><span class="summary-value">${Number(totalFeeAfterDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">+ Fine</span><span class="summary-value">${Number((totalFinePrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">- Discount (Further + Fine)</span><span class="summary-value">${Number((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
+                    ${clearedWaivedPrint !== 0 ? `<div class="summary-card"><span class="summary-label">- Cleared Fee Waived</span><span class="summary-value">${Number(clearedWaivedPrint).toLocaleString()}</span></div>` : ''}
+                    <div class="summary-card result"><span class="summary-label">= Net Receivable</span><span class="summary-value">${Number(totalExpectedFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">- Received</span><span class="summary-value">${Number(totalCollectedFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">= Dues</span><span class="summary-value">${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div>
+                    */}
+                    ${'' /* previous version (commented out): separate lines - Further Discount, = Net Fee, + Fine, - Fine Discount and a Total Discount note under Dues:
+                    <div class="summary-card"><span class="summary-label">- Further Discount</span><span class="summary-value">${Number(totalFurtherDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card result"><span class="summary-label">= Net Fee</span><span class="summary-value">${Number((totalFeeAfterDiscountPrint || 0) - (totalFurtherDiscountPrint || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">+ Fine</span><span class="summary-value">${Number((totalFinePrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">- Fine Discount</span><span class="summary-value">${Number(totalFineDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card note"><span class="summary-label">Total Discount (Further + Fine)</span><span class="summary-value">${Number((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
+                    */}
+                    ${'' /* <div class="summary-card note"><span class="summary-label">Fine Waived (not charged)</span><span class="summary-value">${Number(totalFineDiscountPrint || 0).toLocaleString()}</span></div> */}
+                    ${'' /* old cards:
                     <div class="summary-card"><span class="summary-label">Receivable =</span><span class="summary-value">${Number((totalExpectedFeePrint || 0) + (totalDiscountPrint || 0)).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Discount =</span><span class="summary-value">${Number(totalDiscountPrint || 0).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Received =</span><span class="summary-value">${Number(totalCollectedFeePrint || 0).toLocaleString()}</span></div>
-                    <div class="summary-card dues"><span class="summary-label">Dues =</span><span class="summary-value">${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">Dues =</span><span class="summary-value">${Number(totalPendingFeePrint || 0).toLocaleString()}</span></div> */}
                     ${'' /* <div class="summary-card"><span class="summary-label">Collection Percentage</span><span class="summary-value">${collectionPercPrint}%</span></div> */}
                 </div>
                 </div>
@@ -701,7 +830,7 @@
                 <!-- Data Table -->
                 <div style="overflow: auto; margin-bottom: 11px;">
                     <table class="ledger-table">
-                        <colgroup><col style="width:5%"><col style="width:16%"><col style="width:10%"><col style="width:16.5%"><col style="width:6.5%"><col style="width:8%"><col style="width:7.5%"><col style="width:8%"><col style="width:7%"><col style="width:7%"><col style="width:8.5%"></colgroup>
+                        <colgroup><col style="width:4.5%"><col style="width:16.6%"><col style="width:9.5%"><col style="width:15.9%"><col style="width:6.7%"><col style="width:8.2%"><col style="width:7.2%"><col style="width:9.7%"><col style="width:6.9%"><col style="width:6.9%"><col style="width:7.9%"></colgroup>
                         <thead>
                             <tr>
                                 <th class="align-center">Sr #</th>
@@ -711,10 +840,10 @@
                                 <th>Paying Date</th>
                                 ${'' /* <th>Mode / Source (User)</th> */}
                                 ${'' /* <th>Due</th> */}
-                                <th class="align-right">Actual Fee</th>
+                                <th class="align-right">Actual Class Fee</th>${'' /* old heading: Actual Fee */}
                                 ${'' /* <th>Disc</th> */}
-                                <th class="align-right">After Discount</th>
-                                <th class="align-right">Further Disc</th>
+                                <th class="align-right">Fee After Discount</th>${'' /* old heading: After Discount */}
+                                <th class="align-right">Further Fee Disc</th>${'' /* old heading: Further Disc */}
                                 <th class="align-right">Fine</th>
                                 <th class="align-right col-total">Total</th>
                                 <th class="align-right col-paid">Paid</th>
@@ -750,14 +879,17 @@
                 // not applicable (fee not overdue) = light grey dash
                 const currentFine = Number(item.fine || 0);
                 const fineDiscountAmount = (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
-                const fineClass = item.due ? 'fine-applied' : 'fine-na';
+                const fineClass = item.due ? 'fine-applied' : 'fine-na fine-zero';   // not overdue: only the dash, kept at the right. old: a not overdue fee with a fine was 'fine-na' (value at the center)   // a zero fine (only the grey dash) stays at the right like the other rows. old: item.due ? 'fine-applied' : 'fine-na'
                 // new: applicable = underlined fine + check mark, not applicable = fine + cross mark, zero fine = light grey dash
                 // old: applicable = bold underlined, not applicable = light grey dash
                 // only the current fine is shown (the struck-through original fine, before the fine discount, is not shown any more).
                 // old: fineDiscountAmount > 0 ? `<s>${(currentFine + fineDiscountAmount).toLocaleString()}</s> ${...current fine...}` : ...
-                const fineHtml = currentFine === 0
+                // fine discount given: the original fine is struck through and the remaining (current) fine follows it, like 300 200 (check / cross mark after it)
+                // old: only the current fine was shown
+                // a fee that is not overdue yet shows only the grey dash in the Fine cell (old: its fine was shown at the center of the cell)
+                const fineHtml = (!item.due || (currentFine === 0 && fineDiscountAmount === 0))
                     ? '<span class="zero-dash">-</span>'
-                    : (item.due ? `${currentFine.toLocaleString()} &#10003;` : `${currentFine.toLocaleString()} &#10007;`);   // old: the applied fine was underlined (<u>...</u>)
+                    : `${fineDiscountAmount > 0 ? `<span class="fine-split"><s>${(currentFine + fineDiscountAmount).toLocaleString()}</s><span>${currentFine.toLocaleString()}</span></span>` : `${currentFine.toLocaleString()}`}`;   // old: <s>original</s> current, all at the right side   // check / cross marks removed (old: ${currentFine.toLocaleString()} ${item.due ? '&#10003;' : '&#10007;'}), the position now shows it: right = applied, center = not applied
 
                 return `
                                     <tr class="row">
@@ -787,7 +919,10 @@
                                 <td class="align-right">${totalActualFeePrint.toLocaleString()}</td>
                                 <td class="align-right">${totalFeeAfterDiscountPrint.toLocaleString()}</td>
                                 <td class="align-right">${totalFurtherDiscountPrint.toLocaleString()}</td>
-                                <td class="align-right">${totalFinePrint.toLocaleString()}</td>
+                                ${totalFineDiscountPrint > 0
+                                    ? `<td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${totalFineDiscountPrint.toLocaleString()}</b></div><div><span>Apl</span><b>${totalFinePrint.toLocaleString()}</b></div>${'' /* old order: Apl first, then Disc */}</div></td>`
+                                    : `<td class="align-right">${totalFinePrint.toLocaleString()}</td>`}
+                                ${'' /* old cells: <td class="align-right">apl : X<br/>dis : Y</td> when a fine discount exists, otherwise only the applied fine total */}
                                 <td class="align-right col-total">${Number(totalExpectedFeePrint || 0).toLocaleString()}</td>
                                 <td class="align-right col-paid">${Number(totalCollectedFeePrint || 0).toLocaleString()}</td>
                                 <td class="align-right col-due">${Number(totalPendingFeePrint || 0).toLocaleString()}</td>
@@ -795,7 +930,7 @@
                         </tbody>` : ''}
                     </table>
                 </div>
-                <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div>
+                ${'' /* <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div> */}   <!-- legend removed -->
                 <div class="bottom-spacer"></div>
                 <div class="report-bottom">
                     ${(breakdownDates.length > 0 || undatedReceived > 0 || undatedDiscount > 0) ? `
@@ -850,16 +985,17 @@
     document.body.insertAdjacentHTML("beforeend", pagesToRender.map(function (page, index) { return buildStudentReportPage(page.studentData, page.feeData, index === pagesToRender.length - 1); }).join(""));
 
     /* ================= RUNNING HEADER (student) + PAGE NUMBERS, printed in the page margin ================= */
-    (function () {
-        var first = pagesToRender[0] && pagesToRender[0].studentData;
-        var name = pagesToRender.length === 1 && first ? String(first.student_name || "") + " | " + String(first.general_registration_code || "") : "Student Fee Ledger";
-        name = name.split('"').join("");
-        var css = "@page { @top-left { content: \"" + name + "\"; font-size: 8px; color: #444; } @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8px; color: #444; } }" +
-                  "@page :first { @top-left { content: \"\"; } }";
-        var st = document.createElement("style");
-        st.textContent = css;
-        document.head.appendChild(st);
-    })();
+    // Removed (commented out): the student name at the top of the 2nd page and "Page 1 of 2" at the bottom of every page
+    // (function () {
+    //     var first = pagesToRender[0] && pagesToRender[0].studentData;
+    //     var name = pagesToRender.length === 1 && first ? String(first.student_name || "") + " | " + String(first.general_registration_code || "") : "Student Fee Ledger";
+    //     name = name.split('"').join("");
+    //     var css = "@page { @top-left { content: \"" + name + "\"; font-size: 8px; color: #444; } @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8px; color: #444; } }" +
+    //               "@page :first { @top-left { content: \"\"; } }";
+    //     var st = document.createElement("style");
+    //     st.textContent = css;
+    //     document.head.appendChild(st);
+    // })();
 
     /* ================= PIN THE FINE NOTE + GENERATED LINE TO THE END OF THE LAST PRINTED PAGE ================= */
     function fitBottomBlocks() {

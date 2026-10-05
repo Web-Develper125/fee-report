@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Date Wise Fee Transaction Report</title>
+<style>
+    /* preview only: the Print button is not part of the report */
+    .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; z-index: 10; }
+    @media print { .print-btn { display: none !important; } }
+</style>
+</head>
+<body>
+<script>
+    /* ================= DUMMY DATA (same shape as the getFeeDefaultersNewFast API) ================= */
+    var systemSetting = { school_name: "Ai Schooling System", school_logo: "https://i.postimg.cc/jqB2gpTG/image.png" };
+
+    var CASH = "69f61a250ece5980ea7593d9", CASH_GEN = "69f61a250ece5980ea7593da", CASH_AYESHA = "6a99cd3ac6679a85f7c0ab5f";
+    var WALLET = "69f61a250ece5980ea7593db", WALLET_JAZZ = "69f61a600ece5980ea7593f4";
+    var BANK = "69f61a250ece5980ea7593dd", BANK_GEN = "69f61a250ece5980ea7593de";
+    var paymentChannels = [
+        { _id: CASH, mode_name: "Cash", sources: [{ _id: CASH_GEN, source: "General" }, { _id: CASH_AYESHA, source: "Ayesha" }] },
+        { _id: WALLET, mode_name: "Mobile Wallet", sources: [{ _id: WALLET_JAZZ, source: "Jazz Cash" }] },
+        { _id: BANK, mode_name: "Bank Transfer", sources: [{ _id: BANK_GEN, source: "General" }] }
+    ];
+    function getModeName(id) { for (var i = 0; i < paymentChannels.length; i++) if (paymentChannels[i]._id === id) return paymentChannels[i].mode_name; return ""; }
+    function getSourceName(id) { for (var i = 0; i < paymentChannels.length; i++) for (var j = 0; j < paymentChannels[i].sources.length; j++) if (paymentChannels[i].sources[j]._id === id) return paymentChannels[i].sources[j].source; return ""; }
+
+    // filters of the page (the report header prints them)
+    var session_id = "All", sessionName = "All", campus_name = "All", class_name = "All", section_name = "All", type_name = "All";
+    var fee_month = "", fee_year = 2026, custom_fee_name = "";
+    var start_date_incomePageFilter = "2026-09-29";
+    var end_date_incomePageFilter = "2026-10-02";
+    var selectedUsers = ["All"];
+    var selectedUsersLabel = selectedUsers.indexOf("All") !== -1 ? "All" : selectedUsers.join(", ");
+
+    function fee(o) {
+        return Object.assign({
+            _id: "inv" + Math.random().toString(36).slice(2, 8), fee_status: "Unpaid", paying_date: null, paid_amount: 0,
+            actual_fee: 3000, fee_after_discount: 3000, late_fine: 300, fee_discount: 0,
+            partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [],
+            class_name: "NINE", section_name: "SUPER BARIAN", campus_name: "IQBAL TOWN"
+        }, o);
+    }
+    var totalData = [
+        fee({ general_registration_code: "BSS-STD-1", student_family_code: "BSS-STD-1", student_name: "Rehan Ali", student_father_name: "Muhammad Akram", class_name: "SEVEN", section_name: "JINNAH",
+              title: "Fee Of September 2026", due_date: "2026-09-10T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-09-29T10:15:00.000Z", paid_amount: 3300,
+              payment_mode_id: CASH, payment_mode_source_id: CASH_GEN, payment_recieved_by: "Ali Raza" }),
+        fee({ general_registration_code: "BSS-STD-2", student_family_code: "BSS-STD-2", student_name: "Sara Khan", student_father_name: "Imran Khan", class_name: "SEVEN", section_name: "JINNAH",
+              title: "Fee Of September 2026", due_date: "2026-09-10T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-09-30T05:20:00.000Z", paid_amount: 3200, late_fine: 200,
+              late_fee_fine_discount_history: [{ date: "2026-09-30T05:18:00.000Z", amount: 100, reason: "Fine Discount", discount_by: "Usman", approved_by: "DEMO" }],
+              payment_mode_id: CASH, payment_mode_source_id: CASH_GEN, payment_recieved_by: "Usman" }),
+        fee({ general_registration_code: "BSS-STD-3", student_family_code: "BSS-STD-3", student_name: "Hamza Tariq", student_father_name: "Tariq Mehmood", class_name: "EIGHT", section_name: "IQBAL",
+              title: "Fee Of August 2026", due_date: "2026-08-10T00:00:00.000Z", fee_status: "Unpaid", paid_amount: 1500,
+              partial_payment_history: [
+                  { amount: 1000, date: "2026-09-30T08:30:00.000Z", payment_mode_id: CASH, payment_mode_source_id: CASH_AYESHA, payment_recieved_by: "Ayesha" },
+                  { amount: 500, date: "2026-10-01T11:05:00.000Z", payment_mode_id: WALLET, payment_mode_source_id: WALLET_JAZZ, payment_recieved_by: "Usman" }
+              ] }),
+        fee({ general_registration_code: "BSS-STD-11", student_family_code: "BSS-STD-11", student_name: "Adnan Ahmed", student_father_name: "Muhammad Kamran",
+              title: "Fee Of October 2026", due_date: "2026-10-10T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-10-01T09:16:00.000Z", paid_amount: 2400,
+              actual_fee: 3000, fee_after_discount: 2400,
+              further_discount_history: [{ date: "2026-10-01T09:16:00.000Z", amount: 600, reason: "Further Discount", discount_by: "DEMO", approved_by: "DEMO" }],
+              payment_mode_id: BANK, payment_mode_source_id: BANK_GEN, payment_recieved_by: "Ali Raza" }),
+        fee({ general_registration_code: "BSS-STD-12", student_family_code: "BSS-STD-12", student_name: "Ayesha Noor", student_father_name: "Noor Muhammad",
+              title: "CONTEEN FEE 2026", due_date: "2026-10-05T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-10-02T06:40:00.000Z", paid_amount: 4500,
+              actual_fee: 4500, fee_after_discount: 4500,
+              payment_mode_id: CASH, payment_mode_source_id: CASH_GEN, payment_recieved_by: "Ayesha" }),
+        fee({ general_registration_code: "BSS-STD-20", student_family_code: "BSS-STD-20", student_name: "Bilal Ahmed", student_father_name: "Ahmed Hussain", class_name: "TEN", section_name: "YELLOW",
+              title: "Fee Of July 2026", due_date: "2026-07-10T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-10-02T09:00:00.000Z", paid_amount: 3300,
+              partial_payment_history: [{ amount: 1000, date: "2026-10-01T10:10:00.000Z", payment_mode_id: CASH, payment_mode_source_id: CASH_GEN, payment_recieved_by: "Ali Raza" }],
+              payment_mode_id: BANK, payment_mode_source_id: BANK_GEN, payment_recieved_by: "Usman" }),
+        fee({ general_registration_code: "BSS-STD-21", student_family_code: "BSS-STD-21", student_name: "Zainab Ali", student_father_name: "Ali Hassan", class_name: "TEN", section_name: "YELLOW",
+              title: "STATIONARY FEE 2026", due_date: "2026-10-15T00:00:00.000Z", fee_status: "Paid", paying_date: "2026-10-02T07:25:00.000Z", paid_amount: 1500,
+              actual_fee: 1500, fee_after_discount: 1500,
+              payment_mode_id: WALLET, payment_mode_source_id: WALLET_JAZZ, payment_recieved_by: "DEMO" }),
+        fee({ general_registration_code: "BSS-STD-30", student_family_code: "BSS-STD-30", student_name: "Hassan Raza", student_father_name: "Raza Ali", class_name: "SIX", section_name: "JINNAH",
+              title: "Fee Of June 2026", due_date: "2026-06-10T00:00:00.000Z", fee_status: "Unpaid", paid_amount: 800,
+              partial_payment_history: [{ amount: 800, date: "2026-10-02T04:50:00.000Z", payment_mode_id: CASH, payment_mode_source_id: CASH_GEN, payment_recieved_by: "Ali Raza" }] })
+    ];
+
+    /* ================= SAME CODE AS Fee Income Report.jsx ================= */
+    const INCLUDE_DATELESS_PAYMENTS = true;
+    const normalizeName = (value) => String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+    const sortByGrCode = (a, b) => String(a?.student_family_code ?? "").localeCompare(String(b?.student_family_code ?? ""), undefined, { numeric: true, sensitivity: "base" });
+
+    const formatDateTime = (value) => {
+        if (!value) return null;
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return null;
+        const dateString = date.toLocaleDateString("pt-PT");
+        if (date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0) { return dateString; }
+        const timeString = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return `${dateString} ${timeString}`;
+    };
+
+    const getPaymentSegments = (row) => {
+        const segments = [];
+        const history = row?.partial_payment_history || [];
+        history.forEach((payment) => {
+            const amount = Number(payment?.amount) || 0;
+            if (amount <= 0) return;
+            segments.push({ amount, receivedBy: String(payment?.payment_recieved_by || payment?.paymentRecievedBy || "").trim(), date: payment?.date ? new Date(payment.date) : null, type: "partial" });
+        });
+        const partialSum = history.reduce((sum, payment) => sum + (Number(payment?.amount) || 0), 0);
+        const quickPayAmount = (Number(row?.paid_amount) || 0) - partialSum;
+        if (quickPayAmount > 0) {
+            segments.push({ amount: quickPayAmount, receivedBy: String(row?.payment_recieved_by || row?.paymentRecievedBy || "").trim(), date: row?.paying_date ? new Date(row.paying_date) : null, type: "quick" });
+        }
+        return segments;
+    };
+    const getRangeBounds = () => ({
+        start_date: new Date(`${start_date_incomePageFilter}T00:00:00.000+05:00`),
+        end_date: new Date(`${end_date_incomePageFilter}T23:59:59.999+05:00`),
+    });
+    const isDateInRange = (value, start_date, end_date) => {
+        if (!value) return INCLUDE_DATELESS_PAYMENTS;
+        const date = value instanceof Date ? value : new Date(value);
+        if (isNaN(date.getTime())) return INCLUDE_DATELESS_PAYMENTS;
+        return date >= start_date && date <= end_date;
+    };
+    const getSegmentsInRange = (row) => {
+        const { start_date, end_date } = getRangeBounds();
+        return getPaymentSegments(row).filter((segment) => isDateInRange(segment.date, start_date, end_date));
+    };
+    const isSelectedReceiver = (receivedBy) => {
+        if (!selectedUsers?.length || selectedUsers.includes("All")) return true;
+        const raw = String(receivedBy || "").trim();
+        if (!raw) return selectedUsers.includes("Unknown");
+        const norm = normalizeName(raw);
+        return selectedUsers.some((u) => u !== "All" && u !== "Unknown" && normalizeName(u) === norm);
+    };
+    const getPaidInRange = (row) => getSegmentsInRange(row).reduce((sum, segment) => (isSelectedReceiver(segment.receivedBy) ? sum + segment.amount : sum), 0);
+    const getDiscountBy = (entry) => String(entry?.discount_by || entry?.further_discount_discount_by || entry?.late_fee_fine_discount_discount_by || entry?.by || "").trim();
+    const getDiscountsInRange = (row) => {
+        const { start_date, end_date } = getRangeBounds();
+        const collect = (list) => (list || []).filter((entry) => isDateInRange(entry?.date, start_date, end_date)).map((entry) => ({ amount: Number(entry?.amount) || 0, by: getDiscountBy(entry), date: entry?.date ? new Date(entry.date) : null }));
+        return { further: collect(row?.further_discount_history), fine: collect(row?.late_fee_fine_discount_history) };
+    };
+    const rowMatchesUser = (row) => {
+        if (!selectedUsers?.length || selectedUsers.includes("All")) return true;
+        const segments = getSegmentsInRange(row);
+        const { further, fine } = getDiscountsInRange(row);
+        return segments.some((s) => isSelectedReceiver(s.receivedBy)) || further.some((e) => isSelectedReceiver(e.by)) || fine.some((e) => isSelectedReceiver(e.by));
+    };
+
+    // ---- data processing (useEffect of the page) ----
+    totalData.sort(sortByGrCode);
+    var allStudentData = (!selectedUsers?.length || selectedUsers.includes("All")) ? totalData : totalData.filter(rowMatchesUser);
+    var totalStudent = 0, totalExpectedFee = 0, totalFullFee = 0, totalPartialFee = 0, totalAmount = 0, totalUnpaidCount = 0, totalFeeDiscount = 0, totalFineDiscount = 0;
+    (function () {
+        const today = new Date().toLocaleDateString("en-CA");
+        let studentsArray = [], totalExpected = 0, totalFull = 0, totalPartial = 0, feeDiscountSum = 0, fineDiscountSum = 0;
+        allStudentData.forEach(item => {
+            if (!studentsArray.includes(item.general_registration_code)) studentsArray.push(item.general_registration_code);
+            const dueDate = new Date(item.due_date).toLocaleDateString("en-CA");
+            const payingDate = item.paying_date ? new Date(item.paying_date).toLocaleDateString("en-CA") : null;
+            const clearDate = item.clear_fee_date ? new Date(item.clear_fee_date).toLocaleDateString("en-CA") : null;
+            const isDue = item.fee_status === "Paid" ? payingDate > dueDate : item.fee_status === "Clear" ? clearDate > dueDate : today > dueDate;
+            const feeAfterDiscount = Number(item.fee_after_discount) || 0;
+            const lateFine = Number(item.late_fine) || 0;
+            totalExpected += isDue ? feeAfterDiscount + lateFine : feeAfterDiscount;
+            getSegmentsInRange(item).forEach((segment) => {
+                if (!isSelectedReceiver(segment.receivedBy)) return;
+                if (segment.type === "partial") totalPartial += segment.amount; else totalFull += segment.amount;
+            });
+            const { further, fine } = getDiscountsInRange(item);
+            further.forEach((entry) => { if (isSelectedReceiver(entry.by)) feeDiscountSum += entry.amount; });
+            fine.forEach((entry) => { if (isSelectedReceiver(entry.by)) fineDiscountSum += entry.amount; });
+        });
+        totalStudent = studentsArray.length; totalExpectedFee = totalExpected; totalFullFee = totalFull; totalPartialFee = totalPartial;
+        totalAmount = totalFull + totalPartial; totalUnpaidCount = allStudentData.length; totalFeeDiscount = feeDiscountSum; totalFineDiscount = fineDiscountSum;
+    })();
+
+    // ---- User Wise Breakdown rows ----
+    const userCollectedRows = (function () {
+        const buckets = new Map();
+        const ensure = (key, label) => { if (!buckets.has(key)) buckets.set(key, { key, label, invoices: new Set(), furtherDiscount: 0, fineDiscount: 0, paid: 0 }); return buckets.get(key); };
+        const bucketFor = (receivedBy) => { const raw = String(receivedBy || "").trim(); if (!raw) return ensure("__unknown__", "Unknown"); return ensure(normalizeName(raw), raw); };
+        const invoiceKeyOf = (row) => row._id || row.voucher_id || `${row.general_registration_code}-${row.title}-${row.due_date}`;
+        (totalData || []).forEach((row) => {
+            const invoiceKey = invoiceKeyOf(row);
+            getSegmentsInRange(row).forEach((segment) => { const b = bucketFor(segment.receivedBy); b.paid += segment.amount; b.invoices.add(invoiceKey); });
+            const { further, fine } = getDiscountsInRange(row);
+            further.forEach((entry) => { const b = bucketFor(entry.by); b.furtherDiscount += entry.amount; b.invoices.add(invoiceKey); });
+            fine.forEach((entry) => { const b = bucketFor(entry.by); b.fineDiscount += entry.amount; b.invoices.add(invoiceKey); });
+        });
+        return [...buckets.values()].map((b) => ({ username: b.label, invoiceCount: b.invoices.size, furtherDiscount: b.furtherDiscount, fineDiscount: b.fineDiscount, paid: b.paid }))
+            .sort((a, b) => b.paid - a.paid || String(a.username).localeCompare(String(b.username)));
+    })();
+    const filteredUserCollectedRows = (!selectedUsers?.length || selectedUsers.includes("All")) ? userCollectedRows : userCollectedRows.filter((row) => {
+        if (row.username === "Unknown") return selectedUsers.includes("Unknown");
+        const norm = normalizeName(row.username);
+        return selectedUsers.some((u) => u !== "All" && u !== "Unknown" && normalizeName(u) === norm);
+    });
+
+    // ---- print helpers ----
+    const getModeSourcePrintString = (i) => {
+        const segments = [];
+        if (i?.partial_payment_history?.length > 0) {
+            segments.push(...i.partial_payment_history.map(p => ({ amount: p.amount, mode_id: p.payment_mode_id, date: p.date, source_id: p.payment_mode_source_id, receivedBy: String(p?.payment_recieved_by || p?.paymentRecievedBy || "").trim(), type: 'partial' })));
+        }
+        const partialSum = i?.partial_payment_history?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        const quickPayAmount = (i.paid_amount || 0) - partialSum;
+        if (quickPayAmount > 0) {
+            segments.push({ amount: quickPayAmount, mode_id: i.payment_mode_id, date: i.paying_date, source_id: i.payment_mode_source_id, receivedBy: String(i?.payment_recieved_by || i?.paymentRecievedBy || "").trim(), type: 'quick' });
+        }
+        if (segments.length === 0) {
+            const mode = i.payment_mode_id ? getModeName(i.payment_mode_id) : '-';
+            const source = i.payment_mode_source_id ? getSourceName(i.payment_mode_source_id) : '';
+            return `${mode}${source ? ` / ${source}` : ''}`;
+        }
+        if (segments.length === 1 && segments[0].type === 'quick') {
+            const mode = segments[0].mode_id ? getModeName(segments[0].mode_id) : '-';
+            const source = segments[0].source_id ? getSourceName(segments[0].source_id) : '';
+            const who = segments[0].receivedBy ? ` (${segments[0].receivedBy})` : '';
+            return `${mode}${source ? ` / ${source}` : ''}${who}`;
+        }
+        return segments.map(seg => {
+            const mode = seg.mode_id ? getModeName(seg.mode_id) : '-';
+            const source = seg.source_id ? getSourceName(seg.source_id) : '';
+            const who = seg.receivedBy ? ` (${seg.receivedBy})` : '';
+            return `${seg.amount} = ${mode}${source ? ` / ${source}` : ''}${who} (${formatDateTime(seg.date) || '-'})`;
+        }).join('<br/>');
+    };
+    const getFinePrintBlock = (i) => {
+        const history = i?.late_fee_fine_discount_history || [];
+        const currentFine = Number(i?.late_fine) || 0;
+        if (!history.length) return `${currentFine?.toLocaleString() || 0}`;
+        const totalDiscounted = history.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        const initialFine = currentFine + totalDiscounted;
+        const lines = [`Initial Fine: ${initialFine.toLocaleString()}`];
+        history.forEach((entry) => {
+            const dateStr = entry.date;
+            const by = String(entry.discount_by || entry.by || '').trim();
+            lines.push(`dis ${Number(entry.amount || 0).toLocaleString()} (${formatDateTime(dateStr)})${by ? ` (${by})` : ''}`);
+        });
+        lines.push(`Current Fine: ${currentFine.toLocaleString()}`);
+        return lines.join('<br/>');
+    };
+    const getFurtherDiscountPrintBlock = (i) => {
+        const history = i?.further_discount_history || [];
+        if (!history.length) return `0`;
+        const lines = [];
+        history.forEach((entry) => {
+            const dateStr = entry.date;
+            const by = String(entry.discount_by || entry.by || '').trim();
+            lines.push(`dis ${Number(entry.amount || 0).toLocaleString()} (${formatDateTime(dateStr)})${by ? ` (${by})` : ''}`);
+        });
+        return lines.join('<br/>');
+    };
+
+    const buildDateWiseSummaryRows = () => {
+        const today = new Date().toLocaleDateString("en-CA");
+        const dateMap = {};
+        const ensureDate = (dateKey) => {
+            if (!dateMap[dateKey]) dateMap[dateKey] = { invoiceIds: new Set(), furtherDiscount: 0, fineDiscount: 0, total: 0, paid: 0, totalByInvoice: {} };
+            return dateMap[dateKey];
+        };
+        const getInvoiceKey = (item) => item._id || item.voucher_id || `${item.general_registration_code}-${item.title}-${item.due_date}`;
+        const getRowTotal = (item) => {
+            const dueDate = new Date(item.due_date).toLocaleDateString("en-CA");
+            const isOverdue = item.fee_status === "Paid" ? new Date(item.paying_date).toLocaleDateString("en-CA") > dueDate
+                : item.fee_status === "Clear" ? new Date(item.clear_fee_date).toLocaleDateString("en-CA") > dueDate : today > dueDate;
+            const feeAfterDiscount = Number(item.fee_after_discount) || 0;
+            const lateFine = Number(item.late_fine) || 0;
+            return isOverdue ? feeAfterDiscount + lateFine : feeAfterDiscount;
+        };
+        const addPaymentToDate = (item, dateKey, amount) => {
+            if (!amount) return;
+            const day = ensureDate(dateKey);
+            const invoiceKey = getInvoiceKey(item);
+            const rowTotal = getRowTotal(item);
+            day.paid += amount;
+            day.invoiceIds.add(invoiceKey);
+            if (!day.totalByInvoice[invoiceKey]) { day.totalByInvoice[invoiceKey] = rowTotal; day.total += rowTotal; }
+        };
+        totalData.forEach((item) => {
+            const invoiceKey = getInvoiceKey(item);
+            const { further, fine } = getDiscountsInRange(item);
+            further.forEach((entry) => {
+                if (!isSelectedReceiver(entry.by) || !entry.date) return;
+                const day = ensureDate(entry.date.toLocaleDateString("en-CA"));
+                day.furtherDiscount += entry.amount; day.invoiceIds.add(invoiceKey);
+            });
+            fine.forEach((entry) => {
+                if (!isSelectedReceiver(entry.by) || !entry.date) return;
+                const day = ensureDate(entry.date.toLocaleDateString("en-CA"));
+                day.fineDiscount += entry.amount; day.invoiceIds.add(invoiceKey);
+            });
+            getSegmentsInRange(item).forEach((segment) => {
+                if (!isSelectedReceiver(segment.receivedBy) || !segment.date) return;
+                addPaymentToDate(item, segment.date.toLocaleDateString("en-CA"), segment.amount);
+            });
+        });
+        const [startY, startM, startD] = start_date_incomePageFilter.split("-").map(Number);
+        const [endY, endM, endD] = end_date_incomePageFilter.split("-").map(Number);
+        const cursor = new Date(startY, startM - 1, startD);
+        const rangeEnd = new Date(endY, endM - 1, endD);
+        const allDateKeys = [];
+        while (cursor <= rangeEnd) { allDateKeys.push(cursor.toLocaleDateString("en-CA")); cursor.setDate(cursor.getDate() + 1); }
+        return allDateKeys.map((dateKey) => {
+            const day = dateMap[dateKey];
+            if (!day) return { date: dateKey, invoiceCount: 0, furtherDiscount: 0, fineDiscount: 0, total: 0, paid: 0, due: 0 };
+            const due = Math.max(0, day.total - day.paid);
+            return { date: dateKey, invoiceCount: day.invoiceIds.size, furtherDiscount: day.furtherDiscount, fineDiscount: day.fineDiscount, total: day.total, paid: day.paid, due };
+        });
+    };
+
+    const getUserWisePrintTableHtml = () => {
+        const rows = filteredUserCollectedRows || [];
+        const grandTotals = rows.reduce((acc, row) => ({
+            invoiceCount: acc.invoiceCount + Number(row.invoiceCount || 0),
+            furtherDiscount: acc.furtherDiscount + Number(row.furtherDiscount || 0),
+            fineDiscount: acc.fineDiscount + Number(row.fineDiscount || 0),
+            paid: acc.paid + Number(row.paid || 0),
+        }), { invoiceCount: 0, furtherDiscount: 0, fineDiscount: 0, paid: 0 });
+        const tableRowsHtml = rows.length > 0 ? rows.map((row) => `
+                    <tr>
+                        <td class="table-cell date-cell">${row.username || '-'}</td>
+                        <!--<td class="table-cell center strong">${row.invoiceCount}</td>-->
+                        <td class="table-cell right">${row.furtherDiscount.toLocaleString()}</td>
+                        <td class="table-cell right">${row.fineDiscount.toLocaleString()}</td>
+                        <td class="table-cell right strong">${row.paid.toLocaleString()}</td>
+                    </tr>`).join("") : `<tr><td colspan="4" class="no-records">No Records Found!</td></tr>`;
+        return `
+            <div class="section-title" style="margin-top: 14px;">User Wise Breakdown</div>
+            <table>
+                <thead>
+                    <tr class="table-head-row">
+                        <th class="table-head-cell">User</th>
+                        <!--<th class="table-head-cell">Transactions</th>-->
+                        <th class="table-head-cell right">Further Fee Discount</th>
+                        <th class="table-head-cell right">Fine Discount</th>
+                        <th class="table-head-cell right" style="font-size:10px;">Receiving</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRowsHtml}
+                    ${rows.length > 0 ? `
+                    <tr class="grand-total-row">
+                        <td class="grand-total-label">Grand Total:</td>
+                        <!--<td class="grand-total-cell">${grandTotals.invoiceCount}</td>-->
+                        <td class="grand-total-cell right">${grandTotals.furtherDiscount.toLocaleString()}</td>
+                        <td class="grand-total-cell right">${grandTotals.fineDiscount.toLocaleString()}</td>
+                        <td class="grand-total-cell right">${grandTotals.paid.toLocaleString()}</td>
+                    </tr>` : ""}
+                </tbody>
+            </table>
+        `;
+    };
+
+    /* ================= handlePrintDateWiseReport (portrait summary) - the HTML string, unchanged ================= */
+    const buildDateWiseReportHtml = () => {
+        const summaryRows = buildDateWiseSummaryRows();
+        const grandTotals = summaryRows.reduce((acc, row) => ({
+            invoiceCount: acc.invoiceCount + row.invoiceCount, furtherDiscount: acc.furtherDiscount + row.furtherDiscount, fineDiscount: acc.fineDiscount + row.fineDiscount,
+            total: acc.total + row.total, paid: acc.paid + row.paid, due: acc.due + row.due,
+        }), { invoiceCount: 0, furtherDiscount: 0, fineDiscount: 0, total: 0, paid: 0, due: 0 });
+
+        const tableRowsHtml = summaryRows.length > 0 ? summaryRows.map((row) => `
+                    <tr>
+                        <td class="table-cell date-cell">${new Date(row.date).toLocaleDateString("pt-PT")}</td>
+                        <td class="table-cell center strong">${row.invoiceCount}</td>
+                        <td class="table-cell right">${row.furtherDiscount.toLocaleString()}</td>
+                        <td class="table-cell right">${row.fineDiscount.toLocaleString()}</td>
+                        <!--<td class="table-cell right">${row.total.toLocaleString()}</td>-->
+                        <td class="table-cell right strong">${row.paid.toLocaleString()}</td>
+                        <!--<td class="table-cell right">${row.due.toLocaleString()}</td>-->
+                    </tr>`).join("") : `<tr><td colspan="7" class="no-records">No Records Found!</td></tr>`;
+
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Date Wise Fee Transaction Report - Summary</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                    * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",sans-serif !important; }
+                    @page { size: A4 portrait; margin: 3mm; }
+                    html, body {
+                        background: white;
+                        font-size: 9px;
+                        line-height: 1.2;
+                        padding: 5px;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .print-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:11px; border-bottom:2px solid #d1d5db; padding-bottom:11px; }
+                    .logo-box { width:71px; }
+                    .school-logo { width:71px; height:71px; object-fit:contain; }
+                    .school-header { text-align:center; flex:1; }
+                    .school-title { font-size:17px; font-weight:800; color:#17181a; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+                    .report-title { font-size:12px; font-weight:700; color:#2e2f30; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+                    .header-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; font-size:10px; font-weight:600; color:#141414; line-height:1.35; }
+                    .summary-bar { border:1px solid #9ca3af; border-top:4px solid #1f2937; margin-bottom:11px; padding:9px; background:#f3f4f6; border-radius:5px; }
+                    .summary-title { font-size:11px; font-weight:700; color:#111827; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #9ca3af; padding-bottom:7px; margin-bottom:8px; }
+                    .summary-flex { display:flex; justify-content:space-around; flex-wrap:wrap; gap:5px; }
+                    .summary-item { flex:1; min-width:80px; text-align:center; }
+                    .summary-label { font-size:9px; color:#1f2937; text-transform:uppercase; font-weight:700; }
+                    .summary-value { font-size:14px; color:#111827; font-weight:700; margin-top:2px; }
+                    .summary-value.strong { font-weight:800; }
+                    .section-title { font-size:11px; font-weight:700; color:#111827; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #6b7280; padding-bottom:7px; margin-bottom:8px; }
+                    table { width:100%; border-collapse:collapse; font-size:10px; border: 1px solid #9ca3af; /* ADD TABLE BORDER */ }
+                    thead tr.table-head-row { background:#1f2937; }
+                    .table-head-cell { padding:4px 8px; text-align:center; color:#fff; font-weight:700; font-size:10px; text-transform:uppercase; border: 1px solid #9ca3af; /* border for header cells */ }
+                    .table-head-cell.right { text-align:right; font-size:10px; }
+                    .table-row {}
+                    .table-cell { padding:4px 8px; border:1px solid #d1d5db; /* border for table cells */ font-weight:600; }
+                    .table-cell.right { text-align:right; }
+                    .table-cell.center { text-align:center; }
+                    .table-cell.strong { font-weight:700; font-size:12px; }
+                    .date-cell { text-align:center; font-weight:600; }
+                    /* Removed .border-mid styles as requested */
+                    .no-records { text-align:center; padding:17px; font-size:12px; border: 1px solid #d1d5db; }
+                    .grand-total-row { background:#1f2937; }
+                    .grand-total-label { padding:4px 8px; text-align:right; color:#fff; font-weight:700; font-size:10px; text-transform:uppercase; border: 1px solid #4b5563; }
+                    .grand-total-cell { padding:4px 8px; font-weight:800; font-size:12px; color:#fff; text-align:center; border: 1px solid #4b5563; }
+                    .grand-total-cell.right { text-align:right; }
+                    /* Removed .grand-total-cell.border-mid as requested */
+                    .print-footer { margin-top: 11px; padding-top: 7px; border-top: 1px solid #e2e8f0; font-size: 10px; color:rgb(56, 56, 56); text-align: center; font-weight:700; }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <div class="logo-box">
+                        ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="school-logo" alt="Logo" />` : ''}
+                    </div>
+                    <div class="school-header">
+                        <div class="school-title">${systemSetting?.school_name || ''}</div>
+                        <div class="report-title">Date Wise Fee Transaction Report</div>
+                        <div class="header-row">
+                            <span>Session: <strong>${sessionName}</strong></span>
+                            <span>Campus: <strong>${campus_name || "All"}</strong></span>
+                            <span>Class: <strong>${class_name || "All"}</strong></span>
+                            <span>Section: <strong>${section_name || "All"}</strong></span>
+                            <span>Fee Type: <strong>${type_name || "All"}</strong></span>
+                            ${type_name === "Monthly Fee" || type_name === "Transport Fee" ? `<span>Month/Year: <strong>${fee_month || "-"} / ${fee_year}</strong></span>` : ""}
+                            ${type_name === "Custom Fee" ? `<span>Fee Name: <strong>${custom_fee_name || "-"}</strong></span>` : ""}
+                        </div>
+                        <div class="header-row">
+                            <span>Date: <strong><u>${new Date(start_date_incomePageFilter).toLocaleDateString("pt-PT")}</u> TO <u>${new Date(end_date_incomePageFilter).toLocaleDateString("pt-PT")}</u></strong></span>
+                            <span>Received By: <strong>${selectedUsersLabel}</strong></span>
+                        </div>
+                    </div>
+                    <div class="logo-box"></div>
+                </div>
+
+                <div class="summary-bar">
+                    <div class="summary-title">Summary</div>
+                    <div class="summary-flex">
+                        <div class="summary-item">
+                            <div class="summary-label">Students</div>
+                            <div class="summary-value">${totalStudent}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Number Of Invoices</div>
+                            <div class="summary-value">${totalUnpaidCount.toLocaleString()}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Net Receiving</div>
+                            <div class="summary-value strong">Rs. ${totalAmount.toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Date Wise Breakdown</div>
+                <table>
+                    <thead>
+                        <tr class="table-head-row">
+                            <th class="table-head-cell">Date</th>
+                            <th class="table-head-cell">Transactions</th>
+                            <th class="table-head-cell right">Further Fee Discount</th>
+                            <th class="table-head-cell right">Fine Discount</th>
+                            <!--<th class="table-head-cell right">Total</th>-->
+                            <th class="table-head-cell right" style="font-size:10px;">Receiving</th>
+                            <!--<th class="table-head-cell right">Dues</th>-->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHtml}
+                        ${summaryRows.length > 0 ? `
+                        <tr class="grand-total-row">
+                            <td class="grand-total-label">Grand Total:</td>
+                            <td class="grand-total-cell">${grandTotals.invoiceCount}</td>
+                            <td class="grand-total-cell right">${grandTotals.furtherDiscount.toLocaleString()}</td>
+                            <td class="grand-total-cell right">${grandTotals.fineDiscount.toLocaleString()}</td>
+                            <!--<td class="grand-total-cell right">${grandTotals.total.toLocaleString()}</td>-->
+                            <td class="grand-total-cell right">${grandTotals.paid.toLocaleString()}</td>
+                            <!--<td class="grand-total-cell right">${grandTotals.due.toLocaleString()}</td>-->
+                        </tr>` : ""}
+                    </tbody>
+                </table>
+                ${getUserWisePrintTableHtml()}
+                <div class="print-footer">
+                    Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                </div>
+            </body>
+            </html>
+        `;
+    };
+
+
+    /* ================= SHOW THE REPORT (the same HTML string the app writes into its print window) ================= */
+    (function () {
+        var html = buildDateWiseReportHtml();
+        var btn = '<button class="print-btn" onclick="window.print()">Print</button>';
+        html = html.replace('</style>', '.print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; z-index: 10; } @media print { .print-btn { display: none !important; } }</style>').replace('</body>', btn + '</body>');
+        document.open();
+        document.write(html);
+        document.close();
+    })();
+</script>
+</body>
+</html>
