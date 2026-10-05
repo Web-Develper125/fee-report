@@ -13,7 +13,7 @@
                     font-family: "Poppins", sans-serif !important;
                 }
                 @page {
-                    size: A4 landscape;
+                    size: A4 auto;   /* old: A4 landscape */
                     margin: 7mm;
                 }
                 html {
@@ -121,10 +121,19 @@
                 }
                 tr.grand-total td:first-child { text-align: right; text-transform: uppercase; }
                 tr.grand-total td.col-due { font-size: 13px; border-bottom: 3px double #000; }
+                /* Student Total row: Actual Class Fee, Fee After Discount and Further Fee Disc totals are normal weight (old: all bold). Total / Paid / Dues stay bold */
+                .ledger-table tr.grand-total td.align-right:not(.col-total):not(.col-paid):not(.col-due) { font-weight: 400; }
                 .zero-dash { color: #999; font-size: 9px; font-weight: 400; }
                 /* fine not applicable: dark, so it is clearly visible on a black and white print (old: color #999; font-weight 400) */
-                .fine-na { color: #000; font-size: 9px; font-weight: 600; }
-                .fine-ok { font-size: 10px; font-weight: 700; }
+                .fine-na { color: #000; font-size: 9px; font-weight: 400; }   /* old: 600. Not used now: a fee that is not overdue shows only a dash */
+                .fine-ok { font-size: 10px; font-weight: 400; }   /* old: 700. Not used now: the check mark is removed */
+                /* Grand Total / Student Total, Fine cell: two small boxes side by side, DISC (fine discount) and APL (fine applied), each with its amount under it */
+                td.fine-pair-cell { padding: 0 !important; }
+                .fine-pair { display: flex; }
+                .fine-pair > div { flex: 1; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
+                .fine-pair > div + div { border-left: 1px solid #999; }
+                .fine-pair span { font-size: 7px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #999; padding: 1px 2px; background: #e6e6e6; }
+                .fine-pair b { font-size: 9px; font-weight: 400; padding: 2px; white-space: nowrap; }
                 .dt span { white-space: nowrap; }   /* the date and the time stay whole, the time moves to the next line when the cell is too narrow */
                 .dt span + span { margin-left: 8px; }
                 .green { color: rgb(0, 0, 0) !important; }
@@ -204,6 +213,9 @@
                     border-top: 1px solid #000;
                 }
                 .summary-card:first-child { border-top: none; }
+                .summary-card { border-top: 1px dotted #999; }
+                .summary-card.result { border-top: 1px solid #000; }
+                .summary-card.result .summary-label { font-weight: 700; }
                 .summary-card.dues { background-color: #e6e6e6 !important; border-top: 2px solid #000; }
                 .summary-card.dues .summary-label { font-weight: 700; }
                 .summary-card.dues .summary-value { font-size: 15px; }
@@ -215,9 +227,10 @@
                 }
                 .summary-value {
                     font-size: 12px;
-                    font-weight: 700;
+                    font-weight: 400;   /* old: 700 for every amount. Now only the = lines are bold */
                     color: #000;
                 }
+                .summary-card.result .summary-value, .summary-card.dues .summary-value { font-weight: 700; }
                 .summary-section {
                     border: 1px solid #ddd;
                     margin: 11px 0;
@@ -662,15 +675,39 @@
         const monthOrder = (i) => (i.fee_month && i.fee_year ? Number(i.fee_year) * 12 + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].indexOf(i.fee_month) : 0);
         const byDueDate = (a, b) => (new Date(a.due_date) - new Date(b.due_date)) || (monthOrder(a) - monthOrder(b)) || (new Date(a.fee_generation_date) - new Date(b.fee_generation_date)) || String(a.title).localeCompare(String(b.title));
         const sortFees = (feeData) => [
-            ...feeData.filter(i => Number(i.dues || 0) > 0 && i.due).sort(byDueDate),
-            ...feeData.filter(i => Number(i.dues || 0) > 0 && !i.due).sort(byDueDate),
-            ...feeData.filter(i => Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)),   // old: .sort(byDueDate)
+            ...feeData.filter(i => i.status !== 'Clear' && Number(i.dues || 0) > 0 && i.due).sort(byDueDate),
+            ...feeData.filter(i => i.status !== 'Clear' && Number(i.dues || 0) > 0 && !i.due).sort(byDueDate),
+            ...feeData.filter(i => i.status === 'Clear' || Number(i.dues || 0) <= 0).sort((a, b) => (new Date(b.paying_date || 0) - new Date(a.paying_date || 0)) || byDueDate(a, b)),   // old: .sort(byDueDate)
         ];
 
         // ---------- Family report: father details on top, siblings, then one detailed ledger per sibling ----------
         // Totals of a list of fee rows (same formulas as the Student Detailed report):
         //   expected = sum of Total, collected = sum of Paid, pending = sum of Dues, discount = (actual fee - fee after discount) + fine discounts,
         //   afterDiscount = fee after discount + further discounts, fine = fines included in Total (overdue fees only)
+        const computeStats = (feeData) => {
+            const st = { expected: 0, collected: 0, pending: 0, discount: 0, actual: 0, afterDiscount: 0, further: 0, fine: 0, fineDiscount: 0, clearedWaived: 0 };
+            feeData.forEach(item => {
+                const collected = item.paid_amount || 0;
+                // a cleared fee waives the remaining amount: Net Receivable counts what was paid, Dues is 0
+                const cleared = item.status === 'Clear';
+                st.expected += cleared ? collected : (item.total || 0);
+                st.collected += collected;
+                st.pending += cleared ? 0 : (item.dues || 0);
+                if (cleared) st.clearedWaived += Number(item.total || 0) - Number(collected);
+                // Discount = further discounts + fine discounts. A fine discount counts only when that fine is inside Total (overdue fee).
+                // The monthly fee discount (percent) is not part of it.
+                const furtherDiscountAmount = (item.further_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0);
+                const fineDiscountAmount = item.due ? (item.late_fee_fine_discount_history || []).reduce((sum, d) => sum + Number(d.amount || 0), 0) : 0;
+                st.discount += furtherDiscountAmount + fineDiscountAmount;
+                st.actual += Number(item.actual_fee || 0);
+                st.afterDiscount += Number(item.fee_after_discount || 0) + furtherDiscountAmount;
+                st.further += furtherDiscountAmount;
+                st.fine += item.due ? Number(item.fine || 0) : 0;
+                st.fineDiscount += fineDiscountAmount;   // shown in the DISC box of the total row
+            });
+            return st;
+        };
+        /* old computeStats (commented out): Discount included the monthly percent discount and every fine discount, cleared fees were not handled
         const computeStats = (feeData) => {
             const st = { expected: 0, collected: 0, pending: 0, discount: 0, actual: 0, afterDiscount: 0, further: 0, fine: 0, fineDiscount: 0 };
             feeData.forEach(item => {
@@ -689,24 +726,30 @@
             });
             return st;
         };
+        */
 
         // One fee row of the detailed ledger (same row as the Student Detailed report)
         const renderFeeRow = (item, srNo) => {
             const fdHistory = item.further_discount_history || [];
             const furtherDiscountHtml = getAmountDateHistoryStr(fdHistory) || dash;
-            // Fine states: applicable (fee is overdue, fine is included in Total) = fine + check mark,
-            // not applicable (fee is not overdue) = fine + cross mark
+            // Fine: a fee that is not overdue yet shows only the grey dash. An overdue fee shows its fine (with the initial fine and the discount history
+            // when a fine discount was given). No check / cross marks.
             const hasFineHistory = (item.late_fee_fine_discount_history || []).length > 0;
-            let fineHtml;
-            if (Number(item.fine || 0) === 0 && !hasFineHistory) {
-                fineHtml = dash;
-            } else if (!item.due && !hasFineHistory) {
-                fineHtml = `<span class="fine-na">${Number(item.fine || 0).toLocaleString()} &#10007;</span>`;   // fine amount + cross mark
-            } else if (item.due) {
-                fineHtml = hasFineHistory ? getFinePrintStr(item, true) : `${getFinePrintStr(item)} <span class="fine-ok">&#10003;</span>`;
-            } else {
-                fineHtml = getFinePrintStr(item);
-            }
+            const fineHtml = (!item.due || (Number(item.fine || 0) === 0 && !hasFineHistory)) ? dash : getFinePrintStr(item);
+            // old fine cell (commented out): cross mark for a fee that is not overdue, check mark for an overdue one
+            // // Fine states: applicable (fee is overdue, fine is included in Total) = fine + check mark,
+            // // not applicable (fee is not overdue) = fine + cross mark
+            // const hasFineHistory = (item.late_fee_fine_discount_history || []).length > 0;
+            // let fineHtml;
+            // if (Number(item.fine || 0) === 0 && !hasFineHistory) {
+            // fineHtml = dash;
+            // } else if (!item.due && !hasFineHistory) {
+            // fineHtml = `<span class="fine-na">${Number(item.fine || 0).toLocaleString()} &#10007;</span>`;   // fine amount + cross mark
+            // } else if (item.due) {
+            // fineHtml = hasFineHistory ? getFinePrintStr(item, true) : `${getFinePrintStr(item)} <span class="fine-ok">&#10003;</span>`;
+            // } else {
+            // fineHtml = getFinePrintStr(item);
+            // }
             const furtherDiscountTotal = fdHistory.reduce((sum, d) => sum + Number(d.amount || 0), 0);
             const modeSourceHtml = getModeSourceStr(item).trim();
             return `
@@ -719,7 +762,7 @@
                                         <td class="align-right">${Number(item.actual_fee || 0).toLocaleString()}</td>
                                         <td class="align-right">${(Number(item.fee_after_discount || 0) + furtherDiscountTotal).toLocaleString()}</td>
                                         <td class="${fdHistory.length > 0 ? 'align-left' : 'align-right'}">${furtherDiscountHtml}</td>
-                                        <td class="${hasFineHistory ? 'align-left' : 'align-right'}">${fineHtml}</td>
+                                        <td class="${(item.due && hasFineHistory) ? 'align-left' : 'align-right'}">${fineHtml}</td>   ${'' /* old class: hasFineHistory ? align-left : align-right */}
                                         <td class="align-right col-total">${Number(item.total || 0).toLocaleString()}</td>
                                         <td class="align-right col-paid">${amountOrDash(item.paid_amount)}</td>
                                         <td class="align-right col-due">${amountOrDash(item.dues)}</td>
@@ -740,9 +783,9 @@
                                 <th>Due Date</th>
                                 <th>Paying Date</th>
                                 <th>Mode / Source (User)</th>
-                                <th class="align-right">Actual Fee</th>
-                                <th class="align-right">After Discount</th>
-                                <th class="align-right">Further Disc</th>
+                                <th class="align-right">Actual Class Fee</th>${'' /* old heading: Actual Fee */}
+                                <th class="align-right">Fee After Discount</th>${'' /* old heading: After Discount */}
+                                <th class="align-right">Further Fee Disc</th>${'' /* old heading: Further Disc */}
                                 <th class="align-right">Fine</th>
                                 <th class="align-right col-total">Total</th>
                                 <th class="align-right col-paid">Paid</th>
@@ -759,7 +802,10 @@
                                 <td class="align-right">${st.actual.toLocaleString()}</td>
                                 <td class="align-right">${st.afterDiscount.toLocaleString()}</td>
                                 <td class="align-right">${amountOrDash(st.further)}</td>
-                                <td class="align-right">${amountOrDash(st.fine)}${st.fineDiscount > 0 ? `<br/>dis ${st.fineDiscount.toLocaleString()}` : ''}</td>
+                                ${st.fineDiscount > 0
+                                    ? `<td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${st.fineDiscount.toLocaleString()}</b></div><div><span>Apl</span><b>${st.fine.toLocaleString()}</b></div></div></td>`
+                                    : `<td class="align-right">${st.fine.toLocaleString()}</td>`}
+                                ${'' /* old cell: <td class="align-right">applied fine total + <br/>dis X</td> */}
                                 <td class="align-right col-total">${Number(st.expected || 0).toLocaleString()}</td>
                                 <td class="align-right col-paid">${Number(st.collected || 0).toLocaleString()}</td>
                                 <td class="align-right col-due">${Number(st.pending || 0).toLocaleString()}</td>
@@ -776,6 +822,7 @@
             // (Overdue + Not Yet Due = Remaining)
             let overdueDues = 0, overdueCount = 0, notYetDueDues = 0, notYetDueCount = 0;
             allFees.forEach(item => {
+                if (item.status === 'Clear') return;   // a cleared fee waives its dues
                 if (Number(item.dues || 0) > 0) {
                     if (item.due) { overdueDues += Number(item.dues || 0); overdueCount++; }
                     else { notYetDueDues += Number(item.dues || 0); notYetDueCount++; }
@@ -797,7 +844,7 @@
                 partials.forEach(p => addToDate(p.date, 'received', p.amount));
                 addToDate(item.paying_date, 'received', Number(item.paid_amount || 0) - partialSum);   // full / quick payment
                 (item.further_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
-                (item.late_fee_fine_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));
+                if (item.due) (item.late_fee_fine_discount_history || []).forEach(d => addToDate(d.date, 'discount', d.amount));   // old: counted for every fee
             });
             const breakdownDates = Object.keys(dateBreakdown).sort();
             const datedReceived = breakdownDates.reduce((sum, k) => sum + dateBreakdown[k].received, 0);
@@ -844,13 +891,26 @@
                 </div>
                 </div>
 
+                <!-- Step by step amounts: Receivable (sum of Fee After Discount) - Disc (further + fine) + Fine Applied = Net Receivable (= Total column),
+                     - Received = Remaining, - Family Advance = Net Dues -->
                 <div class="summary-grid">
+                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number(familyStats.afterDiscount || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Disc (Further Fee + Fine)</span><span class="summary-value">${(familyStats.discount || 0) ? '-' : ''}${Number(familyStats.discount || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Fine Applied</span><span class="summary-value">${(familyStats.fine || 0) ? '+' : ''}${Number(familyStats.fine || 0).toLocaleString()}</span></div>
+                    ${familyStats.clearedWaived !== 0 ? `<div class="summary-card"><span class="summary-label">Cleared Fee Waived</span><span class="summary-value">${familyStats.clearedWaived > 0 ? "-" : "+"}${Math.abs(familyStats.clearedWaived).toLocaleString()}</span></div>` : ''}
+                    <div class="summary-card result"><span class="summary-label">= Net Receivable</span><span class="summary-value">${Number(familyStats.expected || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Received</span><span class="summary-value">${Number(familyStats.collected || 0).toLocaleString()}</span></div>
+                    <div class="summary-card result"><span class="summary-label">= Remaining</span><span class="summary-value">${Number(familyStats.pending || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Family Advance</span><span class="summary-value">- ${familyAdvance.toLocaleString()}</span></div>
+                    <div class="summary-card dues"><span class="summary-label">${advanceCoversDues ? '= Advance Left' : '= Net Dues'}</span><span class="summary-value">${Math.abs(duesAfterAdvance).toLocaleString()}</span></div>
+                    ${'' /* old cards (commented out):
                     <div class="summary-card"><span class="summary-label">Receivable =</span><span class="summary-value">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Discount =</span><span class="summary-value">${Number(familyStats.discount || 0).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Received =</span><span class="summary-value">${Number(familyStats.collected || 0).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Remaining =</span><span class="summary-value">${Number(familyStats.pending || 0).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Family Advance =</span><span class="summary-value">- ${familyAdvance.toLocaleString()}</span></div>
                     <div class="summary-card dues"><span class="summary-label">${advanceCoversDues ? 'Advance Left =' : 'Net Dues ='}</span><span class="summary-value">${Math.abs(duesAfterAdvance).toLocaleString()}</span></div>
+                    */}
                 </div>
                 </div>
 
@@ -865,7 +925,7 @@
                             <th>Class / Section</th>
                             <th>Campus</th>
                             <th>Status</th>
-                            <th class="align-right">Receivable</th>
+                            <th class="align-right">Net Receivable</th>${'' /* old heading: Receivable (Net Receivable + discount) */}
                             <th class="align-right">Received</th>
                             <th class="align-right">Dues</th>
                         </tr>
@@ -881,14 +941,14 @@
                             <td class="nowrap">${p.studentData?.student_class_name || '-'} / ${p.studentData?.student_section_name || '-'}</td>
                             <td>${p.studentData?.student_campus_name || '-'}</td>
                             <td>${p.studentData?.student_status || '-'}</td>
-                            <td class="align-right">${Number((st.expected || 0) + (st.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${Number(st.expected || 0).toLocaleString()}</td>   ${'' /* old: expected + discount */}
                             <td class="align-right">${amountOrDash(st.collected)}</td>
                             <td class="align-right col-due">${amountOrDash(st.pending)}</td>
                         </tr>`;
                         }).join('')}
                         <tr class="grand-total">
                             <td colspan="6">Family Total</td>
-                            <td class="align-right">${Number((familyStats.expected || 0) + (familyStats.discount || 0)).toLocaleString()}</td>
+                            <td class="align-right">${Number(familyStats.expected || 0).toLocaleString()}</td>   ${'' /* old: expected + discount */}
                             <td class="align-right">${Number(familyStats.collected || 0).toLocaleString()}</td>
                             <td class="align-right col-due">${Number(familyStats.pending || 0).toLocaleString()}</td>
                         </tr>
@@ -905,7 +965,7 @@
                     ${renderLedgerTable(p.feeData, 'Student Total')}
                 </div>`).join('')}
 
-                <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div>
+                ${'' /* <div class="fine-legend"><u>Underlined</u> due date = overdue (unpaid and past its due date, or paid after it) &nbsp;|&nbsp; 300 &#10003; = fine applied (fee overdue, included in Total) &nbsp;|&nbsp; 300 &#10007; = fine not applicable (fee not overdue) &nbsp;|&nbsp; - = nothing / zero</div> */}   <!-- legend removed -->
                 <div class="bottom-spacer"></div>
                 <div class="report-bottom">
                     ${(breakdownDates.length > 0 || undatedReceived > 0 || undatedDiscount > 0) ? `
