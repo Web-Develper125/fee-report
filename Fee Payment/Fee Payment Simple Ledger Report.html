@@ -783,7 +783,7 @@
                 <!-- Step by step amounts: every line is one column of the Grand Total row, read from top to bottom
                      Fee After Discount, Discount (further + fine), Fine Applied = Net Receivable (= Total column), - Received (= Paid column) = Dues -->
                 <div class="summary-grid">
-                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number(totalFeeAfterDiscountPrint || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number((totalFeeAfterDiscountPrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>${'' /* old value: only the Fee After Discount total, without the fine discount */}
                     <div class="summary-card"><span class="summary-label">Disc (Further Fee + Fine)</span><span class="summary-value">${((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)) ? '-' : ''}${Number((totalFurtherDiscountPrint || 0) + (totalFineDiscountPrint || 0)).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Fine Applied</span><span class="summary-value">${(totalFinePrint || 0) ? '+' : ''}${Number(totalFinePrint || 0).toLocaleString()}</span></div>
                     ${clearedWaivedPrint !== 0 ? `<div class="summary-card"><span class="summary-label">Cleared Fee Waived</span><span class="summary-value">${clearedWaivedPrint > 0 ? "-" : "+"}${Math.abs(clearedWaivedPrint).toLocaleString()}</span></div>` : ''}
@@ -919,9 +919,8 @@
                                 <td class="align-right">${totalActualFeePrint.toLocaleString()}</td>
                                 <td class="align-right">${totalFeeAfterDiscountPrint.toLocaleString()}</td>
                                 <td class="align-right">${totalFurtherDiscountPrint.toLocaleString()}</td>
-                                ${totalFineDiscountPrint > 0
-                                    ? `<td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${totalFineDiscountPrint.toLocaleString()}</b></div><div><span>Apl</span><b>${totalFinePrint.toLocaleString()}</b></div>${'' /* old order: Apl first, then Disc */}</div></td>`
-                                    : `<td class="align-right">${totalFinePrint.toLocaleString()}</td>`}
+                                <td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${totalFineDiscountPrint.toLocaleString()}</b></div><div><span>Apl</span><b>${totalFinePrint.toLocaleString()}</b></div></div></td>
+                                ${'' /* old: the DISC / APL boxes were only shown when a fine discount existed (totalFineDiscountPrint > 0), otherwise only the applied fine total */}
                                 ${'' /* old cells: <td class="align-right">apl : X<br/>dis : Y</td> when a fine discount exists, otherwise only the applied fine total */}
                                 <td class="align-right col-total">${Number(totalExpectedFeePrint || 0).toLocaleString()}</td>
                                 <td class="align-right col-paid">${Number(totalCollectedFeePrint || 0).toLocaleString()}</td>

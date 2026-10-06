@@ -734,9 +734,8 @@
                                 <td class="align-right">${st.actual.toLocaleString()}</td>
                                 <td class="align-right">${st.afterDiscount.toLocaleString()}</td>
                                 <td class="align-right">${st.further.toLocaleString()}</td>
-                                ${st.fineDiscount > 0
-                                    ? `<td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${st.fineDiscount.toLocaleString()}</b></div><div><span>Apl</span><b>${st.fine.toLocaleString()}</b></div></div></td>`
-                                    : `<td class="align-right">${st.fine.toLocaleString()}</td>`}
+                                <td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>${st.fineDiscount.toLocaleString()}</b></div><div><span>Apl</span><b>${st.fine.toLocaleString()}</b></div></div></td>
+                                ${'' /* old: the DISC / APL boxes were only shown when a fine discount existed (st.fineDiscount > 0), otherwise only the applied fine total */}
                                 ${'' /* old cells: <td class="align-right">apl : X<br/>dis : Y</td> when a fine discount exists, otherwise only the applied fine total */}
                                 <td class="align-right col-total">${Number(st.expected || 0).toLocaleString()}</td>
                                 <td class="align-right col-paid">${Number(st.collected || 0).toLocaleString()}</td>
@@ -827,7 +826,7 @@
                 <!-- Step by step amounts: Receivable (sum of Fee After Discount) - Disc (further + fine) + Fine Applied = Net Receivable (= Total column),
                      - Received = Remaining, - Family Advance = Net Dues -->
                 <div class="summary-grid">
-                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number(familyStats.afterDiscount || 0).toLocaleString()}</span></div>
+                    <div class="summary-card"><span class="summary-label">Receivable</span><span class="summary-value">${Number((familyStats.afterDiscount || 0) + (familyStats.fineDiscount || 0)).toLocaleString()}</span></div>${'' /* old value: only the Fee After Discount total, without the fine discount */}
                     <div class="summary-card"><span class="summary-label">Disc (Further Fee + Fine)</span><span class="summary-value">${(familyStats.discount || 0) ? '-' : ''}${Number(familyStats.discount || 0).toLocaleString()}</span></div>
                     <div class="summary-card"><span class="summary-label">Fine Applied</span><span class="summary-value">${(familyStats.fine || 0) ? '+' : ''}${Number(familyStats.fine || 0).toLocaleString()}</span></div>
                     ${familyStats.clearedWaived !== 0 ? `<div class="summary-card"><span class="summary-label">Cleared Fee Waived</span><span class="summary-value">${familyStats.clearedWaived > 0 ? "-" : "+"}${Math.abs(familyStats.clearedWaived).toLocaleString()}</span></div>` : ''}
