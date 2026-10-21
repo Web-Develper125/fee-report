@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Family Advance Balance Sheet - 1311662542</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif !important; }
+    @page { size: A4 portrait; margin: 7mm; }
+    body { background: white; font-size: 10px; line-height: 1.4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Screen preview only: show the sheet like a paper */
+    @media screen {
+        body { background: #e5e5e5}
+        .sheet { width: 210mm; margin: 0 auto; background: #fff; padding: 5mm; border: 1px solid #000; }
+    }
+
+    .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    @media print { .print-btn { display: none !important; } }
+
+    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 9px; }
+    .header-section > div { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .header-section h1 { font-size: 17px; font-weight: 700; margin-bottom: 1px; color: #000; text-transform: uppercase; }
+    .header-section h2 { font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #000; }
+    .header-section .report-dates { font-size: 9px; font-weight: 700; color: #000; margin-top: 1px; }
+    .header-logo { width: 69px; height: 69px; object-fit: contain; }
+
+    .total-balance-highlight { font-size: 15px; font-weight: 700; color: #000; text-align: center; margin: 0 0 5px 0; letter-spacing: 2px; border-radius: 4px; padding: 3px 0; background: #d1d1d1; }
+    .details-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 10px; border: 1px solid #000; padding: 9px; }
+    .detail-item { display: flex; flex-direction: column; }
+    .detail-label { font-size: 8px; color: #000; font-weight: 600; text-transform: uppercase; }
+    .detail-value { font-size: 11px; color: #000; font-weight: 600; }
+
+    .section-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; color: #000; text-transform: uppercase; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+    .stats-card { border: 1px solid #000; padding: 5px 7px; position: relative; }
+    .stats-label { font-size: 8px; text-transform: uppercase; font-weight: 600; display: block; }
+    .stats-value { font-size: 12px; font-weight: 700; display: block; margin-top: 1px; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: left; font-size: 9px; font-weight: 600; color: #000; }
+    th { background-color: #f0f0f0 !important; font-weight: 700; text-transform: uppercase; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    .tfoot td { background-color: #f0f0f0 !important; font-weight: 700; text-transform: uppercase; }
+    .tfoot td { border-top: 2px solid #000; }
+    .align-right { text-align: right; }
+    .align-center { text-align: center; }
+
+    .stats-sub { font-size: 8px; font-weight: 600; position: absolute; right: 7px; bottom: 6px; }
+    .nowrap { white-space: nowrap; }
+    .split { display: flex; gap: 8px; }
+    .split .r { margin-left: auto; text-align: right; }
+    .col-no { width: 28px; }
+    .col-date { width: 150px; }
+    .dt span + span { margin-left: 10px; }
+    .col-amt { width: 80px; }
+    #rows td:nth-child(n+4), #tfDr, #tfCr, #tfBal, #stuBody td:last-child, #stuBody td.align-center:not(:first-child) { font-size: 11px; font-weight: 700; }
+    th.col-amt { font-size: 10px; }
+    .bottom-block { page-break-inside: avoid; break-inside: avoid; }
+    .bottom-block { margin-top: 0; }
+    .page-measure { position: absolute; visibility: hidden; height: 281mm; width: 1px; }
+    /* same layout the printer uses, applied only while measuring */
+    body.measuring .sheet { width: 196mm !important; padding: 0 !important; border: 0 !important; margin: 0 !important; }
+    td.dash { text-align: center; font-weight: 400; color: #999; }
+    .sign-row { display: flex; justify-content: space-between; gap: 30px; margin-top: 50px; }
+    .sign-box { flex: 1; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+    .print-footer { margin-top: 14px; text-align: center; font-size: 9px; color: #000; border-top: 1px dashed #000; padding-top: 8px; font-weight: bold; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="page-measure" id="pageMeasure"></div>
+<button class="print-btn" onclick="window.print()">Print</button>
+
+<div class="sheet">
+
+    <div class="header-section">
+        <img src="https://i.postimg.cc/jqB2gpTG/image.png" alt="Logo" class="header-logo" onerror="this.style.display='none'" />
+        <div>
+            <h1>Ai Schooling System</h1>
+            <h2>Family Advance Balance Sheet</h2>
+            <div class="report-dates" id="rangeText"></div>
+        </div>
+        <img src="https://i.postimg.cc/jqB2gpTG/image.png" alt="" class="header-logo" style="opacity:0;" />
+    </div>
+
+    <div class="details-grid">
+        <div class="detail-item"><span class="detail-label">Family Code</span><span class="detail-value" id="fCode"></span></div>
+        <div class="detail-item"><span class="detail-label">Account Name</span><span class="detail-value" id="fName"></span></div>
+        <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value" id="fPhone"></span></div>
+        <div class="detail-item"><span class="detail-label">CNIC</span><span class="detail-value" id="fCnic"></span></div>
+    </div>
+
+    <div class="total-balance-highlight" id="balanceBar"></div>
+
+    <div class="section-title" id="kidsTitle"></div>
+    <table>
+        <thead>
+            <tr><th>G.R Number</th><th>Student Name</th><th>Campus</th><th>Class</th><th>Section</th></tr>
+        </thead>
+        <tbody id="kidsBody"></tbody>
+    </table>
+
+    <div class="section-title">Debit &amp; Credit Statement</div>
+    <div class="stats-grid">
+        <div class="stats-card"><span class="stats-label">Transactions</span><span class="stats-value" id="stCount"></span></div>
+        <div class="stats-card"><span class="stats-label">Total Credit</span><span class="stats-value" id="stCr"></span><span class="stats-sub" id="stCrN"></span></div>
+        <div class="stats-card"><span class="stats-label">Total Debit</span><span class="stats-value" id="stDr"></span><span class="stats-sub" id="stDrN"></span></div>
+        <div class="stats-card"><span class="stats-label">Closing Balance</span><span class="stats-value" id="stClose"></span></div>
+    </div>
+
+    <table id="mainTable">
+        <thead>
+            <tr>
+                <th class="align-center col-no">#</th>
+                <th class="col-date">Date</th>
+                <th>Title</th>
+                <th class="align-right col-amt">Debit</th>
+                <th class="align-right col-amt">Credit</th>
+                <th class="align-right col-amt">Balance</th>
+            </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+            <tr class='tfoot'>
+                <td colspan="3" class="align-right">Total</td>
+                <td class="align-right" id="tfDr"></td>
+                <td class="align-right" id="tfCr"></td>
+                <td class="align-right" id="tfBal"></td>
+            </tr>
+    </table>
+
+    <div id="pageSpacer"></div>
+    <div class="bottom-block" id="bottomBlock">
+    <div class="section-title">Student-Wise Debit Summary</div>
+    <table>
+        <thead>
+            <tr><th class="align-center col-no">#</th><th>Student</th><th class="align-center">Debit Entries</th><th class="align-right col-amt">Total Debit</th></tr>
+        </thead>
+        <tbody id="stuBody"></tbody>
+    </table>
+
+    <div class="sign-row">
+        <div class="sign-box">Prepared By</div>
+        <div class="sign-box">Checked By</div>
+        <div class="sign-box">Parent Signature</div>
+    </div>
+
+    <div class="print-footer">
+        <p id="genText"></p>
+    </div>
+    </div>
+
+</div>
+
+<script>
+    /* ---------- DUMMY DATA ---------- */
+    var family = {
+        family_code: "1311662542",
+        father_name: "Muhammad Akram",
+        phone: "1311662542",
+        cnic: "3586948709286",
+        available_credit: 500,
+        students: [
+            { gr: "BSS-STD-1",   name: "Rehan Ali",  campus: "IQBAL TOWN",  cls: "SEVEN", section: "JINNAH" },
+            { gr: "BSS-STD-393", name: "Farhan Ali", campus: "GARDEN TOWN", cls: "NINE",  section: "YELLOW" }
+        ]
+    };
+    var dateFrom = "", dateTo = "";   // empty = no date filter line
+
+    var entries = [
+        { action:"Credited", amount:500, before:0, after:500, date:"2026-09-30T17:14:33.698Z", title:"Balance Added" },
+        { action:"Debited", amount:2360, before:2360, after:0, date:"2026-09-30T10:14:22.232Z", title:"A.C CHARGES 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:5640, before:8000, after:2360, date:"2026-09-30T10:09:52.924Z", title:"WASHRROM FEE 2026", student:"Rehan Ali" },
+        { action:"Credited", amount:3000, before:5000, after:8000, date:"2026-09-30T10:09:09.309Z", title:"Balance Added" },
+        { action:"Credited", amount:5000, before:0, after:5000, date:"2026-09-30T10:07:52.576Z", title:"Balance Added" },
+        { action:"Debited", amount:24360, before:24360, after:0, date:"2026-09-30T10:05:39.045Z", title:"WASHRROM FEE 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2850, before:27210, after:24360, date:"2026-09-30T10:03:14.372Z", title:"Monthly Fee May 2027", student:"Farhan Ali" },
+        { action:"Debited", amount:2850, before:30060, after:27210, date:"2026-09-30T10:03:14.371Z", title:"Monthly Fee April 2027", student:"Farhan Ali" },
+        { action:"Debited", amount:2300, before:32360, after:30060, date:"2026-09-30T10:03:14.371Z", title:"Monthly Fee March 2027", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:34660, after:32360, date:"2026-09-30T10:03:14.371Z", title:"Monthly Fee February 2027", student:"Rehan Ali" },
+        { action:"Debited", amount:1500, before:36160, after:34660, date:"2026-09-30T08:17:56.200Z", title:"STATIONARY FEE 2026", student:"Farhan Ali" },
+        { action:"Debited", amount:4500, before:40660, after:36160, date:"2026-09-30T08:17:56.200Z", title:"CONTEEN FEE 2026", student:"Farhan Ali" },
+        { action:"Debited", amount:1300, before:41960, after:40660, date:"2026-09-29T19:52:36.303Z", title:"Monthly Fee September 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:44260, after:41960, date:"2026-09-29T19:52:36.303Z", title:"Monthly Fee June 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:46560, after:44260, date:"2026-09-29T19:52:36.303Z", title:"Monthly Fee May 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:48860, after:46560, date:"2026-09-29T19:52:36.303Z", title:"Monthly Fee April 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:51160, after:48860, date:"2026-09-29T19:52:36.303Z", title:"Monthly Fee February 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:2300, before:53460, after:51160, date:"2026-09-29T19:52:36.301Z", title:"Monthly Fee January 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:1500, before:54960, after:53460, date:"2026-09-29T19:52:36.301Z", title:"STATIONARY FEE 2026", student:"Rehan Ali" },
+        { action:"Debited", amount:4500, before:59460, after:54960, date:"2026-09-29T19:52:36.301Z", title:"CONTEEN FEE 2026", student:"Rehan Ali" },
+        { action:"Credited", amount:6, before:59454, after:59460, date:"2026-09-29T17:04:24.896Z", title:"Balance Added" },
+        { action:"Credited", amount:54454, before:5000, after:59454, date:"2026-09-29T17:04:13.480Z", title:"Balance Added" },
+        { action:"Credited", amount:250, before:4750, after:5000, date:"2026-09-29T16:35:46.802Z", title:"Balance Added" },
+        { action:"Credited", amount:150, before:4600, after:4750, date:"2026-09-29T16:35:41.551Z", title:"Balance Added" },
+        { action:"Credited", amount:450, before:4150, after:4600, date:"2026-09-29T16:35:34.973Z", title:"Balance Added" },
+        { action:"Credited", amount:150, before:4000, after:4150, date:"2026-09-29T16:35:29.185Z", title:"Balance Added" },
+        { action:"Credited", amount:400, before:3600, after:4000, date:"2026-09-29T16:35:16.169Z", title:"Balance Added" },
+        { action:"Credited", amount:500, before:3100, after:3600, date:"2026-09-29T16:35:11.426Z", title:"Balance Added" },
+        { action:"Credited", amount:10, before:3090, after:3100, date:"2026-09-29T16:35:04.623Z", title:"Balance Added" },
+        { action:"Credited", amount:675, before:2415, after:3090, date:"2026-09-29T16:34:59.401Z", title:"Balance Added" },
+        { action:"Credited", amount:15, before:2400, after:2415, date:"2026-09-29T16:34:49.868Z", title:"Balance Added" },
+        { action:"Credited", amount:150, before:2250, after:2400, date:"2026-09-29T16:34:43.525Z", title:"Balance Added" },
+        { action:"Credited", amount:1500, before:750, after:2250, date:"2026-09-29T16:34:27.391Z", title:"Balance Added" },
+        { action:"Credited", amount:150, before:600, after:750, date:"2026-09-29T16:33:54.959Z", title:"Balance Added" },
+        { action:"Credited", amount:100, before:500, after:600, date:"2026-09-29T16:30:33.374Z", title:"Advance Balance Added" },
+        { action:"Debited", amount:2600, before:3100, after:500, date:"2026-09-28T19:04:21.099Z", title:"Monthly Fee March 2026", student:"Rehan Ali" },
+        { action:"Credited", amount:1500, before:1600, after:3100, date:"2026-09-28T19:04:07.691Z", title:"Credit Added" },
+        { action:"Debited", amount:1500, before:3100, after:1600, date:"2026-09-27T08:51:02.722Z", title:"Pay And Discount" },
+        { action:"Debited", amount:2300, before:5400, after:3100, date:"2026-09-27T08:50:41.799Z", title:"Monthly Fee August 2026" },
+        { action:"Debited", amount:1300, before:6700, after:5400, date:"2026-09-27T08:50:19.311Z", title:"Monthly Fee October 2026" },
+        { action:"Debited", amount:1000, before:7700, after:6700, date:"2026-09-27T08:50:11.809Z", title:"Partial Payment" },
+        { action:"Debited", amount:2300, before:10000, after:7700, date:"2026-09-27T08:48:39.550Z", title:"Monthly Fee December 2026" },
+        { action:"Credited", amount:10000, before:0, after:10000, date:"2026-09-27T08:46:26.494Z", title:"Credit Added" }
+    ];
+
+    /* ---------- HELPERS ---------- */
+    function $(id) { return document.getElementById(id); }
+    function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+    function num(n) { return Number(n || 0).toLocaleString(); }
+    function fmtDateTime(iso) {
+        var d = new Date(iso);
+        var date = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Karachi" });
+        var time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" });
+        return '<span class="dt"><span>' + date + '</span><span>' + time + '</span></span>';
+    }
+
+    /* ---------- HEADER / FAMILY ---------- */
+    $("fCode").textContent  = family.family_code;
+    $("fName").textContent  = family.father_name;
+    $("fPhone").textContent = family.phone;
+    $("fCnic").textContent  = family.cnic;
+    $("balanceBar").textContent = "Available Balance = Rs. " + num(family.available_credit);
+    if (dateFrom || dateTo) { $("rangeText").textContent = (dateFrom || "Start") + " to " + (dateTo || "Today"); }
+
+    $("kidsTitle").textContent = "Connected Children (" + family.students.length + ")";
+    $("kidsBody").innerHTML = family.students.map(function (s) {
+        return "<tr><td>" + esc(s.gr) + "</td><td>" + esc(s.name) + "</td><td>" + esc(s.campus) + "</td><td>" + esc(s.cls) + "</td><td>" + esc(s.section) + "</td></tr>";
+    }).join("");
+
+    /* ---------- TRANSACTIONS ---------- */
+    var totalCr = 0, totalDr = 0;
+    $("rows").innerHTML = entries.map(function (e, i) {
+        var isCr = e.action === "Credited";
+        if (isCr) totalCr += e.amount; else totalDr += e.amount;
+        return "<tr>" +
+            "<td class='align-center'>" + (i + 1) + "</td>" +
+            "<td class='nowrap'>" + fmtDateTime(e.date) + "</td>" +
+            "<td><div class='split'><span>" + esc(e.title) + "</span>" + (e.student ? "<span class='r'>(" + esc(e.student) + ")</span>" : "") + "</div></td>" +
+            (isCr ? "<td class='dash'>-</td>" : "<td class='align-right'>" + num(e.amount) + "</td>") +
+            (isCr ? "<td class='align-right'>" + num(e.amount) + "</td>" : "<td class='dash'>-</td>") +
+            "<td class='align-right'>" + num(e.after) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    var closing = entries.length ? entries[0].after : family.available_credit;
+    if (!entries.length) { $("rows").innerHTML = "<tr><td colspan='6' class='align-center'>No transactions found</td></tr>"; }
+
+    $("stCount").textContent = entries.length;
+    $("stCr").textContent    = "Rs. " + num(totalCr);
+    $("stDr").textContent    = "Rs. " + num(totalDr);
+    var crN = entries.filter(function (e) { return e.action === "Credited"; }).length;
+    $("stCrN").textContent = crN + " entries";
+    $("stDrN").textContent = (entries.length - crN) + " entries";
+
+    var byStu = {};
+    entries.forEach(function (e) {
+        if (e.action !== "Debited") return;
+        var k = e.student || "Family Account (General)";
+        byStu[k] = byStu[k] || { n: 0, amt: 0 };
+        byStu[k].n++; byStu[k].amt += e.amount;
+    });
+    var stuRows = Object.keys(byStu).map(function (k, i) {
+        return "<tr><td class='align-center'>" + (i + 1) + "</td><td>" + esc(k) + "</td><td class='align-center'>" + byStu[k].n + "</td><td class='align-right'>" + num(byStu[k].amt) + "</td></tr>";
+    });
+    stuRows.push("<tr class='tfoot'><td colspan='2' class='align-right'>Total</td><td class='align-center'>" + (entries.length - crN) + "</td><td class='align-right'>" + num(totalDr) + "</td></tr>");
+    $("stuBody").innerHTML = stuRows.join("");
+
+    $("stClose").textContent = "Rs. " + num(closing);
+    $("tfDr").textContent    = num(totalDr);
+    $("tfCr").textContent    = num(totalCr);
+    $("tfBal").textContent   = num(closing);
+
+    $("genText").textContent = "Generated on: " + new Date().toLocaleDateString("pt-PT") + " " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }) + " | Powered by Ai Schooling System.com";
+
+    /* ---------- PIN SUMMARY TO THE BOTTOM OF THE LAST PRINTED PAGE ---------- */
+    function fitBottomBlock() {
+        var spacer = document.getElementById("pageSpacer");
+        var block = document.getElementById("bottomBlock");
+        var table = document.getElementById("mainTable");
+        spacer.style.height = "0px";
+        document.body.classList.add("measuring");
+        var pageH = document.getElementById("pageMeasure").getBoundingClientRect().height;
+        var sheetTop = document.querySelector(".sheet").getBoundingClientRect().top;
+        var theadH = table.querySelector("thead").getBoundingClientRect().height;
+        var rows = table.querySelectorAll("tbody tr");
+        // walk the rows like the printer does: a row that does not fit moves to the next page,
+        // and the table header is repeated at the top of that page
+        var shift = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var rect = rows[i].getBoundingClientRect();
+            var top = rect.top - sheetTop + shift;
+            var bottom = rect.bottom - sheetTop + shift;
+            var page = Math.floor(top / pageH);
+            if (bottom > (page + 1) * pageH) { shift += (page + 1) * pageH + theadH - top; }
+        }
+        var contentEnd = spacer.getBoundingClientRect().top - sheetTop + shift;
+        var blockH = block.getBoundingClientRect().height;
+        var pages = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
+        var spare = pages * pageH - contentEnd - blockH - 20;   // 20px safety
+        spacer.style.height = Math.max(0, spare) + "px";
+        document.body.classList.remove("measuring");
+    }
+    function clearBottomBlock() { $("pageSpacer").style.height = "0px"; }
+    window.addEventListener("beforeprint", fitBottomBlock);
+    window.addEventListener("afterprint", clearBottomBlock);
+</script>
+</body>
+</html>
