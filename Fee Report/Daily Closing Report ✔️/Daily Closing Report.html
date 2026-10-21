@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Daily Closing Report</title>
+</head>
+<body>
+<script>
+    /* ================= DUMMY DATA (same shape as the API: { rows, ... } of /dailyClosing/getReport) ================= */
+    var systemSettings = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var start_date = "2026-09-01", end_date = "2026-09-30";
+    var apiRows = [{"date":"2026-09-01","creation_type":"automatic","generated_at":"2026-09-01T18:59:00.000Z","strength":1217,"staff_strength":60,"admitted":1,"left":1,"reactivated":0,"received":170000,"discount":5000,"cleared":0,"advance_added":2000,"collection":172000,"outstanding":1580983,"additional_income":6000,"expense":6000,"net_cash":172000,"family_credit_paid":0},{"date":"2026-09-02","creation_type":"automatic","generated_at":"2026-09-02T18:59:00.000Z","strength":1217,"staff_strength":60,"admitted":1,"left":1,"reactivated":0,"received":225000,"discount":5000,"cleared":0,"advance_added":1000,"collection":226000,"outstanding":1497966,"additional_income":5500,"expense":7000,"net_cash":224500,"family_credit_paid":0},{"date":"2026-09-03","creation_type":"automatic","generated_at":"2026-09-03T18:59:00.000Z","strength":1219,"staff_strength":60,"admitted":3,"left":1,"reactivated":0,"received":240000,"discount":7500,"cleared":8500,"advance_added":7000,"collection":247000,"outstanding":1393950,"additional_income":2000,"expense":11000,"net_cash":238000,"family_credit_paid":0},{"date":"2026-09-04","creation_type":"automatic","generated_at":"2026-09-04T18:59:00.000Z","strength":1219,"staff_strength":60,"admitted":0,"left":0,"reactivated":0,"received":150000,"discount":5500,"cleared":0,"advance_added":8000,"collection":158000,"outstanding":1378933,"additional_income":6500,"expense":18000,"net_cash":146500,"family_credit_paid":0},{"date":"2026-09-05","creation_type":"automatic","generated_at":"2026-09-05T18:59:00.000Z","strength":1222,"staff_strength":60,"admitted":3,"left":0,"reactivated":0,"received":160000,"discount":4500,"cleared":0,"advance_added":10500,"collection":170500,"outstanding":1501416,"additional_income":4000,"expense":8500,"net_cash":166000,"family_credit_paid":0},{"date":"2026-09-06","creation_type":"automatic","generated_at":"2026-09-06T18:59:00.000Z","strength":1222,"staff_strength":60,"admitted":0,"left":0,"reactivated":0,"received":0,"discount":0,"cleared":0,"advance_added":0,"collection":0,"outstanding":1644400,"additional_income":0,"expense":0,"net_cash":0,"family_credit_paid":0},{"date":"2026-09-07","creation_type":"automatic","generated_at":"2026-09-07T18:59:00.000Z","strength":1223,"staff_strength":60,"admitted":1,"left":0,"reactivated":0,"received":170000,"discount":7000,"cleared":0,"advance_added":5000,"collection":175000,"outstanding":1612383,"additional_income":2500,"expense":6000,"net_cash":171500,"family_credit_paid":0},{"date":"2026-09-08","creation_type":"automatic","generated_at":"2026-09-08T18:59:00.000Z","strength":1224,"staff_strength":61,"admitted":1,"left":0,"reactivated":0,"received":205000,"discount":1000,"cleared":0,"advance_added":2000,"collection":207000,"outstanding":1548366,"additional_income":4000,"expense":9500,"net_cash":201500,"family_credit_paid":0},{"date":"2026-09-09","creation_type":"automatic","generated_at":"2026-09-09T18:59:00.000Z","strength":1226,"staff_strength":61,"admitted":2,"left":0,"reactivated":0,"received":250000,"discount":5500,"cleared":0,"advance_added":9000,"collection":259000,"outstanding":1432350,"additional_income":2500,"expense":16500,"net_cash":245000,"family_credit_paid":0},{"date":"2026-09-10","creation_type":"automatic","generated_at":"2026-09-10T18:59:00.000Z","strength":1226,"staff_strength":61,"admitted":0,"left":0,"reactivated":0,"received":215000,"discount":2500,"cleared":0,"advance_added":14500,"collection":229500,"outstanding":1345833,"additional_income":1500,"expense":21500,"net_cash":209500,"family_credit_paid":0},{"date":"2026-09-11","creation_type":"automatic","generated_at":"2026-09-11T18:59:00.000Z","strength":1228,"staff_strength":61,"admitted":2,"left":0,"reactivated":0,"received":140000,"discount":4500,"cleared":0,"advance_added":6000,"collection":146000,"outstanding":1342816,"additional_income":1500,"expense":10500,"net_cash":137000,"family_credit_paid":0},{"date":"2026-09-12","creation_type":"automatic","generated_at":"2026-09-12T18:59:00.000Z","strength":1227,"staff_strength":61,"admitted":0,"left":1,"reactivated":0,"received":135000,"discount":7000,"cleared":4000,"advance_added":4000,"collection":139000,"outstanding":1346800,"additional_income":5500,"expense":10500,"net_cash":134000,"family_credit_paid":0},{"date":"2026-09-13","creation_type":"automatic","generated_at":"2026-09-13T18:59:00.000Z","strength":1227,"staff_strength":61,"admitted":0,"left":0,"reactivated":0,"received":0,"discount":0,"cleared":0,"advance_added":0,"collection":0,"outstanding":1489783,"additional_income":0,"expense":0,"net_cash":0,"family_credit_paid":0},{"date":"2026-09-14","creation_type":"automatic","generated_at":"2026-09-14T18:59:00.000Z","strength":1231,"staff_strength":61,"admitted":3,"left":0,"reactivated":1,"received":135000,"discount":7500,"cleared":0,"advance_added":1500,"collection":136500,"outstanding":1496266,"additional_income":2500,"expense":11000,"net_cash":128000,"family_credit_paid":0},{"date":"2026-09-15","creation_type":"automatic","generated_at":"2026-09-15T18:59:00.000Z","strength":1232,"staff_strength":62,"admitted":2,"left":1,"reactivated":0,"received":185000,"discount":7500,"cleared":0,"advance_added":13500,"collection":198500,"outstanding":1440750,"additional_income":5500,"expense":8500,"net_cash":195500,"family_credit_paid":0},{"date":"2026-09-16","creation_type":"automatic","generated_at":"2026-09-16T18:59:00.000Z","strength":1234,"staff_strength":62,"admitted":1,"left":0,"reactivated":1,"received":185000,"discount":3500,"cleared":0,"advance_added":7000,"collection":192000,"outstanding":1391733,"additional_income":2500,"expense":6500,"net_cash":188000,"family_credit_paid":0},{"date":"2026-09-17","creation_type":"automatic","generated_at":"2026-09-17T18:59:00.000Z","strength":1234,"staff_strength":62,"admitted":1,"left":1,"reactivated":0,"received":130000,"discount":1500,"cleared":6500,"advance_added":6500,"collection":136500,"outstanding":1398216,"additional_income":2500,"expense":20000,"net_cash":119000,"family_credit_paid":0},{"date":"2026-09-18","creation_type":"automatic","generated_at":"2026-09-18T18:59:00.000Z","strength":1235,"staff_strength":61,"admitted":1,"left":0,"reactivated":0,"received":175000,"discount":3000,"cleared":0,"advance_added":10000,"collection":185000,"outstanding":1356200,"additional_income":5000,"expense":7500,"net_cash":182500,"family_credit_paid":0},{"date":"2026-09-19","creation_type":"automatic","generated_at":"2026-09-19T18:59:00.000Z","strength":1235,"staff_strength":61,"admitted":0,"left":1,"reactivated":1,"received":195000,"discount":5500,"cleared":0,"advance_added":7500,"collection":202500,"outstanding":1296683,"additional_income":2500,"expense":8000,"net_cash":197000,"family_credit_paid":0},{"date":"2026-09-20","creation_type":"automatic","generated_at":"2026-09-20T18:59:00.000Z","strength":1235,"staff_strength":61,"admitted":0,"left":0,"reactivated":0,"received":0,"discount":0,"cleared":0,"advance_added":0,"collection":0,"outstanding":1439666,"additional_income":0,"expense":0,"net_cash":0,"family_credit_paid":0},{"date":"2026-09-21","creation_type":"automatic","generated_at":"2026-09-21T18:59:00.000Z","strength":1234,"staff_strength":61,"admitted":1,"left":2,"reactivated":0,"received":145000,"discount":5500,"cleared":12000,"advance_added":12000,"collection":157000,"outstanding":1425650,"additional_income":3500,"expense":17500,"net_cash":143000,"family_credit_paid":0},{"date":"2026-09-22","creation_type":"automatic","generated_at":"2026-09-22T18:59:00.000Z","strength":1232,"staff_strength":62,"admitted":0,"left":2,"reactivated":0,"received":155000,"discount":3000,"cleared":0,"advance_added":11000,"collection":166000,"outstanding":1402633,"additional_income":1000,"expense":11500,"net_cash":155500,"family_credit_paid":0},{"date":"2026-09-24","creation_type":"automatic","generated_at":"2026-09-24T18:59:00.000Z","strength":1235,"staff_strength":62,"admitted":1,"left":0,"reactivated":1,"received":130000,"discount":4000,"cleared":0,"advance_added":12500,"collection":142500,"outstanding":1396100,"additional_income":2000,"expense":21000,"net_cash":123500,"family_credit_paid":0},{"date":"2026-09-25","creation_type":"automatic","generated_at":"2026-09-25T18:59:00.000Z","strength":1237,"staff_strength":62,"admitted":2,"left":0,"reactivated":0,"received":140000,"discount":5500,"cleared":0,"advance_added":11500,"collection":151500,"outstanding":1387583,"additional_income":6500,"expense":9500,"net_cash":148500,"family_credit_paid":0},{"date":"2026-09-26","creation_type":"automatic","generated_at":"2026-09-26T18:59:00.000Z","strength":1236,"staff_strength":62,"admitted":0,"left":1,"reactivated":0,"received":150000,"discount":8000,"cleared":5500,"advance_added":11000,"collection":161000,"outstanding":1369566,"additional_income":4000,"expense":11000,"net_cash":154000,"family_credit_paid":0},{"date":"2026-09-27","creation_type":"automatic","generated_at":"2026-09-27T18:59:00.000Z","strength":1236,"staff_strength":62,"admitted":0,"left":0,"reactivated":0,"received":0,"discount":0,"cleared":0,"advance_added":0,"collection":0,"outstanding":1512550,"additional_income":0,"expense":0,"net_cash":0,"family_credit_paid":0},{"date":"2026-09-28","creation_type":"automatic","generated_at":"2026-09-28T18:59:00.000Z","strength":1237,"staff_strength":62,"admitted":3,"left":2,"reactivated":0,"received":205000,"discount":1500,"cleared":0,"advance_added":5500,"collection":210500,"outstanding":1445033,"additional_income":3000,"expense":10000,"net_cash":203500,"family_credit_paid":0},{"date":"2026-09-29","creation_type":"automatic","generated_at":"2026-09-29T18:59:00.000Z","strength":1235,"staff_strength":62,"admitted":0,"left":2,"reactivated":0,"received":155000,"discount":7000,"cleared":9000,"advance_added":12000,"collection":167000,"outstanding":1421016,"additional_income":1000,"expense":12000,"net_cash":156000,"family_credit_paid":0},{"date":"2026-09-30","creation_type":"manual","generated_at":"2026-09-30T14:20:00.000Z","strength":1236,"staff_strength":62,"admitted":2,"left":1,"reactivated":0,"received":210000,"discount":9500,"cleared":0,"advance_added":12000,"collection":222000,"outstanding":1342000,"additional_income":6000,"expense":22000,"net_cash":206000,"family_credit_paid":0}];   // 23 Sep has no snapshot on purpose (shown as "-")
+
+    /* ================= SAME CODE AS the software: src/Pages/Daily Closing Report.jsx (copied as it is) ================= */
+const PK_TZ = 'Asia/Karachi';
+
+const fmt = (value) => (Number(value) || 0).toLocaleString();
+
+// null / undefined means "no data" (e.g. staff not saved in old snapshots) and is shown as "-", a real 0 stays 0.
+const fmtOrDash = (value) => (value == null ? '-' : fmt(value));
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayName = (day) => DAY_NAMES[new Date(`${day}T00:00:00Z`).getUTCDay()];
+
+const nextDay = (day) => {
+    const date = new Date(`${day}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + 1);
+    return date.toISOString().slice(0, 10);
+};
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const displayDate = (day) => {
+    const match = String(day || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : String(day || '');
+};
+
+// Clock time the snapshot was saved, in Pakistan time.
+// The nightly cron runs after midnight, so an automatic snapshot is shown as the end of that day.
+const displayGeneratedAt = (value, creationType) => {
+    if (creationType === 'automatic') return '11:59 PM';
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString('en-US', {
+        timeZone: PK_TZ,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    }).replace(/[\u202f\u00a0]/g, ' ');
+};
+
+// "10-Oct" is the date, the snapshot time sits beside it, and the weekday goes to the right of the cell.
+const stampParts = (day, generatedAt, creationType) => {
+    const match = String(day || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const datePart = match ? `${Number(match[3])}-${MONTHS[Number(match[2]) - 1]}` : displayDate(day);
+    return { datePart, dayPart: dayName(day), timePart: displayGeneratedAt(generatedAt, creationType) };
+};
+
+const escapeHtml = (value) =>
+    String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+
+const cellTone = (key, value) => {
+    const amount = Number(value) || 0;
+    if (['admitted', 'reactivated', 'received', 'advance_added', 'collection', 'additional_income'].includes(key) && amount > 0) return 'dcr-pos';
+    if (['left', 'discount', 'cleared', 'expense', 'outstanding'].includes(key) && amount > 0) return 'dcr-neg';
+    if (key === 'net_cash' && amount > 0) return 'dcr-pos';
+    if (key === 'net_cash' && amount < 0) return 'dcr-neg';
+    return '';
+};
+
+// Column order = printed report. group: 's' Students, 'f' Fee collection, 'o' Other money (no group = plain column).
+// Student / Staff / Outstanding are closing values, the rest are movements of that day. Receivable is not saved: it is worked out (`derived`).
+// Fixed widths: `width` = pixels on screen, `printWidth` = % of the printed table (the Date column takes DATE_PRINT_WIDTH, all together = 100).
+const DATE_PRINT_WIDTH = 9.5;
+const TOTAL_FONT_MAX = 15;   // the 4 highlighted TOTAL cells share one size: this big, or smaller when the longest number needs it
+const TABLE_COLUMNS = [
+    { key: 'strength', label: 'Student', printLabel: 'Student', closing: true, width: 'auto', printWidth: 4.7 },
+    { key: 'staff_strength', label: 'Staff', printLabel: 'Staff', closing: true, width: 'auto', printWidth: 3.6 },
+    { key: 'admitted', label: 'Admission', group: 's', width: 'auto', printWidth: 5.8 },
+    { key: 'left', label: 'Left', group: 's', width: 'auto', printWidth: 3.6 },
+    { key: 'reactivated', label: 'Returned', group: 's', width: 'auto', printWidth: 5.3 },
+    { key: 'receivable', label: 'Receivable', group: 'f', derived: true, totalHighlight: true, width: 'auto', printWidth: 8.4 },
+    { key: 'received', label: 'Fee Receiving', group: 'f', width: 'auto', printWidth: 7.9 },
+    { key: 'advance_added', label: 'Family Advance', group: 'f', width: 'auto', printWidth: 8.4 },
+    { key: 'collection', label: 'Collection', group: 'f', highlight: true, totalHighlight: true, width: 'auto', printWidth: 7.3 },
+    { key: 'discount', label: 'Discount', group: 'f', width: 'auto', printWidth: 5.2 },
+    { key: 'cleared', label: 'Cleared', group: 'f', width: 'auto', printWidth: 4.6 },
+    { key: 'outstanding', label: 'Outstanding', group: 'f', closing: true, totalHighlight: true, width: 'auto', printWidth: 8.4 },
+    { key: 'additional_income', label: 'Additional Income', group: 'o', width: 'auto', printWidth: 6.5 },
+    { key: 'expense', label: 'Expense', group: 'o', width: 'auto', printWidth: 4.6 },
+    { key: 'net_cash', label: 'Net Cash', group: 'o', totalHighlight: true, width: 'auto', printWidth: 6.8 },
+];
+
+const COLUMN_GROUPS = [
+    { label: 'Students', group: 's', span: 3 },
+    { label: 'Fee collection', group: 'f', span: 7 },
+    { label: 'Other money', group: 'o', span: 3 },
+];
+
+// Formulas of the main columns. Shown under the table on the page and at the bottom of the printed report.
+const FORMULAS = [
+    // { label: 'Receivable', text: 'Outstanding + Fee Receiving + Discount + Cleared + Paid by Family Credit (fees paid from the family advance wallet; it has no column of its own).' },
+    { label: 'Fee Receiving', text: 'Fee payments of the day received as money. A fee paid from Family Advance is not counted here, because it is not new money.' },
+    { label: 'Collection', text: 'Fee Receiving + Family Advance.' },
+    { label: 'Outstanding', text: 'Closing balance of all unpaid fees (fine is added only if overdue)' },
+    { label: 'Net Cash', text: 'Collection + Additional Income − Expense.' },
+];
+
+// Biggest font size (up to maxPx) that keeps a number inside its fixed-width print column (A4 landscape: about 1077px wide).
+const PRINT_TABLE_WIDTH_PX = 1077;
+const fitFontSize = (text, column, maxPx) => {
+    const innerPx = (PRINT_TABLE_WIDTH_PX * column.printWidth) / 100 - 10;   // minus the cell border and padding
+    const units = [...text].reduce((sum, char) => sum + (char === ',' ? 0.32 : 0.6), 0);   // width in "em" of a bold digit / comma
+    return Math.max(8, Math.min(maxPx, Math.floor((innerPx / units) * 10) / 10));
+};
+
+// Receivable is not saved in the database. Receivable = Outstanding + Cleared + Discount + Fee Receiving + Paid by Family Credit (of the same row).
+// Fee Receiving is cash only (fees paid from Family Credit are skipped there), so they are added back here: they still settled dues.
+const receivableOf = (row) => (row.outstanding == null
+    ? null
+    : (Number(row.outstanding) || 0) + (Number(row.cleared) || 0) + (Number(row.discount) || 0) + (Number(row.received) || 0) + (Number(row.family_credit_paid) || 0));
+
+// family_credit_paid has no column of its own: it is only summed so Receivable stays right on week / report totals.
+const SUM_KEYS = [...TABLE_COLUMNS.filter((column) => !column.closing && !column.derived).map((column) => column.key), 'family_credit_paid'];
+const CLOSING_KEYS = TABLE_COLUMNS.filter((column) => column.closing).map((column) => column.key);
+
+// Totals of a list of days: movements are summed, closing values come from the last day that has a snapshot.
+const totalsOf = (days) => {
+    const real = days.filter((day) => !day.missing);
+    const last = real[real.length - 1];
+    const totals = {};
+    if (!real.length) {
+        [...SUM_KEYS, ...CLOSING_KEYS, 'receivable'].forEach((key) => { totals[key] = null; });
+        return totals;
+    }
+    SUM_KEYS.forEach((key) => { totals[key] = real.reduce((sum, day) => sum + (Number(day[key]) || 0), 0); });
+    CLOSING_KEYS.forEach((key) => { totals[key] = last ? (last[key] ?? null) : null; });
+    totals.receivable = receivableOf(totals);   // same formula on the totals of the week / report
+    return totals;
+};
+
+// Mon–Sun weeks (PKT calendar). The last week of the range may be partial.
+const splitWeeks = (days) => {
+    const weeks = [];
+    let current = [];
+    days.forEach((day, index) => {
+        current.push(day);
+        if (dayName(day.date) === 'Sun' || index === days.length - 1) {
+            weeks.push(current);
+            current = [];
+        }
+    });
+    return weeks;
+};
+
+    // Receivable is worked out for every row, like the page does
+    var rows = apiRows.map(function (row) { return Object.assign({}, row, { receivable: receivableOf(row) }); });
+    // Every day of the selected dates: the saved snapshot, or an empty day (shown as "-")
+    var rangeDays = (function () {
+        var savedByDay = new Map(rows.map(function (row) { return [row.date, row]; }));
+        var days = [];
+        for (var day = start_date; day <= end_date && days.length < 400; day = nextDay(day)) days.push(savedByDay.get(day) || { date: day, missing: true });
+        return days;
+    })();
+
+    /* ================= handlePrintReport (the HTML of the printed report, as it is) ================= */
+    const buildReportHtml = () => {
+        // Every day of the selected dates. A day with no snapshot shows "-" and is left out of every total.
+        const days = rangeDays;
+
+        const bandClass = (group) => ({ s: 'g1', f: 'g2', o: 'g3' }[group] || '');
+
+        // null = no data -> "-", a real 0 is printed as 0.
+        const cellHtml = (column, value, isDayRow, extraClass = '') => {
+            const classes = ['r', isDayRow && column.bold && value != null ? 'b' : '', isDayRow ? bandClass(column.group) : '', column.highlight ? 'hl' : '', extraClass].filter(Boolean).join(' ');
+            const text = (Number(value) || 0).toLocaleString();
+            const bigTotal = extraClass === 'tl' && value != null;
+            return `<td class="${classes}">${value == null ? '<span class="dash">-</span>' : (bigTotal ? `<span style="font-size:${totalFontPx}px">${text}</span>` : text)}</td>`;
+        };
+
+        const dayRowHtml = (day) => {
+            const { datePart, dayPart, timePart } = stampParts(day.date, day.missing ? null : day.generated_at, day.missing ? null : day.creation_type);
+            return `
+            <tr>
+                <td class="nw">${escapeHtml(datePart)}${timePart ? ` <span class="dt">${escapeHtml(timePart)}</span>` : ''} <span class="dn">${escapeHtml(dayPart)}</span></td>
+                ${TABLE_COLUMNS.map((column) => cellHtml(column, day.missing ? null : day[column.key], true)).join('')}
+            </tr>`;
+        };
+
+        const totalRowHtml = (className, label, totals) => `
+            <tr class="${className}">
+                <td class="nw">${label}</td>
+                ${TABLE_COLUMNS.map((column) => cellHtml(column, totals[column.key], false, className === 'grand' && column.totalHighlight ? 'tl' : '')).join('')}
+            </tr>`;
+
+        const grandTotals = totalsOf(days);
+
+        // One font size for the 4 highlighted TOTAL cells (Receivable, Collection, Outstanding, Net Cash): as big as the longest number allows.
+        const totalFontPx = Math.min(TOTAL_FONT_MAX, ...TABLE_COLUMNS
+            .filter((column) => column.totalHighlight && grandTotals[column.key] != null)
+            .map((column) => fitFontSize((Number(grandTotals[column.key]) || 0).toLocaleString(), column, TOTAL_FONT_MAX)));
+
+        const weeksHtml = splitWeeks(days).map((week, index) =>
+            week.map(dayRowHtml).join('') + totalRowHtml('week', `WEEK ${index + 1} TOTAL`, totalsOf(week))
+        ).join('');
+        const bodyHtml = weeksHtml + totalRowHtml('grand', 'TOTAL', grandTotals);
+
+        const colgroupHtml = `<colgroup><col style="width:${DATE_PRINT_WIDTH}%">${TABLE_COLUMNS.map((column) => `<col style="width:${column.printWidth}%">`).join('')}</colgroup>`;
+
+        const plainHeadHtml = TABLE_COLUMNS.filter((column) => !column.group).map((column) => `<th rowspan="2">${column.printLabel}</th>`).join('');
+        const groupHeadHtml = COLUMN_GROUPS.map((group) => `<th class="${bandClass(group.group)}" colspan="${group.span}">${escapeHtml(group.label)}</th>`).join('');
+        const columnHeadHtml = TABLE_COLUMNS.filter((column) => column.group).map((column) => `<th class="${bandClass(column.group)}${column.highlight ? ' hl' : ''}">${escapeHtml(column.label)}</th>`).join('');
+
+        const formulasHtml = `<div class="formulas">${FORMULAS.map((item) => `<p>${escapeHtml(item.label)}: ${escapeHtml(item.text)}</p>`).join('')}<p>Note: The figures in this report are saved automatically at the end of each day, at 11:59 PM (midnight). If a user edit record of the previous date afterwards, then this captured figure will be mismatch.</p></div>`;
+
+        const logo = systemSettings?.school_logo
+            ? `<img src="${escapeHtml(systemSettings.school_logo)}" class="school-logo" alt="Logo" />`
+            : '';
+
+        return `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Daily Closing Report</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", Arial, sans-serif !important; }
+                    @page { size: A4 landscape; margin: 6mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Poppins, Arial, sans-serif; font-size: 8px; font-weight: 600; color: #000; } }
+                    html, body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    body { background: #fff; color: #000; font-size: 9px; line-height: 1.2; padding: 8px; }
+                    .print-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 0 4px; }
+                    .logo-box { width: 56px; }
+                    .school-logo { width: 56px; height: 56px; object-fit: contain; }
+                    .school-header { text-align: center; flex: 1; }
+                    .school-title { font-size: 17px; font-weight: 700; color: #000; margin-bottom: 2px; }
+                    .report-title { font-size: 12px; font-weight: 700; color: #000; margin-bottom: 4px; }
+                    .header-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 9px; font-weight: 600; color: #000; line-height: 1.35; }
+                    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                    th, td { border: 1px solid #999; padding: 1.2px 5px; line-height: 1.15; font-size: 9px; font-weight: 500; vertical-align: middle; font-variant-numeric: tabular-nums; }
+                    th { background: #f0f0f0; font-weight: 700; text-transform: uppercase; text-align: center; font-size: 8.2px; border-color: #000; padding: 3px 5px; }
+                    td.r { text-align: right; white-space: nowrap; }
+                    td.nw { white-space: nowrap; }
+                    .dn { float: right; color: #777; font-weight: 500; margin-left: 8px; }
+                    .dt { color: #777; font-size: 7.5px; font-weight: 500; }
+                    td.b { font-weight: 700; }
+                    th.g1 { background: #b8b8b8; }
+                    th.g3 { background: #b8b8b8; }
+                    td.g1 { background: #d4d4d4; }
+                    td.g3 { background: #d4d4d4; }
+                    th.hl { background: #999999; }
+                    td.hl { background: #bfbfbf; }
+                    th.hl, td.hl { border-left: 1.5px solid #000; border-right: 1.5px solid #000; }
+                    tr.week td { font-weight: 700; background: #e6e6e6 !important; border-top: 1px solid #000; border-bottom: 1px solid #000; padding-top: 3px; padding-bottom: 3px; }
+                    tr.grand td { font-weight: 800; font-size: 10.5px; background: #000 !important; color: #fff; border-color: #000; padding-top: 7px; padding-bottom: 7px; }
+                    .dash { color: #888; }
+                    tr.grand .dash { color: #ccc; }
+                    tr.grand td.tl { background: #fff !important; color: #000; font-size: 10px; font-weight: 800; border: 2px solid #000; padding-left: 3px; padding-right: 3px; }
+                    tr.grand td.tl .dash { color: #888; }
+                    thead { display: table-header-group; }
+                    tr { page-break-inside: avoid; }
+                    .page { display: flex; flex-direction: column; }
+                    .bottom { margin-top: 4px; }
+                    .formulas { display: flex; flex-direction: row; flex-wrap: wrap; column-gap: 10px; row-gap: 0; margin-bottom: 2px; }
+                    .formulas p { flex: 1 1 32%; min-width: 220px; font-size: 8px; font-weight: 600; line-height: 1.15; margin: 0; text-align: left; color: #777; }
+                    .bottom { page-break-inside: avoid; }
+                    .footer { padding-top: 3px; font-size: 9px; text-align: center; font-weight: 700; }
+                    @media print { body { padding: 0; } .page { min-height: 193mm; } .bottom { margin-top: auto; padding-top: 5px; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="print-header">
+                        <div class="logo-box">${logo}</div>
+                        <div class="school-header">
+                            <div class="school-title">${escapeHtml(systemSettings?.school_name || 'School Management System')}</div>
+                            <div class="report-title">Daily Closing Report</div>
+                            <div class="header-row">
+                                <span>Date: <strong><u>${escapeHtml(displayDate(start_date))}</u> TO <u>${escapeHtml(displayDate(end_date))}</u></strong></span>
+                            </div>
+                        </div>
+                        <div class="logo-box"></div>
+                    </div>
+                    <table>
+                        ${colgroupHtml}
+                        <thead>
+                            <tr><th rowspan="2">Date</th>${plainHeadHtml}${groupHeadHtml}</tr>
+                            <tr>${columnHeadHtml}</tr>
+                        </thead>
+                        <tbody>${bodyHtml}</tbody>
+                    </table>
+                    <div class="bottom">
+                        ${formulasHtml}
+                        <div class="footer">Generated on: ${new Date().toLocaleDateString('pt-PT')} | Powered by Ai Schooling System.com</div>
+                    </div>
+                </div>
+            </body>
+            </html>`;
+    };
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        var html = buildReportHtml();
+        document.open();
+        document.write(html);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>

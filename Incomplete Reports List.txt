@@ -1,0 +1,13 @@
+INCOMPLETE REPORTS LIST
+=======================
+
+1. DATE WISE FEE COLLECTION REPORT
+   Folder : Fee Report\Date Wise Fee Collection Report
+   Status : SKIPPED
+   Reason : The Family Advance column has no final design. Advance belongs to a family, so it can repeat
+            for brothers / sisters, and 13 layout options were made but none was chosen yet.
+
+2. Date Wise Fee Detailed Transaction Report
+   Folder : Fee Report\Date Wise Fee Detailed Transaction Report
+   Status : SKIPPED
+   Reason : The report looking too much complex (design issue)
