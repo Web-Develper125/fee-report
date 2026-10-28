@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Date Wise Fee Transaction Report - Summary</title>
+</head>
+<body>
+<script>
+/* ===== DUMMY DATA (same shape as the app's API data) ===== */
+var systemSetting = {
+    school_name: 'Ai Model School System',
+    school_logo: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="71" height="71"><circle cx="35.5" cy="35.5" r="33" fill="#f0f0f0" stroke="#999" stroke-width="2"/><text x="35.5" y="43" font-size="22" font-weight="700" text-anchor="middle" fill="#333" font-family="Arial">AI</text></svg>')
+};
+var session_id = "All";
+var sessionName = "All";
+var campus_name = "All";
+var class_name = "All";
+var section_name = "All";
+var type_name = "All";
+var fee_month = "";
+var fee_year = 2026;
+var custom_fee_name = "";
+var start_date_incomePageFilter = "2026-10-01";
+var end_date_incomePageFilter = "2026-10-20";
+var selectedUsers = ["All"];
+
+var FAMILY_CREDIT_MODE_ID = 4;
+var modeNames = { 1: 'Cash', 2: 'Bank Transfer', 3: 'Easypaisa', 4: 'Family Credit' };
+var sourceNames = { 1: 'General', 2: 'Meezan Bank', 3: 'Office Wallet' };
+var getModeName = function (id) { return modeNames[id] || '-'; };
+var getSourceName = function (id) { return sourceNames[id] || ''; };
+
+var totalData = [
+    { _id: 'r1', general_registration_code: 'STD-1001', student_family_code: 'STD-1001', student_name: 'Ali Raza', student_father_name: 'Raza Khan', class_name: 'Class 5', section_name: 'A', title: 'October 2026 Fee', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-02T10:15:00+05:00', clear_fee_date: null, actual_fee: 6000, fee_discount: 10, fee_after_discount: 5400, late_fine: 0, paid_amount: 5400, payment_mode_id: 1, payment_mode_source_id: 1, payment_recieved_by: 'ali', partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r2', general_registration_code: 'STD-1002', student_family_code: 'STD-1002', student_name: 'Sara Khan', student_father_name: 'Imran Khan', class_name: 'Class 6', section_name: 'B', title: 'September 2026 Fee', fee_status: 'Paid', due_date: '2026-09-10T00:00:00+05:00', paying_date: '2026-10-03T11:30:00+05:00', clear_fee_date: null, actual_fee: 5000, fee_discount: 0, fee_after_discount: 4500, late_fine: 300, paid_amount: 4800, payment_mode_id: 2, payment_mode_source_id: 2, payment_recieved_by: 'usman', partial_payment_history: [], further_discount_history: [{ amount: 500, date: '2026-10-03T11:20:00+05:00', discount_by: 'admin' }], late_fee_fine_discount_history: [{ amount: 200, date: '2026-10-03T11:25:00+05:00', discount_by: 'usman' }] },
+    { _id: 'r3', general_registration_code: 'STD-1003', student_family_code: 'STD-1003', student_name: 'Hamza Tariq', student_father_name: 'Tariq Mehmood', class_name: 'Class 7', section_name: 'A', title: 'October 2026 Fee', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-05T10:00:00+05:00', clear_fee_date: null, actual_fee: 8000, fee_discount: 0, fee_after_discount: 8000, late_fine: 0, paid_amount: 8000, payment_mode_id: 3, payment_mode_source_id: 3, payment_recieved_by: 'ali',
+      partial_payment_history: [
+        { amount: 3000, date: '2026-10-01T09:40:00+05:00', payment_mode_id: 1, payment_mode_source_id: 1, payment_recieved_by: 'ali' },
+        { amount: 2000, date: '2026-10-04T12:10:00+05:00', payment_mode_id: 2, payment_mode_source_id: 2, payment_recieved_by: 'usman' }
+      ], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r4', general_registration_code: 'STD-1004', student_family_code: 'STD-1004', student_name: 'Zainab Fatima', student_father_name: 'Ahmed Fatima', class_name: 'Class 3', section_name: 'C', title: 'September 2026 Fee', fee_status: 'Clear', due_date: '2026-09-10T00:00:00+05:00', paying_date: null, clear_fee_date: '2026-10-04T00:00:00+05:00', actual_fee: 3000, fee_discount: 0, fee_after_discount: 3000, late_fine: 0, paid_amount: 1500, payment_mode_id: 1, payment_mode_source_id: 1, payment_recieved_by: '',
+      partial_payment_history: [
+        { amount: 1500, date: '2026-10-02T14:05:00+05:00', payment_mode_id: 1, payment_mode_source_id: 1, payment_recieved_by: 'usman' }
+      ], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r5', general_registration_code: 'STD-1005', student_family_code: 'STD-1005', student_name: 'Bilal Ahmed', student_father_name: 'Ahmed Ali', class_name: 'Class 8', section_name: 'A', title: 'October 2026 Fee', fee_status: 'Unpaid', due_date: '2026-10-10T00:00:00+05:00', paying_date: null, clear_fee_date: null, actual_fee: 7000, fee_discount: 0, fee_after_discount: 6700, late_fine: 0, paid_amount: 0, payment_mode_id: null, payment_mode_source_id: null, payment_recieved_by: '', partial_payment_history: [], further_discount_history: [{ amount: 300, date: '2026-10-05T15:00:00+05:00', discount_by: 'admin' }], late_fee_fine_discount_history: [] },
+    { _id: 'r6', general_registration_code: 'STD-1006', student_family_code: 'STD-1006', student_name: 'Maryam Noor', student_father_name: 'Noor Hussain', class_name: 'Class 5', section_name: 'A', title: 'October 2026 Fee', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-06T09:20:00+05:00', clear_fee_date: null, actual_fee: 6000, fee_discount: 0, fee_after_discount: 6000, late_fine: 0, paid_amount: 6000, payment_mode_id: 1, payment_mode_source_id: 1, payment_recieved_by: '', partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r7', general_registration_code: 'STD-1007', student_family_code: 'STD-1007', student_name: 'Usman Ghani', student_father_name: 'Ghani Sher', class_name: 'Class 9', section_name: 'B', title: 'Admission Fee', fee_status: 'Paid', due_date: '2026-10-05T00:00:00+05:00', paying_date: '2026-10-04T13:45:00+05:00', clear_fee_date: null, actual_fee: 10000, fee_discount: 0, fee_after_discount: 10000, late_fine: 0, paid_amount: 10000, payment_mode_id: 2, payment_mode_source_id: 2, payment_recieved_by: 'ali', partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r8', general_registration_code: 'STD-1008', student_family_code: 'STD-1008', student_name: 'Ayesha Siddiqui', student_father_name: 'Siddique Ahmad', class_name: 'Class 4', section_name: 'A', title: 'Transport Fee October 2026', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-06T10:30:00+05:00', clear_fee_date: null, actual_fee: 2500, fee_discount: 0, fee_after_discount: 2500, late_fine: 0, paid_amount: 2500, payment_mode_id: 3, payment_mode_source_id: 3, payment_recieved_by: 'usman', partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] },
+    { _id: 'r9', general_registration_code: 'STD-1009', student_family_code: 'STD-1002', student_name: 'Hira Khan', student_father_name: 'Imran Khan', class_name: 'Class 2', section_name: 'A', title: 'October 2026 Fee', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-06T11:00:00+05:00', clear_fee_date: null, actual_fee: 2500, fee_discount: 0, fee_after_discount: 2500, late_fine: 0, paid_amount: 2500, payment_mode_id: 4, payment_mode_source_id: null, payment_recieved_by: 'usman', partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] }
+];
+
+/* extra sample invoices so every day of the 01-20 Oct range has some data (dummy) */
+(function () {
+    var users = ['ali', 'usman', 'sara', 'admin'];
+    var furtherBy = ['admin', 'usman', 'ali', 'sara'];
+    var amounts = [4500, 3200, 6000, 2800, 5200, 7500, 3600, 4100, 5800, 2500, 6400, 3900, 4800, 3000, 3500, 4200, 2900, 5100, 3300, 4700];
+    for (var i = 0; i < 20; i++) {
+        var day = i < 14 ? 7 + i : i - 13, dd = (day < 10 ? '0' : '') + day;
+        var amt = amounts[i], by = users[i % 4];
+        var row = { _id: 'x' + i, general_registration_code: 'STD-11' + (10 + i), student_family_code: 'STD-11' + (10 + i), student_name: 'Student ' + (i + 1), student_father_name: 'Father ' + (i + 1), class_name: 'Class ' + (1 + i % 9), section_name: 'A', title: 'October 2026 Fee', fee_status: 'Paid', due_date: '2026-10-10T00:00:00+05:00', paying_date: '2026-10-' + dd + 'T10:' + (10 + i) + ':00+05:00', clear_fee_date: null, actual_fee: amt, fee_discount: 0, fee_after_discount: amt, late_fine: 0, paid_amount: amt, payment_mode_id: 1 + i % 3, payment_mode_source_id: 1 + i % 3, payment_recieved_by: by, partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [] };
+        if (i % 2 === 0) row.further_discount_history.push({ amount: 200 + 100 * (i % 4), date: '2026-10-' + dd + 'T10:05:00+05:00', discount_by: furtherBy[i % 4] });
+        if (i % 3 !== 2) row.late_fee_fine_discount_history.push({ amount: 100 + 50 * (i % 3), date: '2026-10-' + dd + 'T10:07:00+05:00', discount_by: by });
+        totalData.push(row);
+    }
+})();
+/* family advance (dummy: in the app these come from the API / the Family Credit payments) */
+var familyAdvanceTransactions = [
+    { date: '2026-10-02T10:40:00+05:00', family_name: 'Raza Khan', amount: 2000, payment_mode_id: 1, payment_mode_source_id: 1, received_by: 'ali', txn_no: 'FA-0101' },
+    { date: '2026-10-04T12:15:00+05:00', family_name: 'Tariq Mehmood', amount: 1500, payment_mode_id: 2, payment_mode_source_id: 2, received_by: 'usman', txn_no: 'FA-0102' },
+    { date: '2026-10-05T09:50:00+05:00', family_name: 'Imran Khan', amount: 1500, payment_mode_id: 3, payment_mode_source_id: 3, received_by: 'ali', txn_no: 'FA-0103' }
+];
+var selectedUsersLabel = selectedUsers.indexOf("All") > -1 ? "All" : selectedUsers.join(", ");
+
+    /* ================= SAME LOGIC AS Fee Income Report.jsx (page functions, copied as they are) ================= */
+    var INCLUDE_DATELESS_PAYMENTS = true;
+    var normalizeName = function (value) { return String(value == null ? "" : value).trim().replace(/\s+/g, " ").toLowerCase(); };
+    var sortByGrCode = function (a, b) { return String((a && a.student_family_code) == null ? "" : a.student_family_code).localeCompare(String((b && b.student_family_code) == null ? "" : b.student_family_code), undefined, { numeric: true, sensitivity: "base" }); };
+    var amountBlank = function (value) { return Number(value || 0) !== 0 ? Number(value).toLocaleString() : ''; };
+    var getSessionName = function () { return sessionName; };
+
+    var feeDefaulterDataFilter = { familyAdvanceTransactions: familyAdvanceTransactions, familyAdvanceTotal: familyAdvanceTransactions.reduce(function (s, t) { return s + (Number(t.amount) || 0); }, 0), familyCreditReportRows: typeof familyCreditReportRows === "undefined" ? [] : familyCreditReportRows };
+    var familyCreditModeIds = new Set([String(FAMILY_CREDIT_MODE_ID)]);
+    var isFamilyCreditPayment = function (modeId) { var mode = modeId ? String(modeId._id || modeId) : ''; return Boolean(mode && familyCreditModeIds.has(mode)); };
+
+    var getPaymentSegments = function (row) {
+        var segments = [];
+        var history = (row && row.partial_payment_history) || [];
+        history.forEach(function (payment) {
+            var amount = Number(payment && payment.amount) || 0;
+            if (amount <= 0) return;
+            segments.push({ amount: amount, receivedBy: String((payment && (payment.payment_recieved_by || payment.paymentRecievedBy)) || "").trim(), date: payment && payment.date ? new Date(payment.date) : null, modeId: payment && payment.payment_mode_id, sourceId: payment && payment.payment_mode_source_id, paymentMethod: payment && payment.payment_method, type: "partial" });
+        });
+        var partialSum = history.reduce(function (sum, payment) { return sum + (Number(payment && payment.amount) || 0); }, 0);
+        var quickPayAmount = (Number(row && row.paid_amount) || 0) - partialSum;
+        if (quickPayAmount > 0) {
+            segments.push({ amount: quickPayAmount, receivedBy: String((row && (row.payment_recieved_by || row.paymentRecievedBy)) || "").trim(), date: row && row.paying_date ? new Date(row.paying_date) : null, modeId: row && row.payment_mode_id, sourceId: row && row.payment_mode_source_id, paymentMethod: row && row.payment_method, type: "quick" });
+        }
+        return segments;
+    };
+    var getRangeBounds = function () { return { start_date: new Date(start_date_incomePageFilter + "T00:00:00.000+05:00"), end_date: new Date(end_date_incomePageFilter + "T23:59:59.999+05:00") }; };
+    var isDateInRange = function (value, start_date, end_date) {
+        if (!value) return INCLUDE_DATELESS_PAYMENTS;
+        var date = value instanceof Date ? value : new Date(value);
+        if (isNaN(date.getTime())) return INCLUDE_DATELESS_PAYMENTS;
+        return date >= start_date && date <= end_date;
+    };
+    var getSegmentsInRange = function (row) { var b = getRangeBounds(); return getPaymentSegments(row).filter(function (segment) { return isDateInRange(segment.date, b.start_date, b.end_date); }); };
+    var isSelectedReceiver = function (receivedBy) {
+        if (!selectedUsers || !selectedUsers.length || selectedUsers.includes("All")) return true;
+        var raw = String(receivedBy || "").trim();
+        if (!raw) return selectedUsers.includes("Unknown");
+        var norm = normalizeName(raw);
+        return selectedUsers.some(function (u) { return u !== "All" && u !== "Unknown" && normalizeName(u) === norm; });
+    };
+    var getPaidInRange = function (row) { return getSegmentsInRange(row).reduce(function (sum, segment) { return isSelectedReceiver(segment.receivedBy) ? sum + segment.amount : sum; }, 0); };
+    var getDiscountBy = function (entry) { return String((entry && (entry.discount_by || entry.further_discount_discount_by || entry.late_fee_fine_discount_discount_by || entry.by)) || "").trim(); };
+    var getAdvanceDate = function (t) { return (t && (t.date || t.createdAt || t.created_at || t.transaction_date)) || null; };
+    var getAdvanceAmount = function (t) { return Number(t && t.amount) || 0; };
+    var getAdvanceBy = function (t) { return String((t && (t.received_by || t.recieved_by || t.payment_recieved_by || t.createdBy || t.by)) || "").trim(); };
+    var getFamilyAdvance = function (familyCode) {
+        var b = getRangeBounds();
+        return (feeDefaulterDataFilter.familyAdvanceTransactions || [])
+            .filter(function (t) { return familyCode && String((t && t.family_code) || '') === String(familyCode) && isDateInRange(getAdvanceDate(t), b.start_date, b.end_date) && isSelectedReceiver(getAdvanceBy(t)); })
+            .map(function (t) { return { amount: getAdvanceAmount(t), date: getAdvanceDate(t), by: getAdvanceBy(t), modeId: t && t.payment_mode_id, sourceId: t && t.payment_mode_source_id }; });
+    };
+    var getFamilyBalance = function (familyCode) {
+        var code = String(familyCode || '').trim().toUpperCase();
+        var row = (feeDefaulterDataFilter.familyCreditReportRows || []).find(function (r) { return String((r && r.family_code) || '').trim().toUpperCase() === code; });
+        return Number(row && row.available_family_credit_amount) || 0;
+    };
+    var getFamilyFatherName = function (familyCode) {
+        var code = String(familyCode || '').trim().toUpperCase();
+        var row = (feeDefaulterDataFilter.familyCreditReportRows || []).find(function (r) { return String((r && r.family_code) || '').trim().toUpperCase() === code; });
+        return String((row && row.family_name) || '').trim();
+    };
+    var getDepositFamilyCodes = function () {
+        var b = getRangeBounds();
+        return Array.from(new Set((feeDefaulterDataFilter.familyAdvanceTransactions || [])
+            .filter(function (t) { return t && t.family_code && isDateInRange(getAdvanceDate(t), b.start_date, b.end_date) && isSelectedReceiver(getAdvanceBy(t)); })
+            .map(function (t) { return String(t.family_code); })));
+    };
+    var getDiscountsInRange = function (row) {
+        var b = getRangeBounds();
+        var collect = function (list) {
+            return (list || []).filter(function (entry) { return isDateInRange(entry && entry.date, b.start_date, b.end_date); })
+                .map(function (entry) { return { amount: Number(entry && entry.amount) || 0, by: getDiscountBy(entry), date: entry && entry.date ? new Date(entry.date) : null }; });
+        };
+        return { further: collect(row && row.further_discount_history), fine: collect(row && row.late_fee_fine_discount_history) };
+    };
+
+    /* ----- the useEffect that processes the data (type "All", every user) ----- */
+    var totalData = totalData.slice().sort(sortByGrCode);
+    var allStudentData = totalData;
+    var totalStudent = 0, totalAmount = 0, familyCreditUsed = 0, totalFeeDiscount = 0, totalFineDiscount = 0;
+    (function () {
+        var studentsArray = [];
+        allStudentData.forEach(function (item) {
+            if (studentsArray.indexOf(item.general_registration_code) < 0) studentsArray.push(item.general_registration_code);
+            getSegmentsInRange(item).forEach(function (segment) {
+                if (!isSelectedReceiver(segment.receivedBy)) return;
+                if (isFamilyCreditPayment(segment.modeId)) familyCreditUsed += segment.amount;
+                totalAmount += segment.amount;
+            });
+            var d = getDiscountsInRange(item);
+            d.further.forEach(function (entry) { if (isSelectedReceiver(entry.by)) totalFeeDiscount += entry.amount; });
+            d.fine.forEach(function (entry) { if (isSelectedReceiver(entry.by)) totalFineDiscount += entry.amount; });
+        });
+        totalStudent = studentsArray.length;
+    })();
+    var familyAdvanceReceived = Number(feeDefaulterDataFilter.familyAdvanceTotal) || 0;
+    var totalUnpaidCount = allStudentData.length;
+    var feeReceiving = totalAmount - familyCreditUsed;
+    var netReceiving = feeReceiving + familyAdvanceReceived;
+
+    var userCollectedRows = (function () {
+        var buckets = new Map();
+        var ensure = function (key, label) {
+            if (!buckets.has(key)) buckets.set(key, { key: key, label: label, invoices: new Set(), furtherDiscount: 0, fineDiscount: 0, paid: 0, advanceReceived: 0, advanceSpent: 0 });
+            return buckets.get(key);
+        };
+        var bucketFor = function (receivedBy) {
+            var raw = String(receivedBy || "").trim();
+            if (!raw) return ensure("__unknown__", "Unknown");
+            return ensure(normalizeName(raw), raw);
+        };
+        var invoiceKeyOf = function (row) { return row._id || row.voucher_id || (row.general_registration_code + "-" + row.title + "-" + row.due_date); };
+        (totalData || []).forEach(function (row) {
+            var invoiceKey = invoiceKeyOf(row);
+            getSegmentsInRange(row).forEach(function (segment) {
+                var bucket = bucketFor(segment.receivedBy);
+                bucket.paid += segment.amount;
+                bucket.invoices.add(invoiceKey);
+                if (isFamilyCreditPayment(segment.modeId)) bucket.advanceSpent += segment.amount;
+            });
+            var d = getDiscountsInRange(row);
+            d.further.forEach(function (entry) { var bucket = bucketFor(entry.by); bucket.furtherDiscount += entry.amount; bucket.invoices.add(invoiceKey); });
+            d.fine.forEach(function (entry) { var bucket = bucketFor(entry.by); bucket.fineDiscount += entry.amount; bucket.invoices.add(invoiceKey); });
+        });
+        (feeDefaulterDataFilter.familyAdvanceTransactions || []).forEach(function (t) {
+            var b = getRangeBounds();
+            if (!isDateInRange(getAdvanceDate(t), b.start_date, b.end_date)) return;
+            bucketFor(getAdvanceBy(t)).advanceReceived += getAdvanceAmount(t);
+        });
+        return Array.from(buckets.values()).map(function (bucket) {
+            return { username: bucket.label, invoiceCount: bucket.invoices.size, furtherDiscount: bucket.furtherDiscount, fineDiscount: bucket.fineDiscount, paid: bucket.paid, advanceReceived: bucket.advanceReceived, advanceSpent: bucket.advanceSpent, net: bucket.paid - bucket.advanceSpent + bucket.advanceReceived };
+        }).sort(function (a, b) { return b.paid - a.paid || String(a.username).localeCompare(String(b.username)); });
+    })();
+    var filteredUserCollectedRows = (!selectedUsers || !selectedUsers.length || selectedUsers.includes("All")) ? userCollectedRows : userCollectedRows.filter(function (row) {
+        if (row.username === "Unknown") return selectedUsers.includes("Unknown");
+        var norm = normalizeName(row.username);
+        return selectedUsers.some(function (u) { return u !== "All" && u !== "Unknown" && normalizeName(u) === norm; });
+    });
+
+    /* ================= SAME CODE AS Fee Income Report.jsx: buildDateWiseSummaryRows / getUserWisePrintTableHtml / handlePrintDateWiseReport (copied as they are) ================= */
+    const buildDateWiseSummaryRows = () => {
+        const start_date = new Date(`${start_date_incomePageFilter}T00:00:00.000+05:00`);
+        const end_date = new Date(`${end_date_incomePageFilter}T23:59:59.999+05:00`);
+        const today = new Date().toLocaleDateString("en-CA");
+
+        const dateMap = {};
+
+        const ensureDate = (dateKey) => {
+            if (!dateMap[dateKey]) {
+                dateMap[dateKey] = {
+                    invoiceIds: new Set(),
+                    furtherDiscount: 0,
+                    fineDiscount: 0,
+                    total: 0,
+                    paid: 0,
+                    totalByInvoice: {},
+                };
+            }
+            return dateMap[dateKey];
+        };
+
+        const getInvoiceKey = (item) =>
+            item._id || item.voucher_id || `${item.general_registration_code}-${item.title}-${item.due_date}`;
+
+        const getRowTotal = (item) => {
+            const dueDate = new Date(item.due_date).toLocaleDateString("en-CA");
+            const isOverdue =
+                item.fee_status === "Paid"
+                    ? new Date(item.paying_date).toLocaleDateString("en-CA") > dueDate
+                    : item.fee_status === "Clear"
+                        ? new Date(item.clear_fee_date).toLocaleDateString("en-CA") > dueDate
+                        : today > dueDate;
+            const feeAfterDiscount = Number(item.fee_after_discount) || 0;
+            const lateFine = Number(item.late_fine) || 0;
+            return isOverdue ? feeAfterDiscount + lateFine : feeAfterDiscount;
+        };
+
+        const addPaymentToDate = (item, dateKey, amount) => {
+            if (!amount) return;
+            const day = ensureDate(dateKey);
+            const invoiceKey = getInvoiceKey(item);
+            const rowTotal = getRowTotal(item);
+
+            day.paid += amount;
+            day.invoiceIds.add(invoiceKey);
+            if (!day.totalByInvoice[invoiceKey]) {
+                day.totalByInvoice[invoiceKey] = rowTotal;
+                day.total += rowTotal;
+            }
+        };
+
+        totalData.forEach((item) => {
+            const invoiceKey = getInvoiceKey(item);
+
+            // Discounts — only the selected person's, and only ones with a
+            // real date (a dateless discount has no day to be placed under).
+            const { further, fine } = getDiscountsInRange(item);
+            further.forEach((entry) => {
+                if (!isSelectedReceiver(entry.by) || !entry.date) return;
+                const day = ensureDate(entry.date.toLocaleDateString("en-CA"));
+                day.furtherDiscount += entry.amount;
+                day.invoiceIds.add(invoiceKey);
+            });
+            fine.forEach((entry) => {
+                if (!isSelectedReceiver(entry.by) || !entry.date) return;
+                const day = ensureDate(entry.date.toLocaleDateString("en-CA"));
+                day.fineDiscount += entry.amount;
+                day.invoiceIds.add(invoiceKey);
+            });
+
+            // Payments — only the selected person's segments, only ones with a
+            // real date, same rule as the discounts above.
+            getSegmentsInRange(item).forEach((segment) => {
+                if (!isSelectedReceiver(segment.receivedBy) || !segment.date) return;
+                addPaymentToDate(item, segment.date.toLocaleDateString("en-CA"), segment.amount);
+            });
+        });
+
+        const [startY, startM, startD] = start_date_incomePageFilter.split("-").map(Number);
+        const [endY, endM, endD] = end_date_incomePageFilter.split("-").map(Number);
+        const cursor = new Date(startY, startM - 1, startD);
+        const rangeEnd = new Date(endY, endM - 1, endD);
+        const allDateKeys = [];
+
+        while (cursor <= rangeEnd) {
+            allDateKeys.push(cursor.toLocaleDateString("en-CA"));
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        return allDateKeys.map((dateKey) => {
+            const day = dateMap[dateKey];
+            if (!day) {
+                return {
+                    date: dateKey,
+                    invoiceCount: 0,
+                    furtherDiscount: 0,
+                    fineDiscount: 0,
+                    total: 0,
+                    paid: 0,
+                    due: 0,
+                };
+            }
+            const due = Math.max(0, day.total - day.paid);
+            return {
+                date: dateKey,
+                invoiceCount: day.invoiceIds.size,
+                furtherDiscount: day.furtherDiscount,
+                fineDiscount: day.fineDiscount,
+                total: day.total,
+                paid: day.paid,
+                due,
+            };
+        });
+    };
+
+    const getUserWisePrintTableHtml = () => {
+        // a person with no name on the payment ("Unknown") is not listed in this print
+        const rows = (filteredUserCollectedRows || []).filter((row) => row.username !== "Unknown");
+        // Fee Receiving of a person = what he received - the part paid from the family advance. Net Receiving = Fee Receiving + advance received.
+        const receivingOf = (row) => Number(row.paid || 0) - Number(row.advanceSpent || 0);
+        const netOf = (row) => receivingOf(row) + Number(row.advanceReceived || 0);
+        const grandTotals = rows.reduce(
+            (acc, row) => ({
+                furtherDiscount: acc.furtherDiscount + Number(row.furtherDiscount || 0),
+                fineDiscount: acc.fineDiscount + Number(row.fineDiscount || 0),
+                advanceReceived: acc.advanceReceived + Number(row.advanceReceived || 0),
+                paid: acc.paid + receivingOf(row),
+                net: acc.net + netOf(row),
+            }),
+            { furtherDiscount: 0, fineDiscount: 0, advanceReceived: 0, paid: 0, net: 0 }
+        );
+
+        const tableRowsHtml =
+            rows.length > 0
+                ? rows
+                    .map(
+                        (row) => `
+                    <tr>
+                        <td class="table-cell date-cell" style="text-align:left;">${row.username || '-'}</td>
+                        <td class="table-cell right">${amountBlank(row.furtherDiscount)}</td>
+                        <td class="table-cell right">${amountBlank(row.fineDiscount)}</td>
+                        <td class="table-cell right">${amountBlank(row.advanceReceived)}</td>
+                        <td class="table-cell right">${amountBlank(receivingOf(row))}</td>
+                        <td class="table-cell right strong">${amountBlank(netOf(row))}</td>
+                    </tr>`
+                    )
+                    .join("")
+                : `<tr><td colspan="6" class="no-records">No Records Found!</td></tr>`;
+
+        return `
+            <div class="section-title" style="margin-top: 14px;">User Wise Breakdown</div>
+            <table>
+                <thead>
+                    <tr class="table-head-row">
+                        <th class="table-head-cell">User</th>
+                        <th class="table-head-cell right">Further Fee Discount</th>
+                        <th class="table-head-cell right">Fine Discount</th>
+                        <th class="table-head-cell right">Advance Received</th>
+                        <th class="table-head-cell right">Fee Receiving</th>
+                        <th class="table-head-cell right">Net Receiving</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRowsHtml}
+                    ${rows.length > 0 ? `
+                    <tr class="grand-total-row">
+                        <td class="grand-total-label">Grand Total:</td>
+                        <td class="grand-total-cell right">${amountBlank(grandTotals.furtherDiscount)}</td>
+                        <td class="grand-total-cell right">${amountBlank(grandTotals.fineDiscount)}</td>
+                        <td class="grand-total-cell right">${amountBlank(grandTotals.advanceReceived)}</td>
+                        <td class="grand-total-cell right">${amountBlank(grandTotals.paid)}</td>
+                        <td class="grand-total-cell right">${amountBlank(grandTotals.net)}</td>
+                    </tr>` : ""}
+                </tbody>
+            </table>
+        `;
+    };
+
+    const buildReportHtml = () => {
+        const summaryRows = buildDateWiseSummaryRows();
+
+        // ── Family advance per day ─────────────────────────────────────────────
+        // received = advance deposits (family advance transactions), spent = fee paid out of the family advance
+        const dayKey = (value) => {
+            const d = value instanceof Date ? value : new Date(value);
+            return isNaN(d.getTime()) ? null : d.toLocaleDateString("en-CA");
+        };
+        const advanceReceivedByDate = {};
+        (feeDefaulterDataFilter?.familyAdvanceTransactions || []).forEach((t) => {
+            const key = dayKey(getAdvanceDate(t));
+            if (!key || !isSelectedReceiver(getAdvanceBy(t))) return;
+            advanceReceivedByDate[key] = (advanceReceivedByDate[key] || 0) + getAdvanceAmount(t);
+        });
+        const advanceSpentByDate = {};
+        (totalData || []).forEach((item) => {
+            getSegmentsInRange(item).forEach((segment) => {
+                if (!segment.date || !isSelectedReceiver(segment.receivedBy) || !isFamilyCreditPayment(segment.modeId)) return;
+                const key = dayKey(segment.date);
+                advanceSpentByDate[key] = (advanceSpentByDate[key] || 0) + segment.amount;
+            });
+        });
+        summaryRows.forEach((row) => {
+            row.advanceReceived = advanceReceivedByDate[row.date] || 0;
+            row.advanceSpent = advanceSpentByDate[row.date] || 0;
+            // Fee Receiving = paid in the day - paid from the family advance; Net Receiving = Fee Receiving + advance received (same as the page's netReceiving)
+            row.receiving = row.paid - row.advanceSpent;
+            row.net = row.receiving + row.advanceReceived;
+        });
+        const grandTotals = summaryRows.reduce(
+            (acc, row) => ({
+                furtherDiscount: acc.furtherDiscount + row.furtherDiscount,
+                fineDiscount: acc.fineDiscount + row.fineDiscount,
+                advanceReceived: acc.advanceReceived + row.advanceReceived,
+                advanceSpent: acc.advanceSpent + row.advanceSpent,
+                paid: acc.paid + row.paid,
+                receiving: acc.receiving + row.receiving,
+                net: acc.net + row.net,
+            }),
+            { furtherDiscount: 0, fineDiscount: 0, advanceReceived: 0, advanceSpent: 0, paid: 0, receiving: 0, net: 0 }
+        );
+
+        // Family Advance cell: Received at the left, Spent at the right, nothing for a zero
+        const advanceCellHtml = (received, spent) =>
+            `<div class="adv-row"><span>${amountBlank(received)}</span><span>${amountBlank(spent)}</span></div>`;
+
+        const tableRowsHtml =
+            summaryRows.length > 0
+                ? summaryRows
+                    .map(
+                        (row) => `
+                    <tr>
+                        <td class="table-cell date-cell"><div class="date-day"><span>${new Date(row.date).toLocaleDateString("pt-PT")}</span><span class="day-name">${new Date(`${row.date}T00:00:00`).toLocaleDateString("en-US", { weekday: "short" })}</span></div></td>
+                        <td class="table-cell right">${amountBlank(row.furtherDiscount)}</td>
+                        <td class="table-cell right">${amountBlank(row.fineDiscount)}</td>
+                        <td class="table-cell">${advanceCellHtml(row.advanceReceived, row.advanceSpent)}</td>
+                        <td class="table-cell right">${amountBlank(row.receiving)}</td>
+                        <td class="table-cell right strong">${amountBlank(row.net)}</td>
+                    </tr>`
+                    )
+                    .join("")
+                : `<tr><td colspan="6" class="no-records">No Records Found!</td></tr>`;
+
+        const sessionName =
+            session_id === "All"
+                ? "All"
+                : getSessionName(session_id);
+
+        // header filters: two short lines, same as the Detailed report
+        const rangeDate = (value) => new Date(value).toLocaleDateString("pt-PT");
+        const filtersRow1 = [['Session', sessionName], ['Campus', campus_name || "All"], ['Class', class_name || "All"], ['Section', section_name || "All"], ['Fee Type', type_name || "All"]];
+        if (type_name === "Monthly Fee" || type_name === "Transport Fee") filtersRow1.push(['Month / Year', `${fee_month || '-'} / ${fee_year}`]);
+        if (type_name === "Custom Fee") filtersRow1.push(['Fee Name', custom_fee_name || '-']);
+        const filtersRow2 = [['Date Range', `${rangeDate(start_date_incomePageFilter)} to ${rangeDate(end_date_incomePageFilter)}`], ['Received By', selectedUsersLabel]];
+        const filtersHtml = (list) => `<div class="filters-row">${list.map(([label, value]) => `<span>${label}: <b>${value}</b></span>`).join('<span class="sep">&middot;</span>')}</div>`;
+
+        const reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Date Wise Fee Transaction Report - Summary</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 portrait; margin: 7mm; }
+                html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:5px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | stat box, one black line under it (same as the Detailed report) */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #000; padding:0 0 8px; }
+                .header-section h1 { font-size:17px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-section h2 { font-size:12px; font-weight:700; margin-bottom:4px; color:#000; }
+                /*.header-side { flex:0 0 190px; }*/
+                .header-logo { width:56px; height:56px; object-fit:contain; border-radius:5px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.5; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 6px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Net Receiving in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(5,1fr); border:1.5px solid #000; margin-bottom:8px; }
+                .stat { padding:5px 6px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.6px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:14px; font-weight:800; margin-top:1px; color:#000; }
+                .section-title { font-size:12px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:4px; }
+                /* Tables: black outer lines, grey header, no stripes */
+                table { width:100%; border-collapse:collapse; font-size:10.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:3px 5px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:9.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; font-size:9.5px; }
+                .table-cell { padding:3px 6px; font-size:10.5px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell.right { text-align:right; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .date-cell { text-align:center; font-weight:600; white-space:nowrap; }
+                .date-day { display:flex; justify-content:space-between; gap:12px; }
+                .day-name { color:#555; font-weight:500; }
+                .zero-dash { color:#888; font-weight:400; }
+                .no-records { text-align:center; padding:17px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:3px 6px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10.5px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:3px 6px; font-weight:700; font-size:10.5px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                /* Family Advance column: one plain column, Received / Spent in the same cell */
+                .adv-row { display:flex; justify-content:space-between; gap:14px; }
+                .print-footer { margin-top:11px; padding-top:7px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                /* preview only */
+                .print-btn { position:fixed; top:12px; right:16px; background:#000; color:#fff; border:1px solid #000; padding:7px 16px; font-size:11px; font-weight:600; cursor:pointer; }
+                @media print { .print-btn { display:none !important; } }
+                /* User Wise Breakdown + footer always at the end of the LAST page: a spacer (set by the script below) fills the gap above it */
+                .bottom { break-inside:avoid; page-break-inside:avoid; margin-top:10px; }
+                #pageSpacer { height:0; }
+                .page-measure { position:absolute; visibility:hidden; left:0; top:0; width:1px; height:281mm; }
+                /* same layout the printer uses, applied only while measuring */
+                body.measuring { padding:0 !important; }
+                body.measuring .page { width:196mm !important; margin:0 !important; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page-measure" id="pageMeasure"></div>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSetting?.school_name || ''}</h1>
+                            <h2>Date Wise Fee Transaction Report</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                            </div>
+                        </div>
+                        <div class="header-side" style="opacity: 0;">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Students</div><div class="stat-value">${totalStudent}</div></div>
+                        <div class="stat"><div class="stat-label">Number Of Invoices</div><div class="stat-value">${totalUnpaidCount.toLocaleString()}</div></div>
+                        <div class="stat"><div class="stat-label">Advance Receiving</div><div class="stat-value">Rs. ${familyAdvanceReceived.toLocaleString()}</div></div>
+                        <div class="stat"><div class="stat-label">Fee Receiving</div><div class="stat-value">Rs. ${feeReceiving.toLocaleString()}</div></div>
+                        <div class="stat net"><div class="stat-label">Net Receiving</div><div class="stat-value">Rs. ${netReceiving.toLocaleString()}</div></div>
+                    </div>
+
+                    <div class="section-title">Date Wise Breakdown</div>
+                    <table id="dateTable">
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Date</th>
+                                <th class="table-head-cell right">Further Fee Discount</th>
+                                <th class="table-head-cell right">Fine Discount</th>
+                                <th class="table-head-cell">Family Advance<div class="adv-row"><span>Received</span><span>Spent</span></div></th>
+                                <th class="table-head-cell right">Fee Receiving</th>
+                                <th class="table-head-cell right">Net Receiving</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                            ${summaryRows.length > 0 ? `
+                            <tr class="grand-total-row">
+                                <td class="grand-total-label">Grand Total:</td>
+                                <td class="grand-total-cell right">${amountBlank(grandTotals.furtherDiscount)}</td>
+                                <td class="grand-total-cell right">${amountBlank(grandTotals.fineDiscount)}</td>
+                                <td class="grand-total-cell">${advanceCellHtml(grandTotals.advanceReceived, grandTotals.advanceSpent)}</td>
+                                <td class="grand-total-cell right">${amountBlank(grandTotals.receiving)}</td>
+                                <td class="grand-total-cell right">${amountBlank(grandTotals.net)}</td>
+                            </tr>` : ""}
+                        </tbody>
+                    </table>
+
+                    <div id="pageSpacer"></div>
+                    <div class="bottom" id="bottomBlock">
+                        ${getUserWisePrintTableHtml()}
+                        <div class="print-footer">
+                            Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    // Pin the User Wise Breakdown + footer to the bottom of the LAST printed page (same method as the Family Advance Ledger report)
+                    function fitBottomBlock() {
+                        var spacer = document.getElementById("pageSpacer");
+                        var block = document.getElementById("bottomBlock");
+                        var table = document.getElementById("dateTable");
+                        var page = document.querySelector(".page");
+                        spacer.style.height = "0px";
+                        document.body.classList.add("measuring");
+                        var pageH = document.getElementById("pageMeasure").getBoundingClientRect().height;
+                        var pageTop = page.getBoundingClientRect().top;
+                        var theadH = table.querySelector("thead").getBoundingClientRect().height;
+                        var rows = table.querySelectorAll("tbody tr");
+                        // walk the rows like the printer does: a row that does not fit moves to the next page,
+                        // and the table header is repeated at the top of that page
+                        var shift = 0;
+                        for (var i = 0; i < rows.length; i++) {
+                            var rect = rows[i].getBoundingClientRect();
+                            var top = rect.top - pageTop + shift;
+                            var bottom = rect.bottom - pageTop + shift;
+                            var pg = Math.floor(top / pageH);
+                            if (bottom > (pg + 1) * pageH) { shift += (pg + 1) * pageH + theadH - top; }
+                        }
+                        var contentEnd = spacer.getBoundingClientRect().top - pageTop + shift;
+                        var blockH = block.getBoundingClientRect().height;
+                        var pages = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
+                        var spare = pages * pageH - contentEnd - blockH - 20;   // 20px safety
+                        spacer.style.height = Math.max(0, spare) + "px";
+                        document.body.classList.remove("measuring");
+                    }
+                    function clearBottomBlock() { document.getElementById("pageSpacer").style.height = "0px"; }
+                    window.addEventListener("beforeprint", fitBottomBlock);
+                    window.addEventListener("afterprint", clearBottomBlock);
+                <\/script>
+            </body>
+            </html>
+        `;
+        return reportContent;
+    };
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        var html = buildReportHtml();
+        document.open();
+        document.write(html);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>
