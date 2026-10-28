@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Date Wise Fee Collection Report</title>
+<title>Date Wise Fee Detailed Collection Report</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
@@ -19,7 +19,7 @@ html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; paddin
 .filters b { font-weight:700; color:#000; }
 .filters .sep { color:#999; }
 /* Stats: one horizontal strip under the header, Paid in a grey box */
-.stats-strip { display:grid; grid-template-columns:repeat(var(--stat-count, 5),1fr); border:1.5px solid #000; margin-bottom:8px; }
+.stats-strip { display:grid; grid-template-columns:repeat(5,1fr); border:1.5px solid #000; margin-bottom:8px; }
 .stat { padding:5px 6px; text-align:center; border-right:1px solid #000; }
 .stat:last-child { border-right:none; }
 .stat.net { background:#d9d9d9 !important; }
@@ -59,7 +59,6 @@ body.measuring .page { width:196mm !important; margin:0 !important; }
 .adv-row { display:flex; justify-content:space-between; gap:14px; }
 .adv-see { color:#555; font-size:8.5px; text-align:center; }
 .note { font-size:8px; font-weight:500; color:#444; margin-top:4px; }
-.stat-value { font-size:12.5px !important; }
 .adv-row { display:flex; justify-content:space-between; gap:14px; }
 .adv-merge { vertical-align:middle; }
 .mode-merge { vertical-align:middle; font-weight:700; }
@@ -100,7 +99,7 @@ var dummyStudents = [
 
 /* family advance of the day: ONE entry per family (never per student), so brothers / sisters can not double count */
 var familyAdvanceRows = [
-    { fam: 'F-101', father: 'Raza Khan',        rec: 2000, spent: 0,    mode: 'Cash / General',              by: 'ali' },
+    { fam: 'F-101', father: 'Raza Khan',        rec: 2000, spent: 0,    mode: 'Cash / General',              by: 'ali', t: '2026-10-19T08:00:00' },
     { fam: 'F-105', father: 'Muhammad Yousaf',  rec: 3000, spent: 1500, mode: 'Bank Transfer / Meezan Bank', by: 'usman' },
     { fam: 'F-106', father: 'Muhammad Ayub',    rec: 0,    spent: 1000, mode: '',                            by: '' }
 ];
@@ -165,8 +164,14 @@ var totalPayable = studentRows.reduce(function (s, r) { return s + r.payable; },
 var totalPaid = studentRows.reduce(function (s, r) { return s + r.paid; }, 0);
 var totalDiscount = studentRows.reduce(function (s, r) { return s + r.discount; }, 0);
 var totalDues = studentRows.reduce(function (s, r) { return s + r.dues; }, 0);
-var totalAdvRec = studentRows.reduce(function (s, r) { return s + (r.famFirst ? r.advRec : 0); }, 0);      /* each family counted once */
-var totalAdvSpent = studentRows.reduce(function (s, r) { return s + (r.famFirst ? r.advSpent : 0); }, 0);
+var totalAdvRec = familyAdvanceRows.reduce(function (s, r) { return s + r.rec; }, 0);      /* each family counted once */
+var totalAdvSpent = familyAdvanceRows.reduce(function (s, r) { return s + r.spent; }, 0);
+/* a family that deposited advance but has no student in the list still gets its own row, so the totals always add up */
+var depositOnlyRows = familyAdvanceRows.filter(function (r) { return r.rec > 0 && !studentRows.some(function (g) { return g.fam === r.fam; }); });
+/* stats strip = same five stats and formulas as the Date Wise summary print */
+var invoiceCount = dummyStudents.length;
+var feeReceiving = totalPaid - totalAdvSpent;
+var netReceiving = feeReceiving + totalAdvRec;
 
 /* zero shows nothing (no dash), same as the Date Wise Fee Transaction report */
 var amountOrDash = function (value) { return Number(value || 0) !== 0 ? Number(value).toLocaleString() : ''; };
@@ -317,7 +322,23 @@ var rowsHtml = studentRows?.length > 0
         </tr>`).join('')
     : `<tr><td colspan="${colCount}" class="no-records">No Records Found!</td></tr>`;
 
-var grandRowHtml = studentRows.length > 0 ? `
+var depositOnlyRowsHtml = depositOnlyRows.map((r) => `
+        <tr>
+            <td class="table-cell center"></td>
+            <td class="table-cell center"></td>
+            <td class="table-cell col-name col-student">
+                <div style="font-weight: 700;">Family ${r.fam}</div>
+                <div class="sub">${r.father}</div>
+            </td>
+            <td class="table-cell center sm">${formatDateTime(new Date(r.t)) || '-'}</td>
+            ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
+            <td class="table-cell right"></td>
+            <td class="table-cell adv-merge"><div class="adv-row"><span>${amountOrDash(r.rec)}</span><span>${amountOrDash(0)}</span></div></td>
+            <td class="table-cell right strong"></td>
+            ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
+        </tr>`).join('');
+
+var grandRowHtml = (studentRows.length > 0 || depositOnlyRows.length > 0) ? `
         <tr class="grand-total-row">
             <td class="grand-total-label" colspan="4">Grand Total:</td>
             ${showPayableDues ? `<td class="grand-total-cell right">${amountOrDash(totalPayable)}</td>` : ""}
@@ -327,16 +348,15 @@ var grandRowHtml = studentRows.length > 0 ? `
             ${showPayableDues ? `<td class="grand-total-cell right">${amountOrDash(totalDues)}</td>` : ""}
         </tr>` : "";
 
-var statCount = 3 + (showPayableDues ? 2 : 0) + 2;
 var reportBody = `
-<div class="page" style="--stat-count: ${statCount};">
+<div class="page">
     <div class="header-section">
         <div class="header-side">
             ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
         </div>
         <div style="text-align: center; flex: 1;">
             <h1>${systemSetting?.school_name || 'School Management System'}</h1>
-            <h2>Date Wise Fee Collection Report</h2>
+            <h2>Date Wise Fee Detailed Collection Report</h2>
             <div class="filters">
                 ${filtersHtml(filtersRow1)}
                 ${filtersHtml(filtersRow2)}
@@ -346,13 +366,11 @@ var reportBody = `
     </div>
 
     <div class="stats-strip">
-        <div class="stat"><div class="stat-label">Total Students</div><div class="stat-value">${totalStudents}</div></div>
-        ${showPayableDues ? `<div class="stat"><div class="stat-label">Total Payable</div><div class="stat-value">Rs. ${totalPayable.toLocaleString()}</div></div>` : ""}
-        <div class="stat"><div class="stat-label">Total Discount</div><div class="stat-value">Rs. ${totalDiscount.toLocaleString()}</div></div>
-        <div class="stat net"><div class="stat-label">Total Paid</div><div class="stat-value">Rs. ${totalPaid.toLocaleString()}</div></div>
-        ${showPayableDues ? `<div class="stat"><div class="stat-label">Total Dues</div><div class="stat-value">Rs. ${totalDues.toLocaleString()}</div></div>` : ""}
+        <div class="stat"><div class="stat-label">Students</div><div class="stat-value">${totalStudents}</div></div>
+        <div class="stat"><div class="stat-label">Number Of Invoices</div><div class="stat-value">${invoiceCount.toLocaleString()}</div></div>
         <div class="stat"><div class="stat-label">Advance Receiving</div><div class="stat-value">Rs. ${totalAdvRec.toLocaleString()}</div></div>
-        <div class="stat"><div class="stat-label">Advance Spent</div><div class="stat-value">Rs. ${totalAdvSpent.toLocaleString()}</div></div>
+        <div class="stat"><div class="stat-label">Fee Receiving</div><div class="stat-value">Rs. ${feeReceiving.toLocaleString()}</div></div>
+        <div class="stat net"><div class="stat-label">Net Receiving</div><div class="stat-value">Rs. ${netReceiving.toLocaleString()}</div></div>
     </div>
 
     <table id="mainTable">
@@ -371,6 +389,7 @@ var reportBody = `
         </thead>
         <tbody>
             ${rowsHtml}
+            ${depositOnlyRowsHtml}
             ${grandRowHtml}
         </tbody>
     </table>
