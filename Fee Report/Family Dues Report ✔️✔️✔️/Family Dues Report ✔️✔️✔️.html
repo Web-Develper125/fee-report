@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Family Wise Dues Report</title>
+</head>
+<body>
+<script>
+    /* ================= DUMMY DATA (same shape as the page's buildFamilies(): families[] with children[] + total_dues) ================= */
+    var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var session_name = "2026-2027", campus_name = "All", class_name = "All", section_name = "All";
+    var appliedFilters = { fee_type: "All", fee_month: "All", fee_year: "All", custom_fee_name: ["All"], duration: "All" };
+
+    var fathers = ["Raza Khan", "Noor Ahmed", "Tariq Mehmood", "Zahid Hussain", "Abdul Ghani", "Ahmed Siddique", "Malik Aslam", "Abbas Ali", "Shahid Iqbal", "Farooq Hassan", "Imran Sheikh", "Nadeem Butt", "Kashif Mirza"];
+    var kidNames = ["Ali", "Ayesha", "Hamza", "Fatima", "Usman", "Bilal", "Sana", "Zain", "Hira", "Omar", "Maryam", "Danish", "Iqra", "Saad"];
+    var classes = ["Class 5 / A", "Class 6 / B", "Class 7 / A", "Class 8 / C", "Class 9 / A", "Class 3 / B"];
+    var statuses = ["Active", "Active", "Active", "Inactive", "Active", "Passout"];
+    var families = [], grNo = 1;
+    fathers.forEach(function (father, fi) {
+        var kids = 1 + (fi % 3), children = [], total = 0;
+        for (var k = 0; k < kids; k++) {
+            var dues = 1500 + ((fi * 7 + k * 5) % 9) * 850;
+            children.push({
+                general_registration_code: "DPS-STD-" + String(grNo++).padStart(3, "0"),
+                student_name: kidNames[(fi + k * 3) % kidNames.length] + " " + father.split(" ")[1],
+                class_section: "Main Campus / " + classes[(fi + k) % classes.length],
+                student_status: statuses[(fi + k) % statuses.length],
+                dues: dues
+            });
+            total += dues;
+        }
+        families.push({ family_key: "code:FAM-" + (fi + 1), family_code: "FAM-" + String(fi + 1).padStart(4, "0"), father_name: father, father_phone: "31" + (20000000 + fi * 1234567), children: children, total_dues: total });
+    });
+    families.sort(function (a, b) { return b.total_dues - a.total_dues; });
+
+    var totalStudents = families.reduce(function (s, f) { return s + f.children.length; }, 0);
+    var totalDues = families.reduce(function (s, f) { return s + f.total_dues; }, 0);
+
+    var n = function (v) { return Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 }); };
+    // Reg # as the last number of the code, zeros kept (DPS-STD-001 -> 001)
+    var grNumber = function (code) { var m = String(code == null ? "" : code).match(/\d+(?!.*\d)/); return m ? m[0] : "-"; };
+    var formatPhone = function (phone) { var d = String(phone == null ? "" : phone).replace(/\D/g, ""); return d ? (d.charAt(0) === "0" ? d : "0" + d) : "-"; };
+
+    /* ================= PRINT TEMPLATE (portrait, same design as the other reports) ================= */
+    var needsMonthYear = function (t) { return t === "Monthly Fee" || t === "Transport Fee"; };
+    var filtersRow1 = [["Session", session_name || "-"], ["Campus", campus_name || "-"], ["Class", class_name || "-"], ["Section", section_name || "-"]];
+    var filtersRow2 = [["Fee Type", appliedFilters.fee_type]];
+    if (needsMonthYear(appliedFilters.fee_type)) { filtersRow2.push(["Month", appliedFilters.fee_month], ["Year", appliedFilters.fee_year]); }
+    else if (appliedFilters.fee_type === "Custom Fee") filtersRow2.push(["Custom Fee", appliedFilters.custom_fee_name.join(", ")]);
+    filtersRow2.push(["Duration", appliedFilters.duration]);
+    var filtersHtml = function (arr) {
+        return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
+    };
+
+    var tableBodiesHtml = families.length > 0 ? families.map(function (family) {
+        var rows = family.children.map(function (child, index) {
+            return '<tr>' +
+                '<td class="table-cell center">' + (index + 1) + '</td>' +
+                '<td class="table-cell center">' + grNumber(child.general_registration_code) + '</td>' +
+                '<td class="table-cell"><span class="student-name">' + (child.student_name || '-') + '</span></td>' +
+                '<td class="table-cell">' + (child.class_section || '-') + '</td>' +
+                '<td class="table-cell center">' + (child.student_status || '-') + '</td>' +
+                '<td class="table-cell right strong">' + (child.dues == null ? '-' : n(child.dues)) + '</td>' +
+                '</tr>';
+        }).join('');
+        return '<tbody>' +
+            '<tr class="family-head"><td colspan="6"><div class="family-head-row"><span>Family Code: ' + (family.family_code || '-') + ' <span class="gap"></span> Father Name: ' + (family.father_name || '-') + '</span><span>Father Phone: ' + formatPhone(family.father_phone) + '</span></div></td></tr>' +
+            rows +
+            '<tr class="family-total"><td colspan="5" class="total-label">Family Total Dues</td><td class="total-value">' + (family.total_dues == null ? '-' : n(family.total_dues)) + '</td></tr>' +
+            '</tbody>';
+    }).join('') + '<tbody><tr class="grand-total-row"><td class="grand-total-label" colspan="5">Grand Total Dues:</td><td class="grand-total-cell right">' + n(totalDues) + '</td></tr></tbody>'
+        : '<tbody><tr><td class="no-records" colspan="6">No Family Dues Found!</td></tr></tbody>';
+
+    var reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Family Wise Dues Report</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 portrait; margin: 7mm; }
+                html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:5px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #000; padding:0 0 8px; }
+                .header-section h1 { font-size:17px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-section h2 { font-size:12px; font-weight:700; margin-bottom:4px; color:#000; }
+                .header-side { flex:0 0 56px; }
+                .header-logo { width:56px; height:56px; object-fit:contain; border-radius:5px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.5; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 6px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Total Dues in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); border:1.5px solid #000; margin-bottom:8px; }
+                .stat { padding:5px 6px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.6px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:14px; font-weight:800; margin-top:1px; color:#000; }
+                .section-title { font-size:12px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:4px; }
+                /* Table: black outer lines, grey header, no stripes */
+                table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:10.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:3px 5px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:9.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:3px 6px; font-size:10px; border:1px solid #999; font-weight:500; color:#000; overflow:hidden; }
+                .table-cell.right { text-align:right; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .student-name { font-weight:700; }
+                /* Family group: grey head row (code / father / phone), its students, then the family total */
+                .family-head td { background:#ececec !important; border:1px solid #999; padding:3px 6px; font-size:10px; font-weight:700; }
+                .family-head-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+                .family-head-row .gap { display:inline-block; width:24px; }
+                .family-total .total-label { background:#ececec !important; border:1px solid #999; padding:3px 6px; text-align:right; font-weight:700; font-size:10px; text-transform:uppercase; }
+                .family-total .total-value { background:#ececec !important; border:1px solid #999; padding:3px 6px; text-align:right; font-weight:800; font-size:11px; }
+                .no-records { text-align:center; padding:17px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:4px 6px; text-align:right; color:#000; background-color:#d9d9d9 !important; font-weight:800; font-size:10.5px; text-transform:uppercase; border:1px solid #000; }
+                .grand-total-cell { padding:4px 6px; font-weight:800; font-size:11px; color:#000; background-color:#d9d9d9 !important; text-align:center; border:1px solid #000; }
+                .grand-total-cell.right { text-align:right; }
+                .print-footer { margin-top:11px; padding-top:7px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSetting?.school_name || 'School Management System'}</h1>
+                            <h2>Family Wise Dues Report</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                            </div>
+                        </div>
+                        <div class="header-side"></div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Total Families</div><div class="stat-value">${families.length.toLocaleString()}</div></div>
+                        <div class="stat"><div class="stat-label">Total Students</div><div class="stat-value">${totalStudents.toLocaleString()}</div></div>
+                        <div class="stat net"><div class="stat-label">Total Dues</div><div class="stat-value">Rs. ${n(totalDues)}</div></div>
+                    </div>
+
+                    <div class="section-title">Family Wise Dues Breakdown</div>
+                    <table>
+                        <colgroup>
+                            <col style="width:6%"><col style="width:11%"><col style="width:27%"><col style="width:30%"><col style="width:11%"><col style="width:15%">
+                        </colgroup>
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Sr #</th>
+                                <th class="table-head-cell">Reg #</th>
+                                <th class="table-head-cell">Student Name</th>
+                                <th class="table-head-cell">Campus / Class / Section</th>
+                                <th class="table-head-cell">Status</th>
+                                <th class="table-head-cell right">Dues</th>
+                            </tr>
+                        </thead>
+                        ${tableBodiesHtml}
+                    </table>
+
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>
