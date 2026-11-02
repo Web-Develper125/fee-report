@@ -2,61 +2,80 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Student Wise Estimated Income Report</title>
+<title>Estimated Fee Income Report (Detailed)</title>
 </head>
 <body>
 <script>
-    /* ================= DUMMY DATA (same shape as the page's enriched rows from /student/getStudentsWithSpecificField) ================= */
+    /* ================= DUMMY DATA (same shape as the API: { data[], grand_total } of /familyCredit/getDetailedEstimateFee) ================= */
     var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
-    var reportTitle = "Student Wise Estimated Income Report";
-    var campus_name = "Main Campus", class_name = "Class 5", section_name = "A";
-    var names = [["Ali Raza", "Raza Khan"], ["Ayesha Noor", "Noor Ahmed"], ["Hamza Tariq", "Tariq Mehmood"], ["Fatima Zahra", "Zahid Hussain"], ["Usman Ghani", "Abdul Ghani"], ["Bilal Ahmed", "Ahmed Siddique"], ["Sana Malik", "Malik Aslam"], ["Zain Abbas", "Abbas Ali"], ["Hira Fatima", "Shahid Iqbal"], ["Omar Farooq", "Farooq Hassan"]];
-    var percents = [0, 0, 10, 0, 25, 50, 0, 15, 100, 0];
-    var ActualFeeData = [];
-    for (var i = 0; i < 28; i++) {
-        var fee = 3500, pct = percents[i % percents.length], disc = Math.round(fee * pct / 100);
-        ActualFeeData.push({
-            general_registration_code: String(i + 1), student_name: names[i % names.length][0], student_father_name: names[i % names.length][1],
-            student_class_name: class_name, student_section_name: section_name,
-            assigned_fee: fee, discount_percentage: pct, discount_amount: disc, net_receivable: fee - disc
+    var sessionName = "2026-2027", campus_name = "All";
+    var campusList = ["Main Campus", "City Campus"];
+    var classList = ["Playgroup", "Nursery", "Prep", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11"];
+    var tiers = [["full_fee", 1], ["scholarship_25", 0.875], ["scholarship_50", 0.625], ["scholarship_75", 0.375], ["scholarship_100", 0.125]];
+    var rows = [];
+    campusList.forEach(function (c, ci) {
+        classList.forEach(function (cl, cli) {
+            var fee = 2500 + cli * 400 + ci * 250;
+            var row = { campus_name: c, class_name: cl, class_fee: fee, total_students: 0, net_receivable: 0 };
+            tiers.forEach(function (t, ti) {
+                var count = ti === 0 ? 20 + ((cli * 3 + ci * 5) % 15) : ((cli + ci * 2 + ti * 3) % (5 - ti + 2));
+                var amount = Math.round(count * fee * t[1]);
+                row[t[0]] = { count: count, receivable_amount: amount };
+                row.total_students += count;
+                row.net_receivable += amount;
+            });
+            rows.push(row);
         });
-    }
-    var totalStudent = ActualFeeData.length;
-    var totalFee = ActualFeeData.reduce(function (s, r) { return s + r.assigned_fee; }, 0);
-    var totalDiscountAmount = ActualFeeData.reduce(function (s, r) { return s + r.discount_amount; }, 0);
-    var totalReceivable = ActualFeeData.reduce(function (s, r) { return s + r.net_receivable; }, 0);
+    });
+    var grandTotal = { total_students: 0, net_receivable: 0 };
+    tiers.forEach(function (t) {
+        grandTotal[t[0] + "_count"] = rows.reduce(function (s, r) { return s + r[t[0]].count; }, 0);
+        grandTotal[t[0] + "_amount"] = rows.reduce(function (s, r) { return s + r[t[0]].receivable_amount; }, 0);
+    });
+    grandTotal.total_students = rows.reduce(function (s, r) { return s + r.total_students; }, 0);
+    grandTotal.net_receivable = rows.reduce(function (s, r) { return s + r.net_receivable; }, 0);
+    var EstimateFeeData = { data: rows, grand_total: grandTotal };
 
     var n = function (v) { return (Number(v) || 0).toLocaleString(); };
 
-    /* ================= PRINT TEMPLATE (portrait, same design as the other reports) ================= */
-    var filtersRow1 = [["Campus", campus_name || "N/A"], ["Class", class_name || "N/A"], ["Section", section_name || "N/A"]];
+    /* ================= PRINT TEMPLATE (landscape - 16 columns - same design as the other reports) ================= */
+    var filtersRow1 = [["Session", sessionName || "All"], ["Campus", campus_name || "All"]];
     var filtersHtml = function (arr) {
         return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
     };
 
-    var tableRowsHtml = ActualFeeData.length > 0 ? ActualFeeData.map(function (row, index) {
+    var groups = [["Full Fee", "full_fee"], ["1% - 25% Scholarship", "scholarship_25"], ["26% - 50% Scholarship", "scholarship_50"], ["51% - 75% Scholarship", "scholarship_75"], ["76% - 100% Scholarship", "scholarship_100"]];
+    var groupHead = groups.map(function (g) { return '<th class="table-head-cell" colspan="2">' + g[0] + '</th>'; }).join('');
+    var subHead = groups.map(function () { return '<th class="table-head-cell">Students</th><th class="table-head-cell right">Amount</th>'; }).join('');
+
+    var tableRowsHtml = EstimateFeeData.data.length > 0 ? EstimateFeeData.data.map(function (row, index) {
+        var cells = groups.map(function (g) {
+            var t = row[g[1]] || {};
+            return '<td class="table-cell center">' + n(t.count) + '</td><td class="table-cell right">' + n(t.receivable_amount) + '</td>';
+        }).join('');
         return '<tr>' +
             '<td class="table-cell center">' + (index + 1) + '</td>' +
-            '<td class="table-cell center">' + (row.general_registration_code || '-') + '</td>' +
-            '<td class="table-cell center">' + (row.student_class_name || '-') + '/' + (row.student_section_name || '-') + '</td>' +
-            '<td class="table-cell"><span class="student-name">' + (row.student_name || '-') + '</span> <span class="student-father">' + (row.student_father_name || '-') + '</span></td>' +
-            '<td class="table-cell right">' + n(row.assigned_fee) + '</td>' +
-            '<td class="table-cell center">' + (row.discount_percentage || 0) + '%</td>' +
-            '<td class="table-cell right">' + n(row.discount_amount) + '</td>' +
+            '<td class="table-cell nowrap">' + row.campus_name + '</td>' +
+            '<td class="table-cell nowrap">' + row.class_name + '</td>' +
+            '<td class="table-cell right strong">' + n(row.class_fee) + '</td>' +
+            cells +
+            '<td class="table-cell center strong">' + n(row.total_students) + '</td>' +
             '<td class="table-cell right strong">' + n(row.net_receivable) + '</td>' +
             '</tr>';
-    }).join('') + '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Grand Total:</td><td class="grand-total-cell right">' + n(totalFee) + '</td><td class="grand-total-cell"></td><td class="grand-total-cell right">' + n(totalDiscountAmount) + '</td><td class="grand-total-cell right">' + n(totalReceivable) + '</td></tr>'
-        : '<tr><td class="no-records" colspan="8">No Records Found!</td></tr>';
+    }).join('') + '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Grand Total:</td>' +
+        groups.map(function (g) { return '<td class="grand-total-cell">' + n(grandTotal[g[1] + "_count"]) + '</td><td class="grand-total-cell right">' + n(grandTotal[g[1] + "_amount"]) + '</td>'; }).join('') +
+        '<td class="grand-total-cell">' + n(grandTotal.total_students) + '</td><td class="grand-total-cell right">' + n(grandTotal.net_receivable) + '</td></tr>'
+        : '<tr><td class="no-records" colspan="14">No Records Found!</td></tr>';
 
     var reportContent = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>${reportTitle}</title>
+                <title>Estimated Fee Income Report (Detailed)</title>
                 <style>
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
                 * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
-                @page { size: A4 portrait; margin: 7mm; }
+                @page { size: A4 landscape; margin: 7mm; }
                 html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:5px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
                 /* Header: logo | school name, title and filters | spacer, one black line under it */
                 .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #000; padding:0 0 8px; }
@@ -69,7 +88,7 @@
                 .filters b { font-weight:700; color:#000; }
                 .filters .sep { color:#999; }
                 /* Stats: one horizontal strip under the header, Net Receivable in a grey box */
-                .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); border:1.5px solid #000; margin-bottom:8px; }
+                .stats-strip { display:grid; grid-template-columns:repeat(2,1fr); border:1.5px solid #000; margin-bottom:8px; }
                 .stat { padding:5px 6px; text-align:center; border-right:1px solid #000; }
                 .stat:last-child { border-right:none; }
                 .stat.net { background:#d9d9d9 !important; }
@@ -77,22 +96,21 @@
                 .stat-value { font-size:14px; font-weight:800; margin-top:1px; color:#000; }
                 .section-title { font-size:12px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:4px; }
                 /* Table: black outer lines, grey header, no stripes */
-                table { width:100%; border-collapse:collapse; font-size:10.5px; font-variant-numeric:tabular-nums; }
+                table { width:100%; border-collapse:collapse; font-size:9.5px; font-variant-numeric:tabular-nums; }
                 thead { display:table-header-group; }
                 tr { page-break-inside:avoid; }
                 thead tr.table-head-row { background:#c4c4c4; }
-                .table-head-cell { padding:3px 5px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:9.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell { padding:3px 4px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:8.5px; text-transform:uppercase; border:1px solid #000; }
                 .table-head-cell.right { text-align:right; }
-                .table-cell { padding:3px 6px; font-size:10px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell { padding:2px 4px; font-size:9px; border:1px solid #999; font-weight:500; color:#000; }
                 .table-cell.right { text-align:right; }
                 .table-cell.center { text-align:center; }
                 .table-cell.strong { font-weight:700; }
-                .student-name { font-weight:700; }
-                .student-father { font-weight:500; color:#555; }
+                .nowrap { white-space:nowrap; }
                 .no-records { text-align:center; padding:17px; font-size:9px; border:1px solid #999; }
                 .grand-total-row { background:#f0f0f0; }
-                .grand-total-label { padding:3px 6px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10.5px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
-                .grand-total-cell { padding:3px 6px; font-weight:700; font-size:10.5px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-label { padding:3px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:9.5px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:3px 4px; font-weight:700; font-size:9.5px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
                 .grand-total-cell.right { text-align:right; }
                 .print-footer { margin-top:11px; padding-top:7px; font-size:9px; color:#000; text-align:center; font-weight:700; }
                 @media print { html, body { padding:0 !important; } }
@@ -105,8 +123,8 @@
                             ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
                         </div>
                         <div style="text-align: center; flex: 1;">
-                            <h1>${systemSetting?.school_name || 'School Management System'}</h1>
-                            <h2>${reportTitle}</h2>
+                            <h1>${systemSetting?.school_name || 'School Name'}</h1>
+                            <h2>Estimated Fee Income Report (Detailed)</h2>
                             <div class="filters">
                                 ${filtersHtml(filtersRow1)}
                             </div>
@@ -115,25 +133,23 @@
                     </div>
 
                     <div class="stats-strip">
-                        <div class="stat"><div class="stat-label">Total Students</div><div class="stat-value">${n(totalStudent)}</div></div>
-                        <div class="stat"><div class="stat-label">Total Fee</div><div class="stat-value">Rs. ${n(totalFee)}</div></div>
-                        <div class="stat"><div class="stat-label">Total Discount Amount</div><div class="stat-value">Rs. ${n(totalDiscountAmount)}</div></div>
-                        <div class="stat net"><div class="stat-label">Net Receivable</div><div class="stat-value">Rs. ${n(totalReceivable)}</div></div>
+                        <div class="stat"><div class="stat-label">Total Students</div><div class="stat-value">${n(grandTotal.total_students)}</div></div>
+                        <div class="stat net"><div class="stat-label">Net Receivable</div><div class="stat-value">Rs. ${n(grandTotal.net_receivable)}</div></div>
                     </div>
 
-                    <div class="section-title">Student Wise Breakdown</div>
+                    <div class="section-title">Detailed Estimate Fee Breakdown</div>
                     <table>
                         <thead>
                             <tr class="table-head-row">
-                                <th class="table-head-cell">Sr #</th>
-                                <th class="table-head-cell">Reg #</th>
-                                <th class="table-head-cell">Class/Section</th>
-                                <th class="table-head-cell">Student Name</th>
-                                <th class="table-head-cell right">Fee</th>
-                                <th class="table-head-cell">Discounted %</th>
-                                <th class="table-head-cell right">Discounted Amount</th>
-                                <th class="table-head-cell right">Fee After Discount</th>
+                                <th class="table-head-cell" rowspan="2">#</th>
+                                <th class="table-head-cell" rowspan="2">Campus</th>
+                                <th class="table-head-cell" rowspan="2">Class</th>
+                                <th class="table-head-cell right" rowspan="2">Monthly Fee</th>
+                                ${groupHead}
+                                <th class="table-head-cell" rowspan="2">Total Students</th>
+                                <th class="table-head-cell right" rowspan="2">Net Receivable</th>
                             </tr>
+                            <tr class="table-head-row">${subHead}</tr>
                         </thead>
                         <tbody>
                             ${tableRowsHtml}
