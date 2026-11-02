@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Misleading Entries Report</title>
+</head>
+<body>
+<script>
+    /* ================= DUMMY DATA (same shape as the API: data.{monthlyFee,customFee,transportFee} of /transportFee/getMisleadingEntries) ================= */
+    var systemSettings = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var type_name = "All", fee_month = "", fee_year = 2026, custom_fee_name = "";
+    var campus_name = "All", class_name = "All", section_name = "All";
+    var start_date = "2026-09-01", end_date = "2026-09-30";
+    var tableData = [
+        { general_registration_code: "1", student_name: "Ali Raza", student_father_name: "Raza Khan", class_name: "Class 5", section_name: "A", type: "Monthly Fee", fee_month: "September", fee_year: 2026, reported_date: "2026-09-05T18:50:00", actual_date: "2026-09-02", days_gap: -3, misleading_amount: 5000, activity_by: "admin" },
+        { general_registration_code: "2", student_name: "Ayesha Noor", student_father_name: "Noor Ahmed", class_name: "Class 6", section_name: "B", type: "Monthly Fee", fee_month: "September", fee_year: 2026, reported_date: "2026-09-10T10:15:00", actual_date: "2026-09-14", days_gap: 4, misleading_amount: 2500, activity_by: "accountant1" },
+        { general_registration_code: "3", student_name: "Hamza Tariq", student_father_name: "Tariq Mehmood", class_name: "Class 7", section_name: "A", type: "Transport Fee", fee_month: "September", fee_year: 2026, reported_date: "2026-09-08T12:30:00", actual_date: "2026-09-01", days_gap: -7, misleading_amount: 2000, activity_by: "cashier2" },
+        { general_registration_code: "4", student_name: "Fatima Zahra", student_father_name: "Zahid Hussain", class_name: "Class 8", section_name: "C", type: "Custom Fee", fee_name: "Annual Fund", reported_date: "2026-09-18T09:05:00", actual_date: "2026-09-25", days_gap: 7, misleading_amount: 1500, activity_by: "admin" },
+        { general_registration_code: "5", student_name: "Usman Ghani", student_father_name: "Abdul Ghani", class_name: "Class 5", section_name: "A", type: "Custom Fee", fee_name: "Trip Fee", reported_date: "2026-09-20T14:40:00", actual_date: "2026-09-19", days_gap: -1, misleading_amount: 1500, activity_by: "accountant1" }
+    ];
+    /* pad the dummy data up to 25 rows */
+    (function () {
+        var names = [["Bilal Ahmed", "Ahmed Siddique"], ["Sana Malik", "Malik Aslam"], ["Zain Abbas", "Abbas Ali"], ["Hira Fatima", "Shahid Iqbal"], ["Omar Farooq", "Farooq Hassan"]];
+        var classes = ["Class 5", "Class 6", "Class 7", "Class 8", "Class 9"], sections = ["A", "B", "C"];
+        var types = ["Monthly Fee", "Transport Fee", "Custom Fee"], customNames = ["Annual Fund", "Trip Fee", "Exam Fee"];
+        var users = ["admin", "accountant1", "cashier2"], gaps = [-6, -4, -2, 2, 3, 5, -1, 8];
+        var iso = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+        for (var i = tableData.length; i < 25; i++) {
+            var n = names[i % names.length], type = types[i % types.length], gap = gaps[i % gaps.length];
+            var fee = 1500 + (i % 6) * 1000, mis = (i % 2 === 0) ? fee : Math.round(fee / 2);
+            var rep = new Date(2026, 8, 1 + (i % 28)), act = new Date(rep.getTime() + gap * 86400000);
+            var row = { general_registration_code: String(1 + i), student_name: n[0], student_father_name: n[1], class_name: classes[i % classes.length], section_name: sections[i % sections.length], type: type, reported_date: iso(rep) + "T" + String(8 + (i % 12)).padStart(2, "0") + ":" + String((i * 7) % 60).padStart(2, "0") + ":00", actual_date: iso(act), days_gap: gap, misleading_amount: mis, activity_by: users[i % users.length] };
+            if (type === "Custom Fee") row.fee_name = customNames[i % customNames.length]; else { row.fee_month = "September"; row.fee_year = 2026; }
+            tableData.push(row);
+        }
+    })();
+    var totalEntries = tableData.length;
+    var totalMisleadingAmount = tableData.reduce(function (s, r) { return s + Number(r.misleading_amount || 0); }, 0);
+
+    function fmtDate(v) { return v ? new Date(v).toLocaleDateString("pt-PT") : "-"; }
+    function fmtTime(v) { if (!v) return ""; var d = new Date(v), h = d.getHours(), m = String(d.getMinutes()).padStart(2, "0"); return String(h % 12 || 12).padStart(2, "0") + ":" + m + " " + (h >= 12 ? "PM" : "AM"); }
+
+    /* ================= PRINT TEMPLATE (portrait, same design as the Date Wise Fee reports) ================= */
+    var filtersRow1 = [["Fee Type", type_name]];
+    if (type_name === "Monthly Fee" || type_name === "Transport Fee") { filtersRow1.push(["Month", fee_month]); filtersRow1.push(["Year", fee_year]); }
+    else if (type_name === "Custom Fee") filtersRow1.push(["Fee Name", custom_fee_name]);
+    var filtersRow2 = [["Campus", campus_name || "All"], ["Class", class_name || "All"], ["Section", section_name || "All"]];
+    var filtersRow3 = [["Date Range", fmtDate(start_date) + " to " + fmtDate(end_date)]];
+    var filtersHtml = function (arr) {
+        return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
+    };
+
+    var tableRowsHtml = tableData.length > 0 ? tableData.map(function (row, index) {
+        var feePeriod = row.type === "Custom Fee" ? (row.fee_name || '-') : ((row.fee_month || '') + ' ' + (row.fee_year || '')).trim();
+        var gap = row.days_gap;
+        return '<tr>' +
+            '<td class="table-cell center">' + (index + 1) + '</td>' +
+            '<td class="table-cell center">' + (row.general_registration_code || '-') + '</td>' +
+            '<td class="table-cell"><span class="student-name">' + (row.student_name || '-') + '</span> <span class="student-father">' + (row.student_father_name || '-') + '</span></td>' +
+            '<td class="table-cell center">' + (feePeriod || '-') + '</td>' +
+            '<td class="table-cell date-cell"><div class="act-row"><span>' + fmtDate(row.reported_date) + ' <span class="light">' + fmtTime(row.reported_date) + '</span></span><span class="light">' + (row.activity_by || '-') + '</span></div></td>' +
+            '<td class="table-cell center date-cell">' + fmtDate(row.actual_date) + '</td>' +
+            '<td class="table-cell center">' + (gap !== undefined && gap !== null ? Math.abs(gap) + ' days' : '-') + '</td>' +
+            '<td class="table-cell right strong">' + Number(row.misleading_amount || 0).toLocaleString() + '</td>' +
+            '</tr>';
+    }).join('') + '<tr class="grand-total-row"><td class="grand-total-label" colspan="7">Grand Total:</td><td class="grand-total-cell right">' + totalMisleadingAmount.toLocaleString() + '</td></tr>'
+        : '<tr><td class="no-records" colspan="8">No Records Found!</td></tr>';
+
+    var reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Misleading Entries Report</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 portrait; margin: 7mm; }
+                html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:5px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #000; padding:0 0 8px; }
+                .header-section h1 { font-size:17px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-section h2 { font-size:12px; font-weight:700; margin-bottom:4px; color:#000; }
+                .header-side { flex:0 0 56px; }
+                .header-logo { width:56px; height:56px; object-fit:contain; border-radius:5px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.5; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 6px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Misleading Amount in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(2,1fr); border:1.5px solid #000; margin-bottom:8px; }
+                .stat { padding:5px 6px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.6px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:14px; font-weight:800; margin-top:1px; color:#000; }
+                .section-title { font-size:12px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:4px; }
+                /* Table: black outer lines, grey header, no stripes */
+                table { width:100%; border-collapse:collapse; font-size:10.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:3px 5px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:9.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:3px 6px; font-size:10px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell.right { text-align:right; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .date-cell { white-space:nowrap; }
+                .act-row { display:flex; justify-content:space-between; gap:12px; }
+                .student-name { font-weight:700; }
+                .student-father { font-weight:500; color:#555; }
+                .light { color:#555; }
+                .no-records { text-align:center; padding:17px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:3px 6px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10.5px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:3px 6px; font-weight:700; font-size:10.5px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                .print-footer { margin-top:11px; padding-top:7px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSettings?.school_logo ? `<img src="${systemSettings.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSettings?.school_name || 'School Management System'}</h1>
+                            <h2>Misleading Entries Report</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                                ${filtersHtml(filtersRow3)}
+                            </div>
+                        </div>
+                        <div class="header-side"></div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Total Entries</div><div class="stat-value">${totalEntries.toLocaleString()}</div></div>
+                        <div class="stat net"><div class="stat-label">Misleading Amount</div><div class="stat-value">Rs. ${totalMisleadingAmount.toLocaleString()}</div></div>
+                    </div>
+
+                    <div class="section-title">Misleading Entries Breakdown</div>
+                    <table>
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Sr #</th>
+                                <th class="table-head-cell">Reg #</th>
+                                <th class="table-head-cell">Student Name</th>
+                                <th class="table-head-cell">Fee Name</th>
+                                <th class="table-head-cell">Activity Date / By</th>
+                                <th class="table-head-cell">Actual Date</th>
+                                <th class="table-head-cell">Days Gap</th>
+                                <th class="table-head-cell right">Amount Of</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>
