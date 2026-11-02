@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Class Wise Arrear Report (Detailed)</title>
+</head>
+<body>
+<script>
+    /* ================= SETTINGS (the only difference between the Student Wise and the Class Wise report) ================= */
+    var reportTitle = "Class Wise Arrear Report (Detailed)";
+    var pagePerSection = true;    // every section starts on its own page (false in the Student Wise Arrear Report)
+
+    /* ================= DUMMY DATA (same shape as the page's totalData: students with unpaidFees[] {title, dues, isDue}, grouped by section) ================= */
+    var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var type_name = "All", duration = "All";
+    var campus_name = "All", class_name = "All", section_name = "All";
+
+    var names = [["Ali Raza", "Raza Khan"], ["Ayesha Noor", "Noor Ahmed"], ["Hamza Tariq", "Tariq Mehmood"], ["Fatima Zahra", "Zahid Hussain"], ["Usman Ghani", "Abdul Ghani"], ["Bilal Ahmed", "Ahmed Siddique"], ["Sana Malik", "Malik Aslam"], ["Zain Abbas", "Abbas Ali"], ["Hira Fatima", "Shahid Iqbal"], ["Omar Farooq", "Farooq Hassan"]];
+    var campuses = ["Main Campus", "City Campus"], classes = ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6"], sectionList = ["A", "B"];
+    var feeTitles = ["March 2026", "April 2026", "May 2026", "June 2026", "Transport April 2026", "Annual Fund", "Trip Fee", "July 2026", "August 2026", "September 2026"];
+    var sections = [], grNo = 1, sIdx = 0;
+    campuses.forEach(function (campus) {
+        classes.forEach(function (cls) {
+            sectionList.forEach(function (sec) {
+                if (sIdx >= 12) { sIdx++; return; }
+                var students = [], count = 2 + (sIdx % 4);
+                for (var k = 0; k < count; k++, grNo++) {
+                    var nm = names[(grNo - 1) % names.length];
+                    var feeCount = (grNo % 11 === 0) ? 10 : (grNo % 5);          // some students have 0, some have 10 unpaid fees
+                    var fees = [], total = 0;
+                    for (var f = 0; f < feeCount; f++) {
+                        var dues = 1200 + ((grNo * 3 + f * 5) % 8) * 450;
+                        fees.push({ title: feeTitles[(grNo + f) % feeTitles.length], dues: dues, isDue: (f % 2 === 0) });
+                        total += dues;
+                    }
+                    if (!fees.length) { fees.push({ title: "March 2026", dues: 2500, isDue: false }); total = 2500; }
+                    students.push({ general_registration_code: "DPS-STD-" + String(grNo).padStart(3, "0"), student_name: nm[0], student_father_name: nm[1], student_father_phone: "03" + (10 + (grNo % 5)) + String(1000000 + grNo * 37311).slice(0, 7), campus_name: campus, class_name: cls, section_name: sec, unpaidFees: fees, totalArrears: total });
+                }
+                sections.push(students);
+                sIdx++;
+            });
+        });
+    });
+
+    var n = function (v) { return (Number(v) || 0).toLocaleString(); };
+    // Reg # as the last number of the code, zeros kept (DPS-STD-001 -> 001)
+    var grNumber = function (code) { var m = String(code == null ? "" : code).match(/\d+(?!.*\d)/); return m ? m[0] : "-"; };
+    var sectionStats = function (students) {
+        var s = { students: students.length, invoices: 0, dueDated: 0, within: 0, total: 0 };
+        students.forEach(function (st) {
+            s.total += st.totalArrears || 0;
+            (st.unpaidFees || []).forEach(function (f) { s.invoices++; if (f.isDue) s.dueDated += f.dues || 0; else s.within += f.dues || 0; });
+        });
+        return s;
+    };
+    var all = sectionStats([].concat.apply([], sections));
+
+    /* ================= PRINT TEMPLATE (portrait, compact, fixed column widths - same design as the other reports) ================= */
+    var filtersHtml = function (arr) {
+        return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
+    };
+    var headerHtml = '<div class="header-section">' +
+        '<div class="header-side">' + (systemSetting && systemSetting.school_logo ? '<img src="' + systemSetting.school_logo + '" class="header-logo" alt="Logo" />' : '') + '</div>' +
+        '<div style="text-align: center; flex: 1;"><h1>' + (systemSetting && systemSetting.school_name || 'School Management System') + '</h1><h2>' + reportTitle + '</h2>' +
+        '<div class="filters">' + filtersHtml([["Fee Type", type_name], ["Duration", duration]]) + filtersHtml([["Campus", campus_name], ["Class", class_name], ["Section", section_name]]) + '</div></div>' +
+        '<div class="header-side"></div></div>';
+    var statsHtml = function (s) {
+        return '<div class="stats-strip">' +
+            '<div class="stat"><div class="stat-label">Total Students</div><div class="stat-value">' + n(s.students) + '</div></div>' +
+            '<div class="stat"><div class="stat-label"># Of Invoices</div><div class="stat-value">' + n(s.invoices) + '</div></div>' +
+            '<div class="stat"><div class="stat-label">Arrears Due Dated</div><div class="stat-value">' + n(s.dueDated) + '</div></div>' +
+            '<div class="stat"><div class="stat-label">Within Due Date</div><div class="stat-value">' + n(s.within) + '</div></div>' +
+            '<div class="stat net"><div class="stat-label">Total</div><div class="stat-value">Rs. ' + n(s.total) + '</div></div></div>';
+    };
+    var chips = function (fees) {
+        return fees.length ? '<div class="fee-chips">' + fees.map(function (f) { return '<span class="fee-chip">' + f.title + ' = <b>' + n(f.dues) + '</b></span>'; }).join('') + '</div>' : '-';
+    };
+    var buildTable = function (students) {
+        var rows = students.map(function (i, index) {
+            return '<tr>' +
+                '<td class="table-cell center">' + (index + 1) + '</td>' +
+                '<td class="table-cell center">' + grNumber(i.general_registration_code) + '</td>' +
+                '<td class="table-cell"><span class="student-name">' + i.student_name + '</span> <span class="student-father">' + (i.student_father_name || '') + '</span></td>' +
+                '<td class="table-cell center nowrap">' + (i.student_father_phone || '') + '</td>' +
+                '<td class="table-cell center">' + i.unpaidFees.length + '</td>' +
+                '<td class="table-cell fee-details">' + chips(i.unpaidFees.filter(function (f) { return f.isDue; })) + '</td>' +
+                '<td class="table-cell fee-details">' + chips(i.unpaidFees.filter(function (f) { return !f.isDue; })) + '</td>' +
+                '<td class="table-cell right strong">' + n(i.totalArrears) + '</td>' +
+                '</tr>';
+        }).join('');
+        var s = sectionStats(students);
+        return '<table><colgroup><col style="width:3.5%"><col style="width:5%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:25%"><col style="width:23%"><col style="width:10.5%"></colgroup>' +
+            '<thead><tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Reg #</th><th class="table-head-cell">Student Name</th><th class="table-head-cell">Phone</th><th class="table-head-cell"># Of Invoices</th><th class="table-head-cell">Arrears - (Due Dated)</th><th class="table-head-cell">Within Due Date</th><th class="table-head-cell right">Total</th></tr></thead>' +
+            '<tbody>' + (rows || '<tr><td class="no-records" colspan="8">No Records Found!</td></tr>') +
+            '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Section Total:</td><td class="grand-total-cell">' + n(s.invoices) + '</td><td class="grand-total-cell"></td><td class="grand-total-cell"></td><td class="grand-total-cell right">' + n(s.total) + '</td></tr></tbody></table>';
+    };
+
+    var classGroups = [], groupIndex = {};
+    sections.forEach(function (students) {
+        var f = students[0], key = f.campus_name + '|' + f.class_name;
+        if (groupIndex[key] == null) { groupIndex[key] = classGroups.length; classGroups.push({ campus: f.campus_name, cls: f.class_name, sections: [] }); }
+        classGroups[groupIndex[key]].sections.push(students);
+    });
+    var classHeading = function (g) {
+        var s = sectionStats([].concat.apply([], g.sections));
+        return '<div class="class-head"><span class="class-name">' + g.cls.toUpperCase() + '</span><span class="class-meta">' + g.campus + ' &nbsp;-&nbsp; ' + g.sections.length + (g.sections.length === 1 ? ' section' : ' sections') + ' &nbsp;-&nbsp; ' + n(s.students) + ' students &nbsp;-&nbsp; Rs. ' + n(s.total) + '</span></div>';
+    };
+    var sectionCard = function (students) {
+        var s = sectionStats(students);
+        return '<div class="section-card"><div class="section-card-head"><span>Section <b>' + students[0].section_name + '</b></span><span class="muted">' + n(s.students) + ' students - Rs. ' + n(s.total) + '</span></div>' +
+            statsHtml(s) + buildTable(students) + '</div>';
+    };
+    var sectionBlocks = classGroups.map(function (g) {
+        if (pagePerSection) {   // every section on its own page, with the class heading repeated on top
+            return g.sections.map(function (students) { return '<div class="class-block page-per-section">' + classHeading(g) + sectionCard(students) + '</div>'; }).join('');
+        }
+        return '<div class="class-block">' + classHeading(g) + g.sections.map(sectionCard).join('') + '</div>';
+    }).join('');
+
+
+    var reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${reportTitle}</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 portrait; margin: 6mm; }
+                html, body { background:#fff; color:#000; font-size:9.5px; line-height:1.2; padding:3px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it (compact) */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #000; padding:0 0 5px; }
+                .header-section h1 { font-size:15px; font-weight:700; margin-bottom:1px; color:#000; }
+                .header-section h2 { font-size:11px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-side { flex:0 0 40px; }
+                .header-logo { width:40px; height:40px; object-fit:contain; border-radius:4px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.3; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 5px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Option A: class heading, each section is its own bordered card under it */
+                .class-block { margin:0 0 14px; }
+                .class-block.page-per-section { page-break-after:always; margin-bottom:0; }
+                .class-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; border-bottom:2.5px solid #000; padding:0 0 2px; margin:0 0 6px; page-break-after:avoid; }
+                .class-name { font-size:15px; font-weight:800; letter-spacing:.6px; }
+                .class-meta { font-size:9px; font-weight:600; color:#444; }
+                .section-card { border:1px solid #888; border-radius:3px; margin:0 0 9px; page-break-inside:avoid; }
+                .section-card-head { display:flex; justify-content:space-between; align-items:center; background:#ececec !important; padding:3px 8px; font-size:10.5px; font-weight:600; border-bottom:1px solid #888; page-break-after:avoid; }
+                .section-card-head b { font-weight:800; font-size:12px; }
+                .section-card-head .muted { font-size:9px; color:#444; font-weight:600; }
+                .section-card .stats-strip { border:none; border-bottom:1px solid #888; margin:0; page-break-after:avoid; }
+                /* Stats: one horizontal strip, Total in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(5,1fr); border:1.5px solid #000; margin-bottom:5px; }
+                .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.5px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:12px; font-weight:800; color:#000; }
+                .section-title { font-size:11px; font-weight:700; color:#000; text-transform:uppercase; margin:6px 0 3px; }
+                /* Table: black outer lines, grey header, no stripes (compact rows) */
+                table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:9.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:2px 2px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:8.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:3px 4px; vertical-align:middle; font-size:9.5px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell.right { text-align:right; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .nowrap { white-space:nowrap; }
+                .fee-details { padding:3px 4px; }
+                .fee-chips { display:flex; flex-wrap:wrap; gap:3px 4px; }
+                .fee-chip { display:inline-block; border:1px solid #b5b5b5; border-radius:2px; background:#f6f6f6 !important; padding:1px 4px; font-size:8.5px; line-height:1.3; font-weight:500; white-space:nowrap; }
+                .fee-chip b { font-weight:800; margin-left:1px; }
+                .student-name { font-weight:700; font-size:10px; }
+                .student-father { font-weight:500; font-size:9px; color:#555; }
+                .no-records { text-align:center; padding:12px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:2px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:2px 4px; font-weight:700; font-size:10px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                .print-footer { margin-top:6px; padding-top:3px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                ${headerHtml}
+                ${sectionBlocks}
+                <div class="print-footer">
+                    Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>

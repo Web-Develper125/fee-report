@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fee Reports</title>
+<style>
+:root {
+    --bg: #f6f6f4; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e3e2dc; --hover: #f1f0ea;
+    --final: #166534; --final-bg: #dcfce7; --migrated: #0f766e; --migrated-bg: #ccfbf1;
+    --done: #92400e; --done-bg: #fef3c7; --unmarked: #57534e; --unmarked-bg: #ecebe6;
+    --accent: #111111; --folder: #b7791f;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161615; --card: #1f1f1d; --text: #efefeb; --muted: #a3a39c; --line: #343431; --hover: #292927;
+        --final: #86efac; --final-bg: #14301e; --migrated: #5eead4; --migrated-bg: #0f2e2b;
+        --done: #fcd34d; --done-bg: #35290d; --unmarked: #c8c7c0; --unmarked-bg: #2a2a27;
+        --accent: #f4f4f0; --folder: #f0b84a;
+    }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 16px; font-size: 14px; }
+.crumbs a { color: var(--muted); text-decoration: none; padding: 2px 4px; border-radius: 6px; }
+.crumbs a:hover { color: var(--text); background: var(--hover); }
+.crumbs .cur { font-weight: 600; padding: 2px 4px; }
+.crumbs .sep { color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.stat:hover { border-color: var(--muted); }
+.stat.active { outline: 2px solid var(--accent); outline-offset: -1px; }
+.stat .n { font-size: 22px; font-weight: 600; display: block; line-height: 1.2; }
+.stat .l { color: var(--muted); font-size: 13px; }
+.legend { color: var(--muted); font-size: 13px; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.toolbar { margin-bottom: 18px; }
+.toolbar input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font: inherit; }
+.list { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.row { display: grid; grid-template-columns: 28px 1fr auto auto auto; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+.row:first-child { border-top: none; }
+a.row.folder:hover { background: var(--hover); }
+.row .ico { width: 22px; height: 22px; display: block; }
+.row.folder .ico { color: var(--folder); }
+.row.file .ico { color: var(--muted); }
+.row .name { font-weight: 500; word-break: break-word; }
+.row .name small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.row .date { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.badge.final { color: var(--final); background: var(--final-bg); }
+.badge.migrated { color: var(--migrated); background: var(--migrated-bg); }
+.badge.done { color: var(--done); background: var(--done-bg); }
+.badge.unmarked { color: var(--unmarked); background: var(--unmarked-bg); }
+.go { color: var(--muted); font-size: 18px; line-height: 1; }
+.open { text-decoration: none; color: var(--bg); background: var(--accent); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.open:hover { opacity: .85; }
+.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+.where { color: var(--muted); font-size: 12px; font-weight: 400; display: block; }
+@media (max-width: 640px) {
+    .row { grid-template-columns: 24px 1fr auto; }
+    .row .date, .row .chips { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Fee Reports</h1>
+    <p class="sub" id="sub"></p>
+
+    <div class="crumbs" id="crumbs"></div>
+    <div class="stats" id="stats"></div>
+
+    <div class="legend">
+        <span><span class="badge unmarked">Not marked</span> no check</span>
+        <span><span class="badge done">Done</span> one check, HTML only</span>
+        <span><span class="badge migrated">Done + migrated</span> two checks, already in the code</span>
+        <span><span class="badge final">Final</span> three checks, 100% complete</span>
+    </div>
+
+    <div class="toolbar"><input id="q" type="search" placeholder="Search in this folder..." autocomplete="off"></div>
+    <div id="out"></div>
+</div>
+
+<script>
+var DATA = {"generated":"2026-11-02","statuses":{"0":{"key":"unmarked","label":"Not marked","hint":"No check mark yet"},"1":{"key":"done","label":"Done","hint":"Report is done (HTML only)"},"2":{"key":"migrated","label":"Done + migrated","hint":"Done and already moved into the code"},"3":{"key":"final","label":"Final","hint":"Final, 100% complete"}},"tree":{"t":"d","name":"Home","children":[{"t":"d","name":"Family Advanced Ledger Report","children":[{"t":"f","name":"Family Advance Ledger Report","level":3,"status":"final","href":"Family%20Advanced%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Family%20Advance%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Family Advanced Ledger Detail Report","level":3,"status":"final","href":"Family%20Advanced%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Family%20Advanced%20Ledger%20Detail%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Fee Payment","children":[{"t":"f","name":"Fee Payment Detailed Ledger Report","level":3,"status":"final","href":"Fee%20Payment%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Fee%20Payment%20Detailed%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Fee Payment Family Detailed Ledger Report","level":3,"status":"final","href":"Fee%20Payment%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Fee%20Payment%20Family%20Detailed%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Fee Payment Family Simple Ledger Report","level":3,"status":"final","href":"Fee%20Payment%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Fee%20Payment%20Family%20Simple%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Fee Payment Simple Ledger Report","level":3,"status":"final","href":"Fee%20Payment%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Fee%20Payment%20Simple%20Ledger%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Fee Report","children":[{"t":"d","name":"Arrear Reports","children":[{"t":"f","name":"Class Wise Arrear Report (Detailed)","level":1,"status":"done","href":"Fee%20Report/Arrear%20Reports%20%E2%9C%94%EF%B8%8F/Class%20Wise%20Arrear%20Report%20(Detailed)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Class Wise Arrear Report (Summary)","level":1,"status":"done","href":"Fee%20Report/Arrear%20Reports%20%E2%9C%94%EF%B8%8F/Class%20Wise%20Arrear%20Report%20(Summary)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Student Wise Arrear Report (Detailed)","level":1,"status":"done","href":"Fee%20Report/Arrear%20Reports%20%E2%9C%94%EF%B8%8F/Student%20Wise%20Arrear%20Report%20(Detailed)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Student Wise Arrear Report (Summary)","level":1,"status":"done","href":"Fee%20Report/Arrear%20Reports%20%E2%9C%94%EF%B8%8F/Student%20Wise%20Arrear%20Report%20(Summary)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Collected Fine Report","children":[{"t":"f","name":"Collected Fine Report","level":3,"status":"final","href":"Fee%20Report/Collected%20Fine%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Collected%20Fine%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Daily Closing Report","children":[{"t":"f","name":"Daily Closing Report","level":3,"status":"final","href":"Fee%20Report/Daily%20Closing%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Daily%20Closing%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Date Wise Fee Collection Report","children":[{"t":"f","name":"Date Wise Fee Detailed Collection Report","level":1,"status":"done","href":"Fee%20Report/Date%20Wise%20Fee%20Collection%20Report%20%E2%9C%94%EF%B8%8F%20%F0%9F%9F%A5/Date%20Wise%20Fee%20Detailed%20Collection%20Report%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Date Wise Fee Summary Collection Report","level":1,"status":"done","href":"Fee%20Report/Date%20Wise%20Fee%20Collection%20Report%20%E2%9C%94%EF%B8%8F%20%F0%9F%9F%A5/Date%20Wise%20Fee%20Summary%20Collection%20Report%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Date Wise Fee Transaction Report","children":[{"t":"f","name":"Date Wise Fee Detailed Transaction Report","level":2,"status":"migrated","href":"Fee%20Report/Date%20Wise%20Fee%20Transaction%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%20%F0%9F%9F%A5/Date%20Wise%20Fee%20Detailed%20Transaction%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Estimate Fee Report","children":[{"t":"f","name":"Estimated Fee Income Report (Detailed)","level":3,"status":"final","href":"Fee%20Report/Estimate%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Estimated%20Fee%20Income%20Report%20(Detailed)%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Estimated Fee Income Report (Summary)","level":3,"status":"final","href":"Fee%20Report/Estimate%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Estimated%20Fee%20Income%20Report%20(Summary)%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Student Wise Actual Fee Report","level":3,"status":"final","href":"Fee%20Report/Estimate%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Student%20Wise%20Actual%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Family Advance Balance Report","children":[{"t":"f","name":"Family Advance Balance Report","level":3,"status":"final","href":"Fee%20Report/Family%20Advance%20Balance%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Family%20Advance%20Balance%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Family Collected Fee Report","children":[{"t":"f","name":"Family Collected Fee Report","level":1,"status":"done","href":"Fee%20Report/Family%20Collected%20Fee%20Report/Family%20Collected%20Fee%20Report%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Family Dues Report","children":[{"t":"f","name":"Family Dues Report","level":3,"status":"final","href":"Fee%20Report/Family%20Dues%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Family%20Dues%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Fee Collection Report","children":[{"t":"f","name":"Class Wise Fee Collection Report","level":1,"status":"done","href":"Fee%20Report/Fee%20Collection%20Report/Class%20Wise%20Fee%20Collection%20Report%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Section Wise Fee Collection Report","level":1,"status":"done","href":"Fee%20Report/Fee%20Collection%20Report/Section%20Wise%20Fee%20Collection%20Report%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Generated Voucher Report","children":[{"t":"f","name":"Class Wise Generated Voucher Report","level":2,"status":"migrated","href":"Fee%20Report/Generated%20Voucher%20Report%20%E2%9C%94%EF%B8%8F%20%F0%9F%9F%A5/Class%20Wise%20Generated%20Voucher%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Detailed Generated Voucher Report","level":1,"status":"done","href":"Fee%20Report/Generated%20Voucher%20Report%20%E2%9C%94%EF%B8%8F%20%F0%9F%9F%A5/Detailed%20Generated%20Voucher%20Report.html","updated":"2026-11-02"}]},{"t":"d","name":"Inactive Students Fee Report","children":[{"t":"f","name":"Inactive Students Fee Report","level":3,"status":"final","href":"Fee%20Report/Inactive%20Students%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Inactive%20Students%20Fee%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Misleading Entries Report","children":[{"t":"f","name":"Misleading Entries Report","level":3,"status":"final","href":"Fee%20Report/Misleading%20Entries%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F/Misleading%20Entries%20Report%20%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]},{"t":"d","name":"Payment Channel Wise Fee Collection Report","children":[{"t":"f","name":"Payment Channel Wise Summary Report","level":0,"status":"unmarked","href":"Fee%20Report/Payment%20Channel%20Wise%20Fee%20Collection%20Report%20%F0%9F%9F%A5/Payment%20Channel%20Wise%20Summary%20Report.html","updated":"2026-11-02"}]},{"t":"d","name":"Unpaid Fee Report","children":[{"t":"f","name":"Unpaid Fee Report (Detailed)","level":1,"status":"done","href":"Fee%20Report/Unpaid%20Fee%20Report%20%E2%9C%94%EF%B8%8F/Unpaid%20Fee%20Report%20(Detailed)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"},{"t":"f","name":"Unpaid Fee Report (Summary)","level":1,"status":"done","href":"Fee%20Report/Unpaid%20Fee%20Report%20%E2%9C%94%EF%B8%8F/Unpaid%20Fee%20Report%20(Summary)%20%E2%9C%94%EF%B8%8F.html","updated":"2026-11-02"}]}]}]}};
+var STATUS_KEYS = ["final", "migrated", "done", "unmarked"];
+var STATUS_LABEL = { final: "Final", migrated: "Done + migrated", done: "Done", unmarked: "Not marked" };
+var filter = "all";
+
+var ICON_FOLDER = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>';
+var ICON_FILE = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+function currentPath() {
+    var h = location.hash.replace(/^#\/?/, "");
+    return h ? h.split("/").map(decodeURIComponent) : [];
+}
+function hashFor(path) { return "#/" + path.map(encodeURIComponent).join("/"); }
+
+function resolve(path) {
+    var node = DATA.tree, ok = [];
+    for (var i = 0; i < path.length; i++) {
+        var next = node.children.filter(function (c) { return c.t === "d" && c.name === path[i]; })[0];
+        if (!next) break;
+        node = next; ok.push(path[i]);
+    }
+    return { node: node, path: ok };
+}
+
+function files(node, out) {
+    node.children.forEach(function (c) { if (c.t === "f") out.push(c); else files(c, out); });
+    return out;
+}
+function countBy(list) {
+    var c = { all: list.length, final: 0, migrated: 0, done: 0, unmarked: 0 };
+    list.forEach(function (f) { c[f.status]++; });
+    return c;
+}
+function matches(f) { return filter === "all" || f.status === filter; }
+
+function renderCrumbs(path) {
+    var html = '<a href="#/">Home</a>';
+    path.forEach(function (name, i) {
+        html += '<span class="sep">/</span>';
+        html += i === path.length - 1 ? '<span class="cur">' + esc(name) + '</span>' : '<a href="' + hashFor(path.slice(0, i + 1)) + '">' + esc(name) + '</a>';
+    });
+    document.getElementById("crumbs").innerHTML = html;
+}
+
+function renderStats(node) {
+    var c = countBy(files(node, []));
+    var items = [["all", "All reports"], ["final", "Final"], ["migrated", "Done + migrated"], ["done", "Done"], ["unmarked", "Not marked"]];
+    document.getElementById("stats").innerHTML = items.map(function (i) {
+        return '<button class="stat' + (filter === i[0] ? " active" : "") + '" data-f="' + i[0] + '"><span class="n">' + c[i[0]] + '</span><span class="l">' + i[1] + '</span></button>';
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll(".stat"), function (b) {
+        b.onclick = function () { filter = b.getAttribute("data-f"); render(); };
+    });
+}
+
+function fileRow(f, where) {
+    return '<div class="row file">' + ICON_FILE +
+        '<span class="name">' + esc(f.name) + (where ? '<span class="where">' + esc(where) + '</span>' : '') + '</span>' +
+        '<span class="chips"><span class="badge ' + f.status + '" title="' + esc(DATA.statuses[f.level].hint) + '">' + esc(DATA.statuses[f.level].label) + '</span></span>' +
+        '<span class="date">' + esc(f.updated) + '</span>' +
+        '<a class="open" href="' + f.href + '" target="_blank" rel="noopener">Open</a></div>';
+}
+
+function folderRow(folder, path) {
+    var list = files(folder, []).filter(matches);
+    if (!list.length) return "";
+    var c = countBy(list);
+    var chips = STATUS_KEYS.filter(function (k) { return c[k]; }).map(function (k) { return '<span class="badge ' + k + '">' + c[k] + " " + STATUS_LABEL[k] + "</span>"; }).join("");
+    var sub = folder.children.filter(function (x) { return x.t === "d"; }).length;
+    return '<a class="row folder" href="' + hashFor(path.concat(folder.name)) + '">' + ICON_FOLDER +
+        '<span class="name">' + esc(folder.name) + '<small>' + list.length + (list.length === 1 ? " report" : " reports") + (sub ? " - " + sub + (sub === 1 ? " folder" : " folders") : "") + '</small></span>' +
+        '<span class="chips">' + chips + '</span><span class="date"></span><span class="go">&rsaquo;</span></a>';
+}
+
+function render() {
+    var r = resolve(currentPath());
+    var node = r.node, path = r.path;
+    renderCrumbs(path);
+    renderStats(node);
+
+    var q = document.getElementById("q").value.trim().toLowerCase();
+    var out = document.getElementById("out");
+
+    if (q) {   // search: flat list of every matching report inside this folder
+        var found = files(node, []).filter(function (f) { return matches(f) && f.name.toLowerCase().indexOf(q) !== -1; });
+        out.innerHTML = found.length ? '<div class="list">' + found.map(function (f) { return fileRow(f, ""); }).join("") + "</div>" : '<div class="empty">No reports found.</div>';
+        return;
+    }
+
+    var rows = node.children.map(function (c) { return c.t === "d" ? folderRow(c, path) : (matches(c) ? fileRow(c) : ""); }).join("");
+    out.innerHTML = rows ? '<div class="list">' + rows + "</div>" : '<div class="empty">Nothing in this folder for the selected status.</div>';
+}
+
+var total = files(DATA.tree, []).length;
+document.getElementById("sub").textContent = total + " reports - index built on " + DATA.generated;
+document.getElementById("q").addEventListener("input", render);
+window.addEventListener("hashchange", function () { document.getElementById("q").value = ""; render(); });
+render();
+</script>
+</body>
+</html>

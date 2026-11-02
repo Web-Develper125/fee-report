@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Class Wise Fee Collection Report</title>
+</head>
+<body>
+<script>
+    /* ================= SETTINGS (campus wise and class wise use this same layout - only the title changes) ================= */
+    var reportTitle = "Class Wise Fee Collection Report";   // or "Campus Wise Fee Collection Report"
+
+    /* ================= DUMMY DATA (same shape as the page's totalData for the aggregate prints: one row per section) ================= */
+    var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var type_name = "Monthly Fee", fee_month = "September", fee_year = 2026, custom_fee_name = "";
+    var sessionName = "2026-2027", campus_name = "All", student_status = ["All"];
+    var campuses = ["Main Campus", "City Campus"], classes = ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7"], sectionList = ["A", "B"];
+    var totalData = [];
+    campuses.forEach(function (c, ci) {
+        classes.forEach(function (cl, cli) {
+            sectionList.forEach(function (s, si) {
+                var students = 18 + ((ci * 7 + cli * 5 + si * 3) % 17);
+                var expected = students * (3000 + cli * 400 + ci * 250);
+                var collected = Math.round(expected * (0.55 + ((ci + cli + si) % 5) * 0.08));
+                totalData.push({ campus_name: c, class_name: cl, section_name: s, student_count: students, totalExpectedFee: expected, totalCollectedFee: collected, totalPendingFee: expected - collected, collectionPercentage: (collected / expected * 100).toFixed(2) });
+            });
+        });
+    });
+    var sum = function (k) { return totalData.reduce(function (t, r) { return t + (Number(r[k]) || 0); }, 0); };
+    var totalStudent = sum("student_count"), totalInvoiceCount = totalStudent + 37;
+    var totalExpectedFee = sum("totalExpectedFee"), totalCollectedFee = sum("totalCollectedFee"), totalPendingFee = sum("totalPendingFee");
+    var totalCollectionPerc = (totalCollectedFee / totalExpectedFee * 100).toFixed(2);
+
+    var n = function (v) { return (Number(v) || 0).toLocaleString(); };
+
+    /* ================= PRINT TEMPLATE (portrait, compact - same design as the other reports) ================= */
+    var filtersHtml = function (arr) {
+        return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
+    };
+    var filtersRow1 = [["Fee Type", type_name]];
+    if (type_name === "Monthly Fee" || type_name === "Transport Fee") filtersRow1.push(["Month", fee_month], ["Year", fee_year]);
+    else if (type_name === "Custom Fee") filtersRow1.push(["Fee Name", custom_fee_name]);
+    var filtersRow2 = [["Session", sessionName], ["Campus", campus_name || "All"], ["Student Status", student_status.indexOf("All") !== -1 ? "All" : student_status.join(", ")]];
+
+    var tableRowsHtml = totalData.length > 0 ? totalData.map(function (i, index) {
+        return '<tr>' +
+            '<td class="table-cell center">' + (index + 1) + '</td>' +
+            '<td class="table-cell center">' + i.campus_name + '</td>' +
+            '<td class="table-cell center">' + i.class_name + '</td>' +
+            '<td class="table-cell center">' + i.section_name + '</td>' +
+            '<td class="table-cell center">' + (i.student_count || "0") + '</td>' +
+            '<td class="table-cell right">' + n(i.totalExpectedFee) + '</td>' +
+            '<td class="table-cell right strong">' + n(i.totalCollectedFee) + '</td>' +
+            '<td class="table-cell right">' + n(i.totalPendingFee) + '</td>' +
+            '<td class="table-cell center">' + (i.collectionPercentage || "0") + '%</td>' +
+            '</tr>';
+    }).join('') + '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Grand Total:</td><td class="grand-total-cell">' + n(totalStudent) + '</td><td class="grand-total-cell right">' + n(totalExpectedFee) + '</td><td class="grand-total-cell right">' + n(totalCollectedFee) + '</td><td class="grand-total-cell right">' + n(totalPendingFee) + '</td><td class="grand-total-cell">' + totalCollectionPerc + '%</td></tr>'
+        : '<tr><td class="no-records" colspan="9">No Records Found!</td></tr>';
+
+    var reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${reportTitle}</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 portrait; margin: 6mm; }
+                html, body { background:#fff; color:#000; font-size:9.5px; line-height:1.2; padding:3px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it (compact) */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #000; padding:0 0 5px; }
+                .header-section h1 { font-size:15px; font-weight:700; margin-bottom:1px; color:#000; }
+                .header-section h2 { font-size:11px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-side { flex:0 0 40px; }
+                .header-logo { width:40px; height:40px; object-fit:contain; border-radius:4px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.3; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 5px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Received in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(6,1fr); border:1.5px solid #000; margin-bottom:5px; }
+                .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.5px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:12px; font-weight:800; color:#000; }
+                .section-title { font-size:11px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:3px; }
+                /* Table: black outer lines, grey header, no stripes (compact rows) */
+                table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:9.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:2px 2px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:8.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:3px 4px; vertical-align:middle; font-size:9.5px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell.right { text-align:right; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .no-records { text-align:center; padding:12px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:2px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:2px 4px; font-weight:700; font-size:10px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                /* Calculation formula: small grey notes under the table */
+                .formulas { margin-top:8px; page-break-inside:avoid; }
+                .formulas h3 { font-size:9px; font-weight:700; text-transform:uppercase; margin-bottom:2px; }
+                .formulas p { font-size:8px; font-weight:600; line-height:1.35; color:#777; margin-bottom:1px; }
+                .print-footer { margin-top:8px; padding-top:3px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSetting?.school_name || 'School Management System'}</h1>
+                            <h2>${reportTitle}</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                            </div>
+                        </div>
+                        <div class="header-side"></div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Students</div><div class="stat-value">${n(totalStudent)}</div></div>
+                        <div class="stat"><div class="stat-label"># Of Invoices</div><div class="stat-value">${n(totalInvoiceCount)}</div></div>
+                        <div class="stat"><div class="stat-label">Expected Amount</div><div class="stat-value">Rs. ${n(totalExpectedFee)}</div></div>
+                        <div class="stat net"><div class="stat-label">Received</div><div class="stat-value">Rs. ${n(totalCollectedFee)}</div></div>
+                        <div class="stat"><div class="stat-label">Dues</div><div class="stat-value">Rs. ${n(totalPendingFee)}</div></div>
+                        <div class="stat"><div class="stat-label">Collection %</div><div class="stat-value">${totalCollectionPerc}%</div></div>
+                    </div>
+
+                    <div class="section-title">Fee Collection Breakdown</div>
+                    <table>
+                        <colgroup>
+                            <col style="width:5%"><col style="width:15%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:14%"><col style="width:14%"><col style="width:12%"><col style="width:10%">
+                        </colgroup>
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Sr #</th>
+                                <th class="table-head-cell">Campus</th>
+                                <th class="table-head-cell">Class</th>
+                                <th class="table-head-cell">Section</th>
+                                <th class="table-head-cell">Student Count</th>
+                                <th class="table-head-cell right">Expected Amount</th>
+                                <th class="table-head-cell right">Received</th>
+                                <th class="table-head-cell right">Dues</th>
+                                <th class="table-head-cell">Collection %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="formulas">
+                        <h3>Summary (Calculation Formula)</h3>
+                        <p>Students = Total Number Of Students Whose Fee Are Generated Of This Campus.</p>
+                        <p>Number Of Invoices = Total Number Of Invoices Against This Filter.</p>
+                        <p>Expected Amount = Sum Of The Amount Of All The Students Whose Fees Are Generated. (if fee is due dated and status is unpaid fine is also added in this amount). (if discount is applied to any student then this discount is also deducted from this amount).</p>
+                        <p>Received = Sum Of The Amount Of All The Students Whose Fees Are Paid. (partial payment amount is also added in this amount).</p>
+                        <p>Dues = Sum Of The Amount Of All The Students Whose Fees Are Unpaid. (if fee is due dated and status is unpaid fine is also added in this amount).</p>
+                        <p>Collection % = (Received / Expected Amount) x 100.</p>
+                    </div>
+
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var st = document.createElement("style");
+        st.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(st);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>
