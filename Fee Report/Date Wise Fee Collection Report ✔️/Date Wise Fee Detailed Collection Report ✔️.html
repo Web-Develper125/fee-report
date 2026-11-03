@@ -7,17 +7,17 @@
 <body>
 <script>
 /* Preview of the Print Detailed Report (handlePrintReport in Fee Income Report NEW.jsx).
-   Data = the real API responses (getFeeDefaultersNewFast + getFamilyAdvanceByDate) for 20-10-2026 to 03-11-2026.
-   Only the fee items that have activity inside the date range are listed (items without activity do not change this report).
+   Data = the real API responses (getFeeDefaultersNewFast + getFamilyAdvanceByDate) for today, 03-11-2026.
+   All the fee items of the response are listed (the unpaid ones give the Dues).
    Everything on the report is calculated by the SAME code as the page: nothing is typed in by hand. */
 
 /* ===== STATE (same names as the page) ===== */
 var systemSetting = { school_name: 'Ai Model School System', school_logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E' };
 var session_id = 'All', campus_name = 'All', class_name = 'All', section_name = 'All';
-var start_date = '2026-10-20', end_date = '2026-11-03';
+var start_date = '2026-11-03', end_date = '2026-11-03';   /* today: Receivable and Dues columns show */
 var selectedUser = 'All', selectedModeSourceKey = 'All';
 var FILTER_ALL = 'All';
-var todayStr = function () { return new Date().toLocaleDateString('en-CA'); };
+var todayStr = function () { return '2026-11-03'; };   /* fixed, so this preview always shows the day of the data */
 
 /* ===== payment channels (same ids / names as the system) ===== */
 var P = '69f61a250ece5980ea7593';
@@ -30,142 +30,145 @@ var getSourceName = function (id) { return SOURCE_NAMES[String((id && id._id) ||
 var familyCreditModeIds = new Set([FC]);
 var isFamilyCreditPayment = function (modeId) { var mode = modeId ? String(modeId._id || modeId) : ''; return Boolean(mode && familyCreditModeIds.has(mode)); };
 
-/* ===== REAL DATA (compact form of the API response) ===== */
+/* ===== REAL DATA (compact form of the API response of 03-11-2026) ===== */
+var AY = '6a99cd3ac6679a85f7c0ab5f'; SOURCE_NAMES[AY] = 'Ayesha';
 var ST = {
-    reh1:  ['67cad98adf568083a5255fcf', '1311662542', 'BSS-STD-1',    'Rehan Ali',    'Muhammad Akram'],
-    adeel: ['67cbe69d97d6df15825d78ce', '9039104180', 'BSS-STD-46',   'Adeel Hassan', 'Muhammad Rizwan'],
-    dan:   ['67cd4b823792ba4e2de2fe9b', '9399078401', 'BSS-STD-451',  'Daniyal Raza', 'Muhammad Sajid'],
-    talha: ['67d5987127e6ae0eca720970', '8267076970', 'BSS-STD-863',  'Talha Ahmed',  'Muhammad Shahbaz'],
-    mahad: ['67d5a53127e6ae0eca728ff0', '1301351086', 'BSS-STD-874',  'Mahad Ahmed',  'Muhammad Usman'],
-    reh2:  ['67dd4ce131a760aca7d49bf7', '5769538870', 'BSS-STD-1328', 'Rehan Ali',    'Muhammad Kamran'],
-    wal:   ['67dd4dc631a760aca7d4b4b4', '1273788787', 'BSS-STD-1331', 'Waleed Khan',  'Muhammad Farooq'],
-    imran: ['67ee5ed4550096fe5099d4e1', '9399078401', 'BSS-STD-1770', 'Imran Ali',    'Muhammad Yousaf'],
-    reh3:  ['67ee6239550096fe509ac36b', '1830117161', 'BSS-STD-1783', 'Rehan Ali',    'Muhammad Kamran'],
-    zee:   ['680f78594a67bafed478582e', '7077224818', 'BSS-STD-2322', 'Zeeshan Khan', 'Muhammad Majid'],
-    saif:  ['681f8655fbf6db1727df8415', '2754270897', 'BSS-STD-2514', 'Saif Ahmed',   'Muhammad Bilal'],
-    ray:   ['681f87aefbf6db1727df861b', '1249969556', 'BSS-STD-2516', 'Rayyan Khan',  'Muhammad Shahbaz'],
-    yus:   ['68238e31fbf6db172728cb53', '1403726561', 'BSS-STD-2535', 'Yusuf Khan',   'Muhammad Adnan'],
-    riz:   ['683141d333b0247d2133e32b', '1311662542', 'BSS-STD-2602', 'Rizwan Khan',  'Muhammad Anwar'],
-    ibr:   ['67cadbfbdf568083a5256e3c', '9399078401', 'BSS-STD-6',    'Ibrahim Ahmed','Muhammad Riaz']
+    anas:   ['67cad9d3df568083a5256311', '1242546172', 'BSS-STD-2',    'Anas Ali',      'Muhammad Rizwan'],
+    haris:  ['67cbf76d97d6df15825dddc3', '1311482352', 'BSS-STD-75',   'Haris Ahmed',   'Muhammad Irfan'],
+    adeel:  ['67cbf79797d6df15825de259', '2081515104', 'BSS-STD-78',   'Adeel Hassan',  'Muhammad Shahid'],
+    ayan:   ['67cc045f97d6df15825e04b3', '2761859005', 'BSS-STD-87',   'Ayan Ali',      'Muhammad Adeel'],
+    ahmad:  ['67cc069c97d6df15825e200b', '1141115630', 'BSS-STD-98',   'Ahmad Raza',    'Muhammad Majid'],
+    mahmed: ['67cc312097d6df15825f86b5', '1141115630', 'BSS-STD-233',  'Muhammad Ahmed','Muhammad Hassan'],
+    usman:  ['67cc312d97d6df15825f8885', '7169790133', 'BSS-STD-234',  'Usman Ali',     'Muhammad Nadeem'],
+    ayaank: ['67cd4fe53792ba4e2de3433b', '1141115630', 'BSS-STD-499',  'Ayaan Khan',    'Muhammad Kashif'],
+    rizk:   ['67cd502f3792ba4e2de3495f', '1242546172', 'BSS-STD-505',  'Rizwan Khan',   'Muhammad Rizwan'],
+    hamza:  ['67cd51de3792ba4e2de36c3e', '2327516005', 'BSS-STD-535',  'Hamza Ahmed',   'Muhammad Rauf'],
+    ahmad2: ['67d16d57d74df95683383ee2', '1664987345', 'BSS-STD-789',  'Ahmad Raza',    'Muhammad Sajid'],
+    arham:  ['67e4f1fe7537b69e78eff2b0', '1664987345', 'BSS-STD-1519', 'Arham Ali',     'Muhammad Riaz']
 };
 var fee = function (s, title, o) {
     var st = ST[s];
     return Object.assign({ student_id: st[0], student_family_code: st[1], general_registration_code: st[2], student_name: st[3], student_father_name: st[4], title: title,
-        fee_status: 'Paid', late_fine: 0, due_date: '2026-11-10T00:00:00.000Z', paying_date: null, fee_after_discount: 0, paid_amount: 0,
+        fee_status: 'Paid', late_fine: 300, due_date: '2026-11-10T00:00:00.000Z', paying_date: null, fee_after_discount: 0, paid_amount: 0,
         partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [],
         payment_mode_id: null, payment_mode_source_id: null, payment_recieved_by: '' }, o);
 };
 var pp = function (amount, date, mode, src) { return { amount: amount, date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }; };
 var dc = function (amount, date) { return { amount: amount, date: date, discount_by: 'DEMO' }; };
 var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-var mt = function (mon, yr) { return 'Fee Of  ' + mon + ' ' + yr; };
-/* a fee paid in full on `date` with mode/src */
-var paidFee = function (s, title, after, paid, date, mode, src, o) {
-    return fee(s, title, Object.assign({ fee_status: 'Paid', fee_after_discount: after, paid_amount: paid, paying_date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }, o || {}));
-};
-/* an unpaid fee with one partial payment */
-var partFee = function (s, title, after, amount, date, mode, src, o) {
-    return fee(s, title, Object.assign({ fee_status: 'Unpaid', fee_after_discount: after, paid_amount: amount, partial_payment_history: [pp(amount, date, mode, src)] }, o || {}));
-};
+var MM = { January: '01', February: '02', March: '03', April: '04', May: '05', June: '06', July: '07', August: '08', September: '09', October: '10', November: '11', December: '12' };
+var mrow = function (s, mon, yr, o) { return fee(s, 'Fee Of  ' + mon + ' ' + yr, Object.assign({ due_date: yr + '-' + MM[mon] + '-10T00:00:00.000Z' }, o)); };
+/* a monthly fee paid in full (quick payment) / an unpaid monthly fee (with its partial payments) */
+var paidM = function (s, mon, yr, after, paid, date, mode, src, o) { return mrow(s, mon, yr, Object.assign({ fee_status: 'Paid', fee_after_discount: after, paid_amount: paid, paying_date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }, o || {})); };
+var unpM = function (s, mon, yr, after, parts, o) { parts = parts || []; return mrow(s, mon, yr, Object.assign({ fee_status: 'Unpaid', fee_after_discount: after, paid_amount: parts.reduce(function (a, p) { return a + p.amount; }, 0), partial_payment_history: parts }, o || {})); };
+var crow = function (s, name, o) { return fee(s, name, o); };
+var paidC = function (s, name, after, paid, date, mode, src, o) { return crow(s, name, Object.assign({ fee_status: 'Paid', fee_after_discount: after, paid_amount: paid, paying_date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }, o || {})); };
+var unpC = function (s, name, after, parts, o) { parts = parts || []; return crow(s, name, Object.assign({ fee_status: 'Unpaid', fee_after_discount: after, paid_amount: parts.reduce(function (a, p) { return a + p.amount; }, 0), partial_payment_history: parts }, o || {})); };
+var CONTEEN = 'CONTEEN FEE 2026', STATIONARY = 'STATIONARY FEE 2026';
 
 var monthlyFee = [];
 (function () {
     var add = function (x) { monthlyFee.push(x); };
-    var Y = '2026-';
-    /* Rehan Ali (BSS-STD-1) */
-    var d = '2026-10-28T20:01:34.105Z';
-    add(paidFee('reh1', mt('October', 2025), 2300, 2300, d, D7, D8, { due_date: '2026-10-08T00:00:00.000Z' }));
-    add(paidFee('reh1', mt('September', 2025), 1700, 1700, d, D7, D8, { due_date: '2026-10-08T00:00:00.000Z', further_discount_history: [dc(600, d)] }));
-    /* Adeel Hassan */
-    add(partFee('adeel', mt('October', 2026), 2850, 1500, '2026-10-30T06:40:29.786Z', D9, DA, { late_fine: 300, due_date: '2026-10-10T00:00:00.000Z' }));
-    add(paidFee('adeel', mt('November', 2026), 2850, 2850, '2026-10-30T06:32:59.343Z', D9, DA, { late_fine: 300 }));
-    add(paidFee('adeel', mt('December', 2026), 2850, 2850, '2026-10-30T06:34:06.276Z', D9, DA, { late_fine: 300, due_date: '2026-12-10T00:00:00.000Z' }));
-    /* Daniyal Raza */
-    d = '2026-10-22T06:00:54.588Z';
-    MON.slice(0, 10).forEach(function (m, i) {
-        add(paidFee('dan', mt(m, 2026), 2750, i < 2 ? 2750 : 3050, d, D9, DA, { late_fine: i < 2 ? 0 : 300 }));
-    });
-    add(paidFee('dan', mt('November', 2026), 100, 100, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2650, d)] }));
-    add(paidFee('dan', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2750, d)] }));
-    add(paidFee('dan', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2750, d)] }));
-    /* Talha Ahmed (Jan..Dec + a second Dec; late fine discounted from March) */
-    d = '2026-10-28T05:53:05.252Z';
-    MON.concat(['December']).forEach(function (m, i) {
-        add(paidFee('talha', mt(m, 2026), 3000, 3000, d, EB, EC, { late_fee_fine_discount_history: [dc(i < 2 ? 0 : 300, d)] }));
-    });
-    /* Mahad Ahmed */
-    d = '2026-10-20T10:24:32.135Z';
-    add(paidFee('mahad', mt('January', 2026), 2253, 2253, d, FC, FC3));
-    add(paidFee('mahad', mt('February', 2026), 2253, 2253, d, FC, FC3));
-    add(paidFee('mahad', mt('March', 2026), 2253, 2553, d, FC, FC3, { late_fine: 300 }));
-    add(paidFee('mahad', mt('April', 2026), 2253, 2253, d, FC, FC3, { late_fee_fine_discount_history: [dc(300, '2026-10-20T10:18:35.617Z')] }));
-    add(partFee('mahad', mt('May', 2026), 2253, 688, d, FC, FC3, { late_fine: 300 }));
-    add(partFee('mahad', mt('October', 2026), 2253, 1500, '2026-10-20T10:22:16.799Z', DB, F4, { late_fine: 300 }));
-    add(paidFee('mahad', mt('December', 2026), 2253, 2253, '2026-10-20T10:20:01.733Z', D7, D8, { late_fine: 300 }));
-    /* Rehan Ali (BSS-STD-1328) */
-    add(partFee('reh2', mt('January', 2026), 3000, 2350, '2026-10-21T09:30:42.894Z', E3, E4));
-    /* Waleed Khan */
-    d = '2026-11-02T16:50:31.888Z';
-    MON.slice(0, 10).forEach(function (m, i) {
-        add(paidFee('wal', mt(m, 2026), 3000, i < 2 ? 3000 : 3300, d, D9, DA, { late_fine: i < 2 ? 0 : 300 }));
-    });
-    add(partFee('wal', mt('November', 2026), 3000, 2600, d, D9, DA, { late_fine: 300 }));
-    /* Imran Ali */
-    d = '2026-11-01T06:01:38.446Z';
-    MON.slice(0, 10).forEach(function (m) { add(paidFee('imran', mt(m, 2026), 2650, 2950, d, D9, DA, { late_fine: 300 })); });
-    add(paidFee('imran', mt('November', 2026), 2500, 2500, d, D9, DA, { late_fine: 300, further_discount_history: [dc(150, d)] }));
-    add(paidFee('imran', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2650, d)] }));
-    /* Zeeshan Khan */
-    d = '2026-10-28T05:53:27.963Z';
-    MON.slice(0, 10).forEach(function (m, i) {
-        add(paidFee('zee', mt(m, 2026), 3000, i < 2 ? 3000 : 3300, d, EB, EC, { late_fine: i < 2 ? 0 : 300 }));
-    });
-    add(paidFee('zee', mt('November', 2026), 3000, 3000, d, EB, EC, { late_fine: 300 }));
-    add(paidFee('zee', mt('December', 2026), 600, 600, d, EB, EC, { late_fine: 300, further_discount_history: [dc(2400, d)] }));
-    add(paidFee('zee', mt('December', 2026), 0, 0, d, EB, EC, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
-    /* Saif Ahmed */
-    add(paidFee('saif', mt('December', 2026), 3000, 3000, '2026-10-29T17:52:34.046Z', E9, EA, { late_fine: 300 }));
-    /* Rayyan Khan (Jan..Dec + a second Dec; late fine discounted from March) */
-    d = '2026-10-21T09:30:24.177Z';
-    MON.concat(['December']).forEach(function (m, i) {
-        add(paidFee('ray', mt(m, 2026), 3000, 3000, d, E3, E4, { late_fee_fine_discount_history: [dc(i < 2 ? 0 : 300, d)] }));
-    });
-    /* Yusuf Khan */
-    d = '2026-10-21T09:30:00.177Z';
-    add(paidFee('yus', mt('January', 2026), 3000, 3000, d, FC, FC2));
-    add(paidFee('yus', mt('February', 2026), 3000, 3000, d, FC, FC2));
-    MON.slice(2, 7).forEach(function (m) { add(paidFee('yus', mt(m, 2026), 3000, 3300, d, FC, FC2, { late_fine: 300 })); });
-    add(paidFee('yus', mt('August', 2026), 2500, 2500, d, FC, FC2, { further_discount_history: [dc(500, d)], late_fee_fine_discount_history: [dc(300, d)] }));
-    add(paidFee('yus', mt('September', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] }));
-    add(paidFee('yus', mt('October', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] }));
-    add(paidFee('yus', mt('November', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
-    add(paidFee('yus', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
-    add(paidFee('yus', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    var y = 2026, d;
+    /* Anas Ali (6 fees: Jul..Dec 2026) */
+    d = '2026-11-03T07:29:04.942Z';
+    add(paidM('anas', 'July', y, 2850, 3150, d, FC, FC2, { partial_payment_history: [pp(2100, '2026-09-28T10:56:07.412Z', FC, FC2)] }));
+    add(paidM('anas', 'August', y, 2850, 3150, d, FC, FC2));
+    add(paidM('anas', 'September', y, 2850, 3150, d, FC, FC2));
+    ['October', 'November', 'December'].forEach(function (m) { add(unpM('anas', m, y, 2850)); });
+    /* Haris Ahmed */
+    d = '2026-11-03T07:09:09.184Z';
+    MON.slice(0, 8).forEach(function (m) { add(paidM('haris', m, y, 2140, 2440, d, D9, DA)); });
+    add(unpM('haris', 'September', y, 2140, [pp(480, d, D9, DA)]));
+    add(unpM('haris', 'December', y, 2140, [pp(1000, '2026-11-03T07:12:21.719Z', FC, FC2)]));
+    add(unpM('haris', 'October', y, 2140));
+    add(unpM('haris', 'November', y, 2140));
+    /* Adeel Hassan (BSS-STD-78) */
+    d = '2026-11-03T07:04:25.388Z';
+    MON.slice(0, 10).forEach(function (m) { add(paidM('adeel', m, y, 2850, 3150, d, D9, DA)); });
+    add(paidM('adeel', 'November', y, 2500, 2500, d, D9, DA, { further_discount_history: [dc(350, d)] }));
+    add(paidM('adeel', 'December', y, 0, 0, d, D9, DA, { further_discount_history: [dc(2850, d)] }));
+    /* Ayan Ali */
+    d = '2026-11-03T07:04:41.094Z';
+    add(paidM('ayan', 'January', y, 2140, 2440, d, D9, DA));
+    add(paidM('ayan', 'February', y, 2140, 2440, d, D9, DA));
+    add(paidM('ayan', 'March', y, 1120, 1120, d, D9, DA, { late_fine: 0, further_discount_history: [dc(1020, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    MON.slice(3, 10).forEach(function (m) { add(paidM('ayan', m, y, 0, 0, d, D9, DA, { late_fine: 0, further_discount_history: [dc(2140, d)], late_fee_fine_discount_history: [dc(300, d)] })); });
+    add(paidM('ayan', 'November', y, 0, 0, d, D9, DA, { further_discount_history: [dc(2140, d)] }));
+    add(paidM('ayan', 'December', y, 0, 0, d, D9, DA, { further_discount_history: [dc(2140, d)] }));
+    /* Ahmad Raza (BSS-STD-98) */
+    d = '2026-11-03T07:40:13.214Z';
+    MON.slice(0, 3).forEach(function (m) { add(paidM('ahmad', m, y, 2850, 3150, d, D9, AY)); });
+    add(unpM('ahmad', 'April', y, 2850, [pp(550, d, D9, AY)]));
+    MON.slice(4).forEach(function (m) { add(unpM('ahmad', m, y, 2850)); });
+    /* Muhammad Ahmed */
+    add(unpM('mahmed', 'January', y, 2850, [pp(1400, '2026-11-03T07:40:20.029Z', D9, AY)]));
+    MON.slice(1).forEach(function (m) { add(unpM('mahmed', m, y, 2850)); });
+    /* Usman Ali */
+    d = '2026-11-03T06:52:30.412Z';
+    MON.slice(0, 9).forEach(function (m) { add(paidM('usman', m, y, 2850, 3150, d, D9, DA)); });
+    add(paidM('usman', 'October', y, 1650, 1650, d, D9, DA, { late_fine: 0, further_discount_history: [dc(1200, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    add(paidM('usman', 'November', y, 0, 0, d, D9, DA, { further_discount_history: [dc(2850, d)] }));
+    add(unpM('usman', 'May', 2027, 2850, [pp(1000, '2026-11-03T07:20:55.146Z', FC, FC2)], { late_fine: 0, due_date: '2026-11-17T00:00:00.000Z' }));
+    /* Ayaan Khan */
+    add(paidM('ayaank', 'January', y, 2750, 3050, '2026-11-03T07:40:32.111Z', D9, AY));
+    add(paidM('ayaank', 'February', y, 2750, 3050, '2026-11-03T07:46:52.942Z', FC, FC2, { partial_payment_history: [pp(2450, '2026-11-03T07:40:32.111Z', D9, AY)] }));
+    add(unpM('ayaank', 'March', y, 2750, [pp(400, '2026-11-03T07:46:52.942Z', FC, FC2)]));
+    MON.slice(3).forEach(function (m) { add(unpM('ayaank', m, y, 2750)); });
     /* Rizwan Khan */
-    d = '2026-11-02T09:56:27.605Z';
-    add(paidFee('riz', mt('January', 2026), 2000, 2000, d, FC, FC2, { further_discount_history: [dc(1000, d)] }));
-    add(paidFee('riz', mt('February', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)] }));
-    MON.slice(2, 10).forEach(function (m) { add(paidFee('riz', mt(m, 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] })); });
-    add(paidFee('riz', mt('November', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
-    add(paidFee('riz', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
-    add(paidFee('riz', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    d = '2026-11-03T07:30:56.973Z';
+    add(paidM('rizk', 'January', y, 2070, 2370, d, FC, FC3));
+    add(paidM('rizk', 'February', y, 2070, 2370, d, FC, FC3));
+    add(unpM('rizk', 'March', y, 2070, [pp(260, d, FC, FC3)]));
+    MON.slice(3).forEach(function (m) { add(unpM('rizk', m, y, 2070)); });
+    /* Hamza Ahmed */
+    d = '2026-11-03T07:05:54.670Z';
+    MON.slice(0, 9).forEach(function (m) { add(paidM('hamza', m, y, 45000, 45300, d, D9, DA)); });
+    add(paidM('hamza', 'October', y, 36300, 36300, d, D9, DA, { late_fine: 0, further_discount_history: [dc(8700, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    add(paidM('hamza', 'November', y, 0, 0, d, D9, DA, { further_discount_history: [dc(45000, d)] }));
+    add(paidM('hamza', 'December', y, 0, 0, d, D9, DA, { further_discount_history: [dc(45000, d)] }));
 })();
-var customFee = [
-    paidFee('ibr', 'CONTEEN FEE 2026', 4500, 4500, '2026-10-28T19:20:13.522Z', D7, D8, { partial_payment_history: [pp(500, '2026-09-29T19:19:51.655Z', D7, D8), pp(2000, '2026-10-01T19:20:02.721Z', D7, D8)], late_fee_fine_discount_history: [dc(300, '2026-10-28T19:20:13.522Z')] }),
-    paidFee('adeel', 'STATIONARY FEE 2026', 500, 500, '2026-10-30T06:42:09.744Z', D9, DA, { late_fine: 300, further_discount_history: [dc(1000, '2026-10-30T06:42:09.744Z')] }),
-    paidFee('imran', 'CONTEEN FEE 2026', 4500, 4500, '2026-11-01T06:01:38.446Z', D9, DA, { late_fine: 300 }),
-    paidFee('imran', 'STATIONARY FEE 2026', 1500, 1500, '2026-11-01T06:01:38.446Z', D9, DA, { late_fine: 300 }),
-    partFee('reh3', 'STATIONARY FEE 2026', 1500, 1000, '2026-10-22T05:32:23.955Z', FC, FC2, { late_fine: 300 })
-];
+
+var customFee = [];
+(function () {
+    var add = function (x) { customFee.push(x); };
+    var d;
+    add(unpC('anas', CONTEEN, 4500, [pp(2650, '2026-11-03T07:29:04.942Z', FC, FC2)]));
+    add(unpC('anas', STATIONARY, 1500));
+    add(unpC('haris', CONTEEN, 4500));
+    add(unpC('haris', STATIONARY, 1500));
+    d = '2026-11-03T07:04:25.388Z';
+    add(paidC('adeel', CONTEEN, 4500, 4500, d, D9, DA));
+    add(paidC('adeel', STATIONARY, 1500, 1500, d, D9, DA));
+    d = '2026-11-03T07:04:41.094Z';
+    add(paidC('ayan', CONTEEN, 0, 0, d, D9, DA, { further_discount_history: [dc(4500, d)] }));
+    add(paidC('ayan', STATIONARY, 0, 0, d, D9, DA, { further_discount_history: [dc(1500, d)] }));
+    add(unpC('ahmad', CONTEEN, 4500));
+    add(unpC('ahmad', STATIONARY, 1500));
+    add(unpC('mahmed', CONTEEN, 4500));
+    add(unpC('mahmed', STATIONARY, 1500));
+    d = '2026-11-03T06:52:30.412Z';
+    add(paidC('usman', CONTEEN, 4500, 4500, d, D9, DA));
+    add(paidC('usman', STATIONARY, 1500, 1500, d, D9, DA));
+    add(unpC('ayaank', CONTEEN, 4500));
+    add(unpC('ayaank', STATIONARY, 1500));
+    add(unpC('rizk', CONTEEN, 4500));
+    add(unpC('rizk', STATIONARY, 1500));
+    d = '2026-11-03T07:05:54.670Z';
+    add(paidC('hamza', CONTEEN, 4500, 4500, d, D9, DA));
+    add(paidC('hamza', STATIONARY, 1500, 1500, d, D9, DA));
+    d = '2026-11-03T07:25:54.797Z';
+    add(paidC('ahmad2', CONTEEN, 4500, 4500, d, FC, FC2));
+    add(paidC('ahmad2', STATIONARY, 1500, 1500, d, FC, FC2));
+    add(paidC('arham', CONTEEN, 4500, 4500, d, FC, FC2));
+    add(paidC('arham', STATIONARY, 1500, 1500, d, FC, FC2));
+})();
 var familyAdvanceTransactions = [
-    { family_code: '1301351086', amount: 10000, date: '2026-10-20T10:11:14.318Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
-    { family_code: '1301351086', amount: 1000,  date: '2026-10-20T11:01:27.644Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
-    { family_code: '1403726561', amount: 25000, date: '2026-10-21T09:29:41.371Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
-    { family_code: '5765178198', amount: 500,   date: '2026-10-21T09:47:02.281Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
-    { family_code: '1311662542', amount: 1500,  date: '2026-10-28T10:14:38.684Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
-    { family_code: '1273788787', amount: 1000,  date: '2026-11-02T16:50:42.956Z', payment_mode_id: D9, payment_mode_source_id: DA, received_by: 'DEMO' }
+    { family_code: '7169790133', amount: 1000,  date: '2026-11-03T06:53:31.950Z', payment_mode_id: D9, payment_mode_source_id: DA, received_by: 'DEMO' },
+    { family_code: '1141115630', amount: 20000, date: '2026-11-03T07:06:15.222Z', payment_mode_id: D9, payment_mode_source_id: DA, received_by: 'DEMO' },
+    { family_code: '1311482352', amount: 1000,  date: '2026-11-03T07:10:57.149Z', payment_mode_id: D9, payment_mode_source_id: DA, received_by: 'DEMO' }
 ];
-var feeDefaulterDataFilter = { monthlyFee: monthlyFee, customFee: customFee, transportFee: [], familyAdvanceTotal: 39000, familyAdvanceTransactions: familyAdvanceTransactions };
+var feeDefaulterDataFilter = { monthlyFee: monthlyFee, customFee: customFee, transportFee: [], familyAdvanceTotal: 22000, familyAdvanceTransactions: familyAdvanceTransactions };
 
 /* ===== SAME CODE AS Fee Income Report NEW.jsx ===== */
 const normalizeName = (value) => String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
