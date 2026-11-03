@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Date Wise Fee Collection Report (Detailed)</title>
+</head>
+<body>
+<script>
+/* Preview of the Print Detailed Report (handlePrintReport in Fee Income Report NEW.jsx).
+   Data = the real API responses (getFeeDefaultersNewFast + getFamilyAdvanceByDate) for 20-10-2026 to 03-11-2026.
+   Only the fee items that have activity inside the date range are listed (items without activity do not change this report).
+   Everything on the report is calculated by the SAME code as the page: nothing is typed in by hand. */
+
+/* ===== STATE (same names as the page) ===== */
+var systemSetting = { school_name: 'Ai Model School System', school_logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E' };
+var session_id = 'All', campus_name = 'All', class_name = 'All', section_name = 'All';
+var start_date = '2026-10-20', end_date = '2026-11-03';
+var selectedUser = 'All', selectedModeSourceKey = 'All';
+var FILTER_ALL = 'All';
+var todayStr = function () { return new Date().toLocaleDateString('en-CA'); };
+
+/* ===== payment channels (same ids / names as the system) ===== */
+var P = '69f61a250ece5980ea7593';
+var D7 = P + 'd7', D8 = P + 'd8', D9 = P + 'd9', DA = P + 'da', DB = P + 'db', E3 = P + 'e3', E4 = P + 'e4', E9 = P + 'e9', EA = P + 'ea', EB = P + 'eb', EC = P + 'ec';
+var F4 = '69f61a600ece5980ea7593f4', FC = '6a23166bc0d803e8365bf1d1', FC2 = '6a23166bc0d803e8365bf1d2', FC3 = '6abe24c6c47ee1a2165d82f4';
+var MODE_NAMES = {}; MODE_NAMES[D7] = 'General'; MODE_NAMES[D9] = 'Cash'; MODE_NAMES[DB] = 'Mobile Wallet'; MODE_NAMES[E3] = 'Cheque'; MODE_NAMES[E9] = 'POS Machine'; MODE_NAMES[EB] = 'Payment Gateway'; MODE_NAMES[FC] = 'Family Advance';
+var SOURCE_NAMES = {}; SOURCE_NAMES[D8] = 'General'; SOURCE_NAMES[DA] = 'General'; SOURCE_NAMES[F4] = 'Jazz Cash'; SOURCE_NAMES[E4] = 'General'; SOURCE_NAMES[EA] = 'General'; SOURCE_NAMES[EC] = 'General'; SOURCE_NAMES[FC2] = 'General'; SOURCE_NAMES[FC3] = 'Bank';
+var getModeName = function (id) { return MODE_NAMES[String((id && id._id) || id)] || ''; };
+var getSourceName = function (id) { return SOURCE_NAMES[String((id && id._id) || id)] || ''; };
+var familyCreditModeIds = new Set([FC]);
+var isFamilyCreditPayment = function (modeId) { var mode = modeId ? String(modeId._id || modeId) : ''; return Boolean(mode && familyCreditModeIds.has(mode)); };
+
+/* ===== REAL DATA (compact form of the API response) ===== */
+var ST = {
+    reh1:  ['67cad98adf568083a5255fcf', '1311662542', 'BSS-STD-1',    'Rehan Ali',    'Muhammad Akram'],
+    adeel: ['67cbe69d97d6df15825d78ce', '9039104180', 'BSS-STD-46',   'Adeel Hassan', 'Muhammad Rizwan'],
+    dan:   ['67cd4b823792ba4e2de2fe9b', '9399078401', 'BSS-STD-451',  'Daniyal Raza', 'Muhammad Sajid'],
+    talha: ['67d5987127e6ae0eca720970', '8267076970', 'BSS-STD-863',  'Talha Ahmed',  'Muhammad Shahbaz'],
+    mahad: ['67d5a53127e6ae0eca728ff0', '1301351086', 'BSS-STD-874',  'Mahad Ahmed',  'Muhammad Usman'],
+    reh2:  ['67dd4ce131a760aca7d49bf7', '5769538870', 'BSS-STD-1328', 'Rehan Ali',    'Muhammad Kamran'],
+    wal:   ['67dd4dc631a760aca7d4b4b4', '1273788787', 'BSS-STD-1331', 'Waleed Khan',  'Muhammad Farooq'],
+    imran: ['67ee5ed4550096fe5099d4e1', '9399078401', 'BSS-STD-1770', 'Imran Ali',    'Muhammad Yousaf'],
+    reh3:  ['67ee6239550096fe509ac36b', '1830117161', 'BSS-STD-1783', 'Rehan Ali',    'Muhammad Kamran'],
+    zee:   ['680f78594a67bafed478582e', '7077224818', 'BSS-STD-2322', 'Zeeshan Khan', 'Muhammad Majid'],
+    saif:  ['681f8655fbf6db1727df8415', '2754270897', 'BSS-STD-2514', 'Saif Ahmed',   'Muhammad Bilal'],
+    ray:   ['681f87aefbf6db1727df861b', '1249969556', 'BSS-STD-2516', 'Rayyan Khan',  'Muhammad Shahbaz'],
+    yus:   ['68238e31fbf6db172728cb53', '1403726561', 'BSS-STD-2535', 'Yusuf Khan',   'Muhammad Adnan'],
+    riz:   ['683141d333b0247d2133e32b', '1311662542', 'BSS-STD-2602', 'Rizwan Khan',  'Muhammad Anwar'],
+    ibr:   ['67cadbfbdf568083a5256e3c', '9399078401', 'BSS-STD-6',    'Ibrahim Ahmed','Muhammad Riaz']
+};
+var fee = function (s, title, o) {
+    var st = ST[s];
+    return Object.assign({ student_id: st[0], student_family_code: st[1], general_registration_code: st[2], student_name: st[3], student_father_name: st[4], title: title,
+        fee_status: 'Paid', late_fine: 0, due_date: '2026-11-10T00:00:00.000Z', paying_date: null, fee_after_discount: 0, paid_amount: 0,
+        partial_payment_history: [], further_discount_history: [], late_fee_fine_discount_history: [],
+        payment_mode_id: null, payment_mode_source_id: null, payment_recieved_by: '' }, o);
+};
+var pp = function (amount, date, mode, src) { return { amount: amount, date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }; };
+var dc = function (amount, date) { return { amount: amount, date: date, discount_by: 'DEMO' }; };
+var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+var mt = function (mon, yr) { return 'Fee Of  ' + mon + ' ' + yr; };
+/* a fee paid in full on `date` with mode/src */
+var paidFee = function (s, title, after, paid, date, mode, src, o) {
+    return fee(s, title, Object.assign({ fee_status: 'Paid', fee_after_discount: after, paid_amount: paid, paying_date: date, payment_mode_id: mode, payment_mode_source_id: src, payment_recieved_by: 'DEMO' }, o || {}));
+};
+/* an unpaid fee with one partial payment */
+var partFee = function (s, title, after, amount, date, mode, src, o) {
+    return fee(s, title, Object.assign({ fee_status: 'Unpaid', fee_after_discount: after, paid_amount: amount, partial_payment_history: [pp(amount, date, mode, src)] }, o || {}));
+};
+
+var monthlyFee = [];
+(function () {
+    var add = function (x) { monthlyFee.push(x); };
+    var Y = '2026-';
+    /* Rehan Ali (BSS-STD-1) */
+    var d = '2026-10-28T20:01:34.105Z';
+    add(paidFee('reh1', mt('October', 2025), 2300, 2300, d, D7, D8, { due_date: '2026-10-08T00:00:00.000Z' }));
+    add(paidFee('reh1', mt('September', 2025), 1700, 1700, d, D7, D8, { due_date: '2026-10-08T00:00:00.000Z', further_discount_history: [dc(600, d)] }));
+    /* Adeel Hassan */
+    add(partFee('adeel', mt('October', 2026), 2850, 1500, '2026-10-30T06:40:29.786Z', D9, DA, { late_fine: 300, due_date: '2026-10-10T00:00:00.000Z' }));
+    add(paidFee('adeel', mt('November', 2026), 2850, 2850, '2026-10-30T06:32:59.343Z', D9, DA, { late_fine: 300 }));
+    add(paidFee('adeel', mt('December', 2026), 2850, 2850, '2026-10-30T06:34:06.276Z', D9, DA, { late_fine: 300, due_date: '2026-12-10T00:00:00.000Z' }));
+    /* Daniyal Raza */
+    d = '2026-10-22T06:00:54.588Z';
+    MON.slice(0, 10).forEach(function (m, i) {
+        add(paidFee('dan', mt(m, 2026), 2750, i < 2 ? 2750 : 3050, d, D9, DA, { late_fine: i < 2 ? 0 : 300 }));
+    });
+    add(paidFee('dan', mt('November', 2026), 100, 100, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2650, d)] }));
+    add(paidFee('dan', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2750, d)] }));
+    add(paidFee('dan', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2750, d)] }));
+    /* Talha Ahmed (Jan..Dec + a second Dec; late fine discounted from March) */
+    d = '2026-10-28T05:53:05.252Z';
+    MON.concat(['December']).forEach(function (m, i) {
+        add(paidFee('talha', mt(m, 2026), 3000, 3000, d, EB, EC, { late_fee_fine_discount_history: [dc(i < 2 ? 0 : 300, d)] }));
+    });
+    /* Mahad Ahmed */
+    d = '2026-10-20T10:24:32.135Z';
+    add(paidFee('mahad', mt('January', 2026), 2253, 2253, d, FC, FC3));
+    add(paidFee('mahad', mt('February', 2026), 2253, 2253, d, FC, FC3));
+    add(paidFee('mahad', mt('March', 2026), 2253, 2553, d, FC, FC3, { late_fine: 300 }));
+    add(paidFee('mahad', mt('April', 2026), 2253, 2253, d, FC, FC3, { late_fee_fine_discount_history: [dc(300, '2026-10-20T10:18:35.617Z')] }));
+    add(partFee('mahad', mt('May', 2026), 2253, 688, d, FC, FC3, { late_fine: 300 }));
+    add(partFee('mahad', mt('October', 2026), 2253, 1500, '2026-10-20T10:22:16.799Z', DB, F4, { late_fine: 300 }));
+    add(paidFee('mahad', mt('December', 2026), 2253, 2253, '2026-10-20T10:20:01.733Z', D7, D8, { late_fine: 300 }));
+    /* Rehan Ali (BSS-STD-1328) */
+    add(partFee('reh2', mt('January', 2026), 3000, 2350, '2026-10-21T09:30:42.894Z', E3, E4));
+    /* Waleed Khan */
+    d = '2026-11-02T16:50:31.888Z';
+    MON.slice(0, 10).forEach(function (m, i) {
+        add(paidFee('wal', mt(m, 2026), 3000, i < 2 ? 3000 : 3300, d, D9, DA, { late_fine: i < 2 ? 0 : 300 }));
+    });
+    add(partFee('wal', mt('November', 2026), 3000, 2600, d, D9, DA, { late_fine: 300 }));
+    /* Imran Ali */
+    d = '2026-11-01T06:01:38.446Z';
+    MON.slice(0, 10).forEach(function (m) { add(paidFee('imran', mt(m, 2026), 2650, 2950, d, D9, DA, { late_fine: 300 })); });
+    add(paidFee('imran', mt('November', 2026), 2500, 2500, d, D9, DA, { late_fine: 300, further_discount_history: [dc(150, d)] }));
+    add(paidFee('imran', mt('December', 2026), 0, 0, d, D9, DA, { late_fine: 300, further_discount_history: [dc(2650, d)] }));
+    /* Zeeshan Khan */
+    d = '2026-10-28T05:53:27.963Z';
+    MON.slice(0, 10).forEach(function (m, i) {
+        add(paidFee('zee', mt(m, 2026), 3000, i < 2 ? 3000 : 3300, d, EB, EC, { late_fine: i < 2 ? 0 : 300 }));
+    });
+    add(paidFee('zee', mt('November', 2026), 3000, 3000, d, EB, EC, { late_fine: 300 }));
+    add(paidFee('zee', mt('December', 2026), 600, 600, d, EB, EC, { late_fine: 300, further_discount_history: [dc(2400, d)] }));
+    add(paidFee('zee', mt('December', 2026), 0, 0, d, EB, EC, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    /* Saif Ahmed */
+    add(paidFee('saif', mt('December', 2026), 3000, 3000, '2026-10-29T17:52:34.046Z', E9, EA, { late_fine: 300 }));
+    /* Rayyan Khan (Jan..Dec + a second Dec; late fine discounted from March) */
+    d = '2026-10-21T09:30:24.177Z';
+    MON.concat(['December']).forEach(function (m, i) {
+        add(paidFee('ray', mt(m, 2026), 3000, 3000, d, E3, E4, { late_fee_fine_discount_history: [dc(i < 2 ? 0 : 300, d)] }));
+    });
+    /* Yusuf Khan */
+    d = '2026-10-21T09:30:00.177Z';
+    add(paidFee('yus', mt('January', 2026), 3000, 3000, d, FC, FC2));
+    add(paidFee('yus', mt('February', 2026), 3000, 3000, d, FC, FC2));
+    MON.slice(2, 7).forEach(function (m) { add(paidFee('yus', mt(m, 2026), 3000, 3300, d, FC, FC2, { late_fine: 300 })); });
+    add(paidFee('yus', mt('August', 2026), 2500, 2500, d, FC, FC2, { further_discount_history: [dc(500, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    add(paidFee('yus', mt('September', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    add(paidFee('yus', mt('October', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] }));
+    add(paidFee('yus', mt('November', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    add(paidFee('yus', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    add(paidFee('yus', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    /* Rizwan Khan */
+    d = '2026-11-02T09:56:27.605Z';
+    add(paidFee('riz', mt('January', 2026), 2000, 2000, d, FC, FC2, { further_discount_history: [dc(1000, d)] }));
+    add(paidFee('riz', mt('February', 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)] }));
+    MON.slice(2, 10).forEach(function (m) { add(paidFee('riz', mt(m, 2026), 0, 0, d, FC, FC2, { further_discount_history: [dc(3000, d)], late_fee_fine_discount_history: [dc(300, d)] })); });
+    add(paidFee('riz', mt('November', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    add(paidFee('riz', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+    add(paidFee('riz', mt('December', 2026), 0, 0, d, FC, FC2, { late_fine: 300, further_discount_history: [dc(3000, d)] }));
+})();
+var customFee = [
+    paidFee('ibr', 'CONTEEN FEE 2026', 4500, 4500, '2026-10-28T19:20:13.522Z', D7, D8, { partial_payment_history: [pp(500, '2026-09-29T19:19:51.655Z', D7, D8), pp(2000, '2026-10-01T19:20:02.721Z', D7, D8)], late_fee_fine_discount_history: [dc(300, '2026-10-28T19:20:13.522Z')] }),
+    paidFee('adeel', 'STATIONARY FEE 2026', 500, 500, '2026-10-30T06:42:09.744Z', D9, DA, { late_fine: 300, further_discount_history: [dc(1000, '2026-10-30T06:42:09.744Z')] }),
+    paidFee('imran', 'CONTEEN FEE 2026', 4500, 4500, '2026-11-01T06:01:38.446Z', D9, DA, { late_fine: 300 }),
+    paidFee('imran', 'STATIONARY FEE 2026', 1500, 1500, '2026-11-01T06:01:38.446Z', D9, DA, { late_fine: 300 }),
+    partFee('reh3', 'STATIONARY FEE 2026', 1500, 1000, '2026-10-22T05:32:23.955Z', FC, FC2, { late_fine: 300 })
+];
+var familyAdvanceTransactions = [
+    { family_code: '1301351086', amount: 10000, date: '2026-10-20T10:11:14.318Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
+    { family_code: '1301351086', amount: 1000,  date: '2026-10-20T11:01:27.644Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
+    { family_code: '1403726561', amount: 25000, date: '2026-10-21T09:29:41.371Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
+    { family_code: '5765178198', amount: 500,   date: '2026-10-21T09:47:02.281Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
+    { family_code: '1311662542', amount: 1500,  date: '2026-10-28T10:14:38.684Z', payment_mode_id: D7, payment_mode_source_id: D8, received_by: 'DEMO' },
+    { family_code: '1273788787', amount: 1000,  date: '2026-11-02T16:50:42.956Z', payment_mode_id: D9, payment_mode_source_id: DA, received_by: 'DEMO' }
+];
+var feeDefaulterDataFilter = { monthlyFee: monthlyFee, customFee: customFee, transportFee: [], familyAdvanceTotal: 39000, familyAdvanceTransactions: familyAdvanceTransactions };
+
+/* ===== SAME CODE AS Fee Income Report NEW.jsx ===== */
+const normalizeName = (value) => String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+const GR_COLLATOR_SORT = (a, b) =>
+    String(a?.general_registration_code ?? "").localeCompare(
+        String(b?.general_registration_code ?? ""),
+        undefined,
+        { numeric: true, sensitivity: "base" }
+    );
+const formatDateTime = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return null;
+    const dateString = date.toLocaleDateString("pt-PT");
+    if (date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0) {
+        return dateString;
+    }
+    const timeString = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return `${dateString} ${timeString}`;
+};
+const getPlainGr = (gr) => String(gr ?? "").replace(/\D/g, "") || String(gr ?? "");
+const modeSourceKey = (mode_id, source_id) => `${mode_id || ""}::${source_id || ""}`;
+const amountBlank = (value) => (Number(value || 0) !== 0 ? Number(value).toLocaleString() : '');
+
+const getPaymentSegments = (row) => {
+    const segments = [];
+    const history = row?.partial_payment_history || [];
+    history.forEach((payment) => {
+        const amount = Number(payment?.amount) || 0;
+        if (amount <= 0) return;
+        segments.push({
+            amount,
+            receivedBy: String(payment?.payment_recieved_by || payment?.paymentRecievedBy || "").trim(),
+            mode_id: payment?.payment_mode_id || null,
+            source_id: payment?.payment_mode_source_id || null,
+            date: payment?.date ? new Date(payment.date) : null,
+            type: "partial",
+        });
+    });
+    const partialSum = history.reduce((sum, payment) => sum + (Number(payment?.amount) || 0), 0);
+    const quickPayAmount = (Number(row?.paid_amount) || 0) - partialSum;
+    if (quickPayAmount > 0) {
+        segments.push({
+            amount: quickPayAmount,
+            receivedBy: String(row?.payment_recieved_by || row?.paymentRecievedBy || "").trim(),
+            mode_id: row?.payment_mode_id || null,
+            source_id: row?.payment_mode_source_id || null,
+            date: row?.paying_date ? new Date(row.paying_date) : null,
+            type: "quick",
+        });
+    }
+    return segments;
+};
+const getRangeBounds = () => ({
+    rangeStart: new Date(`${start_date}T00:00:00.000+05:00`),
+    rangeEnd: new Date(`${end_date}T23:59:59.999+05:00`),
+});
+const isDateInRange = (value) => {
+    if (!value) return false;
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return false;
+    const { rangeStart, rangeEnd } = getRangeBounds();
+    return date >= rangeStart && date <= rangeEnd;
+};
+const getSegmentsInRange = (row) => getPaymentSegments(row).filter((segment) => isDateInRange(segment.date));
+const getDiscountBy = (entry) => String(
+    entry?.discount_by || entry?.further_discount_discount_by || entry?.late_fee_fine_discount_discount_by || entry?.by || ""
+).trim();
+const getDiscountsInRange = (row) => {
+    const collect = (list) => (list || [])
+        .filter((entry) => isDateInRange(entry?.date))
+        .map((entry) => ({
+            amount: Number(entry?.amount) || 0,
+            by: getDiscountBy(entry),
+            date: entry?.date ? new Date(entry.date) : null,
+        }));
+    return {
+        further: collect(row?.further_discount_history),
+        fine: collect(row?.late_fee_fine_discount_history),
+    };
+};
+const isSelectedReceiver = (receivedBy) => {
+    if (selectedUser === FILTER_ALL) return true;
+    const raw = String(receivedBy || "").trim();
+    if (!raw) return selectedUser === "Unknown";
+    return normalizeName(selectedUser) === normalizeName(raw);
+};
+const isSelectedModeSourceSeg = (segment) => {
+    if (selectedModeSourceKey === FILTER_ALL) return true;
+    return modeSourceKey(segment.mode_id, segment.source_id) === selectedModeSourceKey;
+};
+const calculateRowTotal = (row) => {
+    const today = todayStr();
+    const dueDate = row?.due_date ? new Date(row.due_date).toLocaleDateString('en-CA') : null;
+    const isOverdue = row.fee_status === "Paid"
+        ? (row.paying_date ? new Date(row.paying_date).toLocaleDateString('en-CA') > dueDate : false)
+        : row.fee_status === "Clear"
+            ? (row.clear_fee_date ? new Date(row.clear_fee_date).toLocaleDateString('en-CA') > dueDate : false)
+            : (dueDate ? today > dueDate : false);
+    const feeAfterDiscount = Number(row.fee_after_discount) || 0;
+    const lateFine = Number(row.late_fine) || 0;
+    return isOverdue ? feeAfterDiscount + lateFine : feeAfterDiscount;
+};
+
+/* ===== the page's processing effect: group fee items by student ===== */
+var rawItems = [], studentRows = [], totalStudents = 0, totalPayable = 0, totalPaid = 0, totalDiscount = 0, totalDues = 0;
+(function () {
+    const allItems = [
+        ...(feeDefaulterDataFilter.monthlyFee || []),
+        ...(feeDefaulterDataFilter.customFee || []),
+        ...(feeDefaulterDataFilter.transportFee || []),
+    ];
+    rawItems = allItems;
+    const groups = new Map();
+    const duesMap = new Map();
+    const ensureGroup = (item) => {
+        const id = String(item.student_id);
+        if (!groups.has(id)) {
+            groups.set(id, {
+                student_id: id, gr: item.general_registration_code, name: item.student_name, fname: item.student_father_name,
+                payable: 0, paid: 0, discount: 0, userLines: [], discountLines: [], modeLines: new Map(), paymenthistoryLine: new Map(), latestDate: null,
+            });
+        }
+        return groups.get(id);
+    };
+    allItems.forEach((item) => {
+        const studentIdStr = String(item.student_id);
+        if (item.fee_status === "Unpaid") {
+            const remaining = Math.max(0, calculateRowTotal(item) - (Number(item.paid_amount) || 0));
+            duesMap.set(studentIdStr, (duesMap.get(studentIdStr) || 0) + remaining);
+        }
+        const segments = getSegmentsInRange(item);
+        const { further, fine } = getDiscountsInRange(item);
+        const hasTodayActivity = segments.length > 0 || further.length > 0 || fine.length > 0;
+        if (!hasTodayActivity) return;
+        const group = ensureGroup(item);
+        segments.forEach((segment) => {
+            if (!isSelectedReceiver(segment.receivedBy)) return;
+            if (!isSelectedModeSourceSeg(segment)) return;
+            group.paid += segment.amount;
+            group.userLines.push({ amount: segment.amount, by: segment.receivedBy || "Unknown", date: segment.date });
+            const key = modeSourceKey(segment.mode_id, segment.source_id);
+            const label = `${segment.mode_id ? getModeName(segment.mode_id) : '-'}${segment.source_id ? ` / ${getSourceName(segment.source_id)}` : ''}`;
+            if (!group.modeLines.has(key)) group.modeLines.set(key, { label, amount: 0 });
+            group.modeLines.get(key).amount += segment.amount;
+            group.paymenthistoryLine.set(`${group.paymenthistoryLine.size}`, { amount: segment.amount, label, user: segment.receivedBy || "Unknown", date: segment.date });
+            if (segment.date && (!group.latestDate || segment.date > group.latestDate)) group.latestDate = segment.date;
+        });
+        [...further, ...fine].forEach((entry) => {
+            if (!isSelectedReceiver(entry.by)) return;
+            group.discount += entry.amount;
+            group.discountLines.push({ amount: entry.amount, by: entry.by || "Unknown", date: entry.date });
+            if (entry.date && (!group.latestDate || entry.date > group.latestDate)) group.latestDate = entry.date;
+        });
+    });
+    const isFilterActive = selectedUser !== FILTER_ALL || selectedModeSourceKey !== FILTER_ALL;
+    let rows = [...groups.values()].filter((g) => !isFilterActive || g.paid > 0 || g.discount > 0);
+    rows.forEach((g) => { g.dues = duesMap.get(g.student_id) || 0; g.payable = g.dues + g.paid + g.discount; });
+    rows.sort((a, b) => (b.latestDate ? b.latestDate.getTime() : -Infinity) - (a.latestDate ? a.latestDate.getTime() : -Infinity) || GR_COLLATOR_SORT(a, b)); // newest paying date first
+    rows = rows.map((g, index) => ({ ...g, sr: index + 1 }));
+    studentRows = rows;
+    totalStudents = rows.length;
+    totalPayable = rows.reduce((s, r) => s + r.payable, 0);
+    totalPaid = rows.reduce((s, r) => s + r.paid, 0);
+    totalDiscount = rows.reduce((s, r) => s + r.discount, 0);
+    totalDues = rows.reduce((s, r) => s + r.dues, 0);
+})();
+var showPayableDues = start_date === todayStr() && end_date === todayStr() && selectedUser === FILTER_ALL && selectedModeSourceKey === FILTER_ALL;
+
+const getAdvanceDate = (t) => t?.date || t?.createdAt || t?.created_at || t?.transaction_date || null;
+const getAdvanceAmount = (t) => Number(t?.amount) || 0;
+const getAdvanceBy = (t) => String(t?.received_by || t?.recieved_by || t?.payment_recieved_by || t?.createdBy || t?.by || "").trim();
+
+const buildUserBreakdownRows = () => {
+    const buckets = new Map();
+    const ensureBucket = (key, label) => {
+        if (!buckets.has(key)) buckets.set(key, { label, furtherDiscount: 0, fineDiscount: 0, paid: 0, advanceReceived: 0, advanceSpent: 0 });
+        return buckets.get(key);
+    };
+    const bucketFor = (receivedBy) => {
+        const raw = String(receivedBy || "").trim();
+        if (!raw) return ensureBucket("__unknown__", "Unknown");
+        return ensureBucket(normalizeName(raw), raw);
+    };
+    (rawItems || []).forEach((row) => {
+        getSegmentsInRange(row).forEach((segment) => {
+            if (!isSelectedModeSourceSeg(segment)) return;
+            const bucket = bucketFor(segment.receivedBy);
+            bucket.paid += segment.amount;
+            if (isFamilyCreditPayment(segment.mode_id)) bucket.advanceSpent += segment.amount;
+        });
+        const { further, fine } = getDiscountsInRange(row);
+        further.forEach((entry) => { bucketFor(entry.by).furtherDiscount += entry.amount; });
+        fine.forEach((entry) => { bucketFor(entry.by).fineDiscount += entry.amount; });
+    });
+    (feeDefaulterDataFilter?.familyAdvanceTransactions || []).forEach((t) => {
+        if (!isDateInRange(getAdvanceDate(t))) return;
+        bucketFor(getAdvanceBy(t)).advanceReceived += getAdvanceAmount(t);
+    });
+    return [...buckets.values()]
+        .filter((row) => selectedUser === FILTER_ALL || normalizeName(row.label) === normalizeName(selectedUser))
+        .map((row) => ({ username: row.label, ...row }))
+        .sort((x, y) => y.paid - x.paid || String(x.username).localeCompare(String(y.username)));
+};
+
+const getDateWiseUserPrintTableHtml = (rows) => {
+    const receivingOf = (row) => Number(row.paid || 0) - Number(row.advanceSpent || 0);
+    const netOf = (row) => receivingOf(row) + Number(row.advanceReceived || 0);
+    const grandTotals = rows.reduce((acc, row) => ({
+        furtherDiscount: acc.furtherDiscount + Number(row.furtherDiscount || 0),
+        fineDiscount: acc.fineDiscount + Number(row.fineDiscount || 0),
+        advanceReceived: acc.advanceReceived + Number(row.advanceReceived || 0),
+        paid: acc.paid + receivingOf(row),
+        net: acc.net + netOf(row),
+    }), { furtherDiscount: 0, fineDiscount: 0, advanceReceived: 0, paid: 0, net: 0 });
+    const tableRowsHtml = rows.length > 0
+        ? rows.map((row) => `
+                <tr>
+                    <td class="table-cell date-cell" style="text-align:left;">${row.username || '-'}</td>
+                    <td class="table-cell right">${amountBlank(row.furtherDiscount)}</td>
+                    <td class="table-cell right">${amountBlank(row.fineDiscount)}</td>
+                    <td class="table-cell right">${amountBlank(row.advanceReceived)}</td>
+                    <td class="table-cell right">${amountBlank(receivingOf(row))}</td>
+                    <td class="table-cell right strong">${amountBlank(netOf(row))}</td>
+                </tr>`).join("")
+        : `<tr><td colspan="6" class="no-records">No Records Found!</td></tr>`;
+    return `
+        <div class="section-title" style="margin-top: 14px;">User Wise Breakdown</div>
+        <table>
+            <thead>
+                <tr class="table-head-row">
+                    <th class="table-head-cell">User</th>
+                    <th class="table-head-cell right">Further Fee Discount</th>
+                    <th class="table-head-cell right">Fine Discount</th>
+                    <th class="table-head-cell right">Advance Received</th>
+                    <th class="table-head-cell right">Fee Receiving</th>
+                    <th class="table-head-cell right">Net Receiving</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRowsHtml}
+                ${rows.length > 0 ? `
+                <tr class="grand-total-row">
+                    <td class="grand-total-label">Grand Total:</td>
+                    <td class="grand-total-cell right">${amountBlank(grandTotals.furtherDiscount)}</td>
+                    <td class="grand-total-cell right">${amountBlank(grandTotals.fineDiscount)}</td>
+                    <td class="grand-total-cell right">${amountBlank(grandTotals.advanceReceived)}</td>
+                    <td class="grand-total-cell right">${amountBlank(grandTotals.paid)}</td>
+                    <td class="grand-total-cell right">${amountBlank(grandTotals.net)}</td>
+                </tr>` : ""}
+            </tbody>
+        </table>
+    `;
+};
+
+const getUserWisePrintTableHtml = (userRows) => {
+    const modeMap = new Map();
+    const entryFor = (label) => {
+        if (!modeMap.has(label)) modeMap.set(label, { amount: 0, advance: 0, spent: 0 });
+        return modeMap.get(label);
+    };
+    studentRows.forEach((row) => {
+        [...row.modeLines.values()].forEach((m) => { entryFor(m.label).amount += m.amount; });
+    });
+    (rawItems || []).forEach((item) => {
+        getSegmentsInRange(item).forEach((segment) => {
+            if (!isSelectedReceiver(segment.receivedBy) || !isSelectedModeSourceSeg(segment) || !isFamilyCreditPayment(segment.mode_id)) return;
+            const label = `${segment.mode_id ? getModeName(segment.mode_id) : '-'}${segment.source_id ? ` / ${getSourceName(segment.source_id)}` : ''}`;
+            entryFor(label).spent += segment.amount;
+        });
+    });
+    (feeDefaulterDataFilter?.familyAdvanceTransactions || []).forEach((t) => {
+        if (!isDateInRange(getAdvanceDate(t)) || !isSelectedReceiver(getAdvanceBy(t))) return;
+        if (selectedModeSourceKey !== FILTER_ALL && modeSourceKey(t?.payment_mode_id, t?.payment_mode_source_id) !== selectedModeSourceKey) return;
+        const label = `${t?.payment_mode_id ? getModeName(t.payment_mode_id) : '-'}${t?.payment_mode_source_id ? ` / ${getSourceName(t.payment_mode_source_id)}` : ''}`;
+        entryFor(label).advance += getAdvanceAmount(t);
+    });
+    const modeGroups = new Map();
+    modeMap.forEach((entry, label) => {
+        const parts = String(label).split(' / ');
+        const mode = parts[0] || '-';
+        const source = parts.slice(1).join(' / ');
+        if (!modeGroups.has(mode)) modeGroups.set(mode, { mode, total: 0, sources: new Map() });
+        const group = modeGroups.get(mode);
+        group.total += entry.amount + entry.advance;
+        const prev = group.sources.get(source) || { amount: 0, advance: 0, spent: 0 };
+        group.sources.set(source, { amount: prev.amount + entry.amount, advance: prev.advance + entry.advance, spent: prev.spent + entry.spent });
+    });
+    const modeList = [...modeGroups.values()].sort((x, y) => y.total - x.total);
+    const modeTotals = modeList.reduce((acc, g) => [...g.sources.values()].reduce((t, v) => ({
+        advance: t.advance + v.advance,
+        receiving: t.receiving + v.amount,
+        net: t.net + (v.amount - v.spent) + v.advance,
+    }), acc), { advance: 0, receiving: 0, net: 0 });
+    const modeRowsHtml = modeList.length > 0
+        ? modeList.map((g) => {
+            const sources = [...g.sources.entries()].sort((x, y) => (y[1].amount + y[1].advance) - (x[1].amount + x[1].advance));
+            return sources.map(([source, v], i) => `
+            <tr>
+                ${i === 0 ? `<td class="table-cell mode-merge" rowspan="${sources.length}">${g.mode}</td>` : ""}
+                <td class="table-cell">${source}</td>
+                <td class="table-cell right">${amountBlank(v.advance)}</td>
+                <td class="table-cell right">${amountBlank(v.amount)}</td>
+                <td class="table-cell right strong">${amountBlank(v.amount - v.spent + v.advance)}</td>
+            </tr>`).join('');
+        }).join('')
+        : `<tr><td colspan="5" class="no-records">No Records Found!</td></tr>`;
+    return `
+        ${getDateWiseUserPrintTableHtml(userRows)}
+
+        <div class="section-title" style="margin-top: 14px;">Mode / Source Wise Breakdown</div>
+        <table>
+            <thead>
+                <tr class="table-head-row">
+                    <th class="table-head-cell">Mode</th>
+                    <th class="table-head-cell">Source</th>
+                    <th class="table-head-cell right">Advance Received</th>
+                    <th class="table-head-cell right">Fee Receiving</th>
+                    <th class="table-head-cell right">Net Receiving</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${modeRowsHtml}
+                ${modeList.length > 0 ? `
+                <tr class="grand-total-row">
+                    <td class="grand-total-label" colspan="2">Grand Total:</td>
+                    <td class="grand-total-cell right">${amountBlank(modeTotals.advance)}</td>
+                    <td class="grand-total-cell right">${amountBlank(modeTotals.receiving)}</td>
+                    <td class="grand-total-cell right">${amountBlank(modeTotals.net)}</td>
+                </tr>` : ""}
+            </tbody>
+        </table>
+    `;
+};
+
+/* ===== handlePrintReport ===== */
+const buildReport = () => {
+    const sessionName = session_id === "All" ? "All" : session_id;
+    const rangeDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-PT");
+    const dateLabel = start_date === end_date ? rangeDate(start_date) : `${rangeDate(start_date)} to ${rangeDate(end_date)}`;
+    const userLabel = selectedUser === FILTER_ALL ? "All" : selectedUser;
+    const filtersRow1 = [['Session', sessionName], ['Campus', campus_name || "All"], ['Class', class_name || "All"], ['Section', section_name || "All"]];
+    const filtersRow2 = [['Date', dateLabel], ['User', userLabel]];
+    const filtersHtml = (list) => `<div class="filters-row">${list.map(([label, value]) => `<span>${label}: <b>${value}</b></span>`).join('<span class="sep">&middot;</span>')}</div>`;
+
+    const familyKeyOfItem = (item) => (item?.student_family_code ? String(item.student_family_code) : `__${item?.student_id}`);
+    const familyKeyOfStudent = new Map();
+    (rawItems || []).forEach((item) => familyKeyOfStudent.set(String(item.student_id), familyKeyOfItem(item)));
+
+    const advanceReceivedByFamily = new Map();
+    let advanceReceivedTotal = 0;
+    (feeDefaulterDataFilter?.familyAdvanceTransactions || []).forEach((t) => {
+        if (!isDateInRange(getAdvanceDate(t)) || !isSelectedReceiver(getAdvanceBy(t))) return;
+        const key = String(t?.family_code || '');
+        const amount = getAdvanceAmount(t);
+        const date = getAdvanceDate(t) ? new Date(getAdvanceDate(t)) : null;
+        if (!advanceReceivedByFamily.has(key)) advanceReceivedByFamily.set(key, { amount: 0, date: null, name: t?.family_name || t?.father_name || '' });
+        const entry = advanceReceivedByFamily.get(key);
+        entry.amount += amount;
+        if (date && (!entry.date || date > entry.date)) entry.date = date;
+        advanceReceivedTotal += amount;
+    });
+
+    const advanceSpentByFamily = new Map();
+    const advanceSpentByStudent = new Map();
+    let advanceSpentTotal = 0;
+    (rawItems || []).forEach((item) => {
+        getSegmentsInRange(item).forEach((segment) => {
+            if (!isSelectedReceiver(segment.receivedBy) || !isSelectedModeSourceSeg(segment) || !isFamilyCreditPayment(segment.mode_id)) return;
+            const key = familyKeyOfItem(item);
+            advanceSpentByFamily.set(key, (advanceSpentByFamily.get(key) || 0) + segment.amount);
+            advanceSpentByStudent.set(String(item.student_id), (advanceSpentByStudent.get(String(item.student_id)) || 0) + segment.amount);
+            advanceSpentTotal += segment.amount;
+        });
+    });
+
+    const printRows = studentRows.map((row) => ({ ...row, famKey: familyKeyOfStudent.get(String(row.student_id)) || `__${row.student_id}` }));
+    const familyOrder = new Map();
+    printRows.forEach((row) => { if (!familyOrder.has(row.famKey)) familyOrder.set(row.famKey, familyOrder.size); });
+    // rows stay in paying-date order (newest first); a family advance cell is merged only over the siblings that sit next to each other
+    const familySize = new Map();
+    printRows.forEach((row) => familySize.set(row.famKey, (familySize.get(row.famKey) || 0) + 1));
+    const seenFamily = new Set();
+    printRows.forEach((row, index) => {
+        row.sr = index + 1;
+        row.runStart = index === 0 || printRows[index - 1].famKey !== row.famKey;
+            row.famEnd = index === printRows.length - 1 || printRows[index + 1].famKey !== row.famKey;
+        if (row.runStart) { let n = 1; while (printRows[index + n] && printRows[index + n].famKey === row.famKey) n++; row.runSize = n; }
+        row.famFirst = !seenFamily.has(row.famKey);
+        seenFamily.add(row.famKey);
+        row.advRec = row.famFirst ? (advanceReceivedByFamily.get(row.famKey)?.amount || 0) : 0;
+        row.advSpent = advanceSpentByStudent.get(String(row.student_id)) || 0;
+        row.netPaid = row.paid - (advanceSpentByStudent.get(String(row.student_id)) || 0) + row.advRec;
+    });
+    const depositOnlyRows = [...advanceReceivedByFamily.entries()]
+        .filter(([key]) => !familyOrder.has(key))
+        .map(([key, entry]) => ({ key, ...entry }));
+
+    const advanceCellHtml = (received, spent) => `<div class="adv-row"><span>${amountBlank(received)}</span><span>${amountBlank(spent)}</span></div>`;
+
+    const payableTh = showPayableDues ? `<th class="table-head-cell right">Receivable</th>` : "";
+    const duesTh = showPayableDues ? `<th class="table-head-cell right">Dues</th>` : "";
+    const payableTd = (row) => showPayableDues ? `<td class="table-cell right">${amountBlank(row.payable)}</td>` : "";
+    const duesTd = (row) => showPayableDues ? `<td class="table-cell right">${amountBlank(row.dues)}</td>` : "";
+    const advanceTd = (row) => `<td class="table-cell fam-cell${row.famEnd ? " fam-end" : ""}">${advanceCellHtml(row.advRec, row.advSpent)}</td>`;
+    const colCount = 7 + (showPayableDues ? 2 : 0);
+
+    const studentRowsHtml = printRows.map((row) => `
+            <tr>
+                <td class="table-cell center">${row.sr}</td>
+                <td class="table-cell center">${getPlainGr(row.gr)}</td>
+                <td class="table-cell col-name"><b>${row.name}</b><span class="sub">${row.fname}</span></td>
+                <td class="table-cell center sm">${formatDateTime(row.latestDate) || '-'}</td>
+                ${payableTd(row)}
+                <td class="table-cell right">${amountBlank(row.discount)}</td>
+                ${advanceTd(row)}
+                <td class="table-cell right strong">${amountBlank(row.netPaid)}</td>
+                ${duesTd(row)}
+            </tr>`).join('');
+    const depositOnlyRowsHtml = depositOnlyRows.map((entry) => `
+            <tr>
+                <td class="table-cell center"></td>
+                <td class="table-cell center"></td>
+                <td class="table-cell col-name"><b>Family Advance : ${entry.key}</b></td>
+                <td class="table-cell center sm">${formatDateTime(entry.date) || '-'}</td>
+                ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
+                <td class="table-cell right"></td>
+                <td class="table-cell fam-cell fam-end">${advanceCellHtml(entry.amount, 0)}</td>
+                <td class="table-cell right strong">${amountBlank(entry.amount)}</td>
+                ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
+            </tr>`).join('');
+    const rowsHtml = (printRows.length > 0 || depositOnlyRows.length > 0)
+        ? studentRowsHtml + depositOnlyRowsHtml
+        : `<tr><td colspan="${colCount}" class="no-records">No Records Found!</td></tr>`;
+
+    const grandRowHtml = (printRows.length > 0 || depositOnlyRows.length > 0) ? `
+            <tr class="grand-total-row">
+                <td class="grand-total-label" colspan="4">Grand Total:</td>
+                ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalPayable)}</td>` : ""}
+                <td class="grand-total-cell right">${amountBlank(totalDiscount)}</td>
+                <td class="grand-total-cell">${advanceCellHtml(advanceReceivedTotal, advanceSpentTotal)}</td>
+                <td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal + advanceReceivedTotal)}</td>
+                ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalDues)}</td>` : ""}
+            </tr>` : "";
+
+    const feeReceiving = totalPaid - advanceSpentTotal;
+    const netReceiving = feeReceiving + advanceReceivedTotal;
+    const invoiceIds = new Set();
+    (rawItems || []).forEach((item) => {
+        const paid = getSegmentsInRange(item).some((segment) => isSelectedReceiver(segment.receivedBy) && isSelectedModeSourceSeg(segment));
+        const { further, fine } = getDiscountsInRange(item);
+        const discounted = further.some((entry) => isSelectedReceiver(entry.by)) || fine.some((entry) => isSelectedReceiver(entry.by));
+        if (paid || discounted) invoiceIds.add(item._id || item.voucher_id || `${item.general_registration_code}-${item.title}-${item.due_date}`);
+    });
+    const invoiceCount = invoiceIds.size;
+
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Date Wise Fee Collection Report (Detailed)</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", Arial, sans-serif !important; }
+                @page { size: A4 portrait; margin: 7mm; }
+                html, body { background: #fff; color: #000; font-size: 9px; line-height: 1.2; padding: 5px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+                /* Header: logo | school name, title and filters | empty side, one black line under it */
+                .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #000; padding: 0 0 8px; }
+                .header-section h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; color: #000; }
+                .header-section h2 { font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #000; }
+                .header-side { flex: 0 0 190px; }
+                .header-logo { width: 56px; height: 56px; object-fit: contain; border-radius: 5px; }
+                .filters { font-size: 9px; font-weight: 600; line-height: 1.5; color: #444; }
+                .filters-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 6px; }
+                .filters b { font-weight: 700; color: #000; }
+                .filters .sep { color: #999; }
+
+                /* Stats: one horizontal strip under the header, Paid in a grey box */
+                .stats-strip { display: grid; grid-template-columns: repeat(5, 1fr); border: 1.5px solid #000; margin-bottom: 8px; }
+                .stat { padding: 5px 6px; text-align: center; border-right: 1px solid #000; }
+                .stat:last-child { border-right: none; }
+                .stat.net { background: #d9d9d9 !important; }
+                .stat-label { font-size: 7.6px; font-weight: 600; text-transform: uppercase; letter-spacing: .2px; color: #000; }
+                .stat-value { font-size: 14px; font-weight: 800; margin-top: 1px; color: #000; }
+                .section-title { font-size: 12px; font-weight: 700; color: #000; text-transform: uppercase; margin-bottom: 4px; }
+
+                /* Tables: black outer lines, grey header, no stripes */
+                table { width: 100%; border-collapse: collapse; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+                thead { display: table-header-group; }
+                tr { page-break-inside: avoid; }
+                thead tr.table-head-row { background: #c4c4c4; }
+                .table-head-cell { padding: 3px 5px; text-align: center; color: #000; background-color: #c4c4c4 !important; font-weight: 700; font-size: 9.5px; text-transform: uppercase; border: 1px solid #000; }
+                .table-head-cell.right { text-align: right; }
+                .table-cell { padding: 3px 6px; font-size: 10.5px; border: 1px solid #999; font-weight: 500; color: #000; }
+                .table-cell.right { text-align: right; }
+                .table-cell.center { text-align: center; }
+                .table-cell.strong { font-weight: 700; }
+                .table-cell.col-name { text-align: left; }
+                .table-cell.sm { font-size: 9.5px; }
+                .table-cell .sub { font-size: 8px; color: #555; font-weight: 400; }
+                .date-cell { font-weight: 600; white-space: nowrap; }
+                .no-records { text-align: center; padding: 17px; font-size: 9px; border: 1px solid #999; }
+                .grand-total-row { background: #f0f0f0; }
+                .grand-total-label { padding: 3px 6px; text-align: right; color: #000; background-color: #f0f0f0 !important; font-weight: 700; font-size: 10.5px; text-transform: uppercase; border: 1px solid #999; border-top: 2px solid #999; }
+                .grand-total-cell { padding: 3px 6px; font-weight: 700; font-size: 10.5px; color: #000; background-color: #f0f0f0 !important; text-align: center; border: 1px solid #999; border-top: 2px solid #999; }
+                .grand-total-cell.right { text-align: right; }
+                .adv-row { display: flex; justify-content: space-between; gap: 14px; }
+                /* student table: one line per student, compact but readable */
+                #mainTable .table-head-cell { padding: 2.5px 5px; font-size: 9.5px; }
+                #mainTable .table-cell { padding: 2.5px 6px; font-size: 10.5px; line-height: 1.2; }
+                #mainTable .table-cell.sm { font-size: 9.5px; white-space: nowrap; }
+                #mainTable .col-name { white-space: nowrap; }
+                #mainTable .col-name .sub { display: inline; font-size: 8px; margin-left: 5px; color: #333; }
+                #mainTable .adv-row { gap: 12px; }
+                .fam-merge { vertical-align: middle; }
+                /* Family Advance cell: no line between the rows of one family (a line only where the family ends), only the amounts (the left / right lines come from the neighbour columns) */
+                #mainTable .fam-cell { border-top: none; border-bottom: none; }
+                #mainTable .fam-cell.fam-end { border-bottom: 1px solid #999; }
+                .mode-merge { vertical-align: middle; font-weight: 700; }
+                .print-footer { margin-top: 11px; padding-top: 7px; font-size: 9px; color: #000; text-align: center; font-weight: 700; }
+
+                /* User Wise Breakdown + footer always at the end of the LAST page: a spacer (set by the script below) fills the gap above it */
+                .bottom { break-inside: avoid; page-break-inside: avoid; margin-top: 10px; }
+                #pageSpacer { height: 0; }
+                .page-measure { position: absolute; visibility: hidden; left: 0; top: 0; width: 1px; height: 281mm; }
+                /* same layout the printer uses, applied only while measuring */
+                body.measuring { padding: 0 !important; }
+                body.measuring .page { width: 196mm !important; margin: 0 !important; }
+                @media print { html, body { padding: 0 !important; } }
+                .print-btn { position: fixed; top: 12px; right: 16px; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Arial, sans-serif; } @media print { .print-btn { display: none !important; } }
+            </style>
+        </head>
+        <body>
+            <div class="page-measure" id="pageMeasure"></div>
+            <div class="page">
+                <div class="header-section">
+                    <div class="header-side">
+                        ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                    </div>
+                    <div style="text-align: center; flex: 1;">
+                        <h1>${systemSetting?.school_name || 'School Management System'}</h1>
+                        <h2>Date Wise Fee Collection Report (Detailed)</h2>
+                        <div class="filters">
+                            ${filtersHtml(filtersRow1)}
+                            ${filtersHtml(filtersRow2)}
+                        </div>
+                    </div>
+                    <div class="header-side"></div>
+                </div>
+
+                <div class="stats-strip">
+                    <div class="stat"><div class="stat-label">Students</div><div class="stat-value">${totalStudents}</div></div>
+                    <div class="stat"><div class="stat-label">Number Of Invoices</div><div class="stat-value">${invoiceCount.toLocaleString()}</div></div>
+                    <div class="stat"><div class="stat-label">Advance Receiving</div><div class="stat-value">Rs. ${advanceReceivedTotal.toLocaleString()}</div></div>
+                    <div class="stat"><div class="stat-label">Fee Receiving</div><div class="stat-value">Rs. ${feeReceiving.toLocaleString()}</div></div>
+                    <div class="stat net"><div class="stat-label">Net Receiving</div><div class="stat-value">Rs. ${netReceiving.toLocaleString()}</div></div>
+                </div>
+
+                <table id="mainTable">
+                    <thead>
+                        <tr class="table-head-row">
+                            <th class="table-head-cell">Sr #</th>
+                            <th class="table-head-cell">Reg #</th>
+                            <th class="table-head-cell">Student Name</th>
+                            <th class="table-head-cell">Paying Date</th>
+                            ${payableTh}
+                            <th class="table-head-cell right">Discount</th>
+                            <th class="table-head-cell">Family Advance<div class="adv-row"><span>Received</span><span>Spent</span></div></th>
+                            <th class="table-head-cell right">Total Received</th>
+                            ${duesTh}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                        ${grandRowHtml}
+                    </tbody>
+                </table>
+
+                <div id="pageSpacer"></div>
+                <div class="bottom" id="bottomBlock">
+                    ${getUserWisePrintTableHtml(buildUserBreakdownRows())}
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </div>
+            <script>
+                function fitBottomBlock() {
+                    var spacer = document.getElementById("pageSpacer");
+                    var block = document.getElementById("bottomBlock");
+                    var table = document.getElementById("mainTable");
+                    var page = document.querySelector(".page");
+                    spacer.style.height = "0px";
+                    document.body.classList.add("measuring");
+                    var pageH = document.getElementById("pageMeasure").getBoundingClientRect().height;
+                    var pageTop = page.getBoundingClientRect().top;
+                    var theadH = table.querySelector("thead").getBoundingClientRect().height;
+                    var rows = table.querySelectorAll("tbody tr");
+                    var shift = 0;
+                    for (var i = 0; i < rows.length; i++) {
+                        var rect = rows[i].getBoundingClientRect();
+                        var top = rect.top - pageTop + shift;
+                        var bottom = rect.bottom - pageTop + shift;
+                        var pg = Math.floor(top / pageH);
+                        if (bottom > (pg + 1) * pageH) { shift += (pg + 1) * pageH + theadH - top; }
+                    }
+                    var contentEnd = spacer.getBoundingClientRect().top - pageTop + shift;
+                    var blockH = block.getBoundingClientRect().height;
+                    var pages = Math.max(1, Math.ceil((contentEnd + blockH) / pageH));
+                    // 60px safety: the printer lays the rows out a little taller than this measurement, so the block must end well before the page bottom or it spills (together with the spacer) onto an extra page
+                    var spare = pages * pageH - contentEnd - blockH - 60;
+                    spacer.style.height = Math.max(0, spare) + "px";
+                    document.body.classList.remove("measuring");
+                }
+                function clearBottomBlock() { document.getElementById("pageSpacer").style.height = "0px"; }
+                window.addEventListener("beforeprint", fitBottomBlock);
+                window.addEventListener("afterprint", clearBottomBlock);
+            <\/script>
+            <button class="print-btn" onclick="window.print()">Print</button>
+        </body>
+        </html>
+    `;
+};
+
+document.open();
+document.write(buildReport());
+document.close();
+</script>
+</body>
+</html>
