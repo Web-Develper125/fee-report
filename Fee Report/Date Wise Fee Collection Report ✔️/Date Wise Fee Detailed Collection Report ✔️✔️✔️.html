@@ -460,7 +460,7 @@ const getUserWisePrintTableHtml = (userRows) => {
     const modeList = [...modeGroups.values()].sort((x, y) => y.total - x.total);
     const modeTotals = modeList.reduce((acc, g) => [...g.sources.values()].reduce((t, v) => ({
         advance: t.advance + v.advance,
-        receiving: t.receiving + v.amount,
+        receiving: t.receiving + (v.amount - v.spent),
         net: t.net + (v.amount - v.spent) + v.advance,
     }), acc), { advance: 0, receiving: 0, net: 0 });
     const modeRowsHtml = modeList.length > 0
@@ -471,7 +471,7 @@ const getUserWisePrintTableHtml = (userRows) => {
                 ${i === 0 ? `<td class="table-cell mode-merge" rowspan="${sources.length}">${g.mode}</td>` : ""}
                 <td class="table-cell">${source}</td>
                 <td class="table-cell right">${amountBlank(v.advance)}</td>
-                <td class="table-cell right">${amountBlank(v.amount)}</td>
+                <td class="table-cell right">${amountBlank(v.amount - v.spent)}</td>
                 <td class="table-cell right strong">${amountBlank(v.amount - v.spent + v.advance)}</td>
             </tr>`).join('');
         }).join('')
@@ -561,20 +561,20 @@ const buildReport = () => {
         seenFamily.add(row.famKey);
         row.advRec = row.famFirst ? (advanceReceivedByFamily.get(row.famKey)?.amount || 0) : 0;
         row.advSpent = advanceSpentByStudent.get(String(row.student_id)) || 0;
-        row.netPaid = row.paid - (advanceSpentByStudent.get(String(row.student_id)) || 0) + row.advRec;
+        row.netPaid = row.paid - (advanceSpentByStudent.get(String(row.student_id)) || 0);
     });
     const depositOnlyRows = [...advanceReceivedByFamily.entries()]
         .filter(([key]) => !familyOrder.has(key))
         .map(([key, entry]) => ({ key, ...entry }));
 
-    const advanceCellHtml = (received, spent) => `<div class="adv-row"><span>${amountBlank(received)}</span><span>${amountBlank(spent)}</span></div>`;
+    const receivedTd = (row) => row.runStart ? `<td class="table-cell fam-rec" rowspan="${row.runSize}">${amountBlank(row.advRec)}</td>` : "";
 
-    const payableTh = showPayableDues ? `<th class="table-head-cell right">Receivable</th>` : "";
-    const duesTh = showPayableDues ? `<th class="table-head-cell right">Dues</th>` : "";
+    const payableTh = showPayableDues ? `<th class="table-head-cell right" rowspan="2">Receivable</th>` : "";
+    const duesTh = showPayableDues ? `<th class="table-head-cell right" rowspan="2">Dues</th>` : "";
     const payableTd = (row) => showPayableDues ? `<td class="table-cell right">${amountBlank(row.payable)}</td>` : "";
     const duesTd = (row) => showPayableDues ? `<td class="table-cell right">${amountBlank(row.dues)}</td>` : "";
-    const advanceTd = (row) => `<td class="table-cell fam-cell${row.famEnd ? " fam-end" : ""}">${advanceCellHtml(row.advRec, row.advSpent)}</td>`;
-    const colCount = 7 + (showPayableDues ? 2 : 0);
+    const spentTd = (row) => `<td class="table-cell right fam-spent${row.famEnd ? " fam-end" : ""}">${amountBlank(row.advSpent)}</td>`;
+    const colCount = 8 + (showPayableDues ? 2 : 0);
 
     const studentRowsHtml = printRows.map((row) => `
             <tr>
@@ -584,7 +584,7 @@ const buildReport = () => {
                 <td class="table-cell center sm">${formatDateTime(row.latestDate) || '-'}</td>
                 ${payableTd(row)}
                 <td class="table-cell right">${amountBlank(row.discount)}</td>
-                ${advanceTd(row)}
+                ${receivedTd(row)}${spentTd(row)}
                 <td class="table-cell right strong">${amountBlank(row.netPaid)}</td>
                 ${duesTd(row)}
             </tr>`).join('');
@@ -596,8 +596,8 @@ const buildReport = () => {
                 <td class="table-cell center sm">${formatDateTime(entry.date) || '-'}</td>
                 ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
                 <td class="table-cell right"></td>
-                <td class="table-cell fam-cell fam-end">${advanceCellHtml(entry.amount, 0)}</td>
-                <td class="table-cell right strong">${amountBlank(entry.amount)}</td>
+                <td class="table-cell fam-rec">${amountBlank(entry.amount)}</td><td class="table-cell right fam-spent fam-end"></td>
+                <td class="table-cell right strong"></td>
                 ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
             </tr>`).join('');
     const rowsHtml = (printRows.length > 0 || depositOnlyRows.length > 0)
@@ -609,8 +609,8 @@ const buildReport = () => {
                 <td class="grand-total-label" colspan="4">Grand Total:</td>
                 ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalPayable)}</td>` : ""}
                 <td class="grand-total-cell right">${amountBlank(totalDiscount)}</td>
-                <td class="grand-total-cell">${advanceCellHtml(advanceReceivedTotal, advanceSpentTotal)}</td>
-                <td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal + advanceReceivedTotal)}</td>
+                <td class="grand-total-cell">${amountBlank(advanceReceivedTotal)}</td><td class="grand-total-cell right">${amountBlank(advanceSpentTotal)}</td>
+                <td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal)}</td>
                 ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalDues)}</td>` : ""}
             </tr>` : "";
 
@@ -686,9 +686,10 @@ const buildReport = () => {
                 #mainTable .col-name .sub { display: inline; font-size: 8px; margin-left: 5px; color: #333; }
                 #mainTable .adv-row { gap: 12px; }
                 .fam-merge { vertical-align: middle; }
-                /* Family Advance cell: no line between the rows of one family (a line only where the family ends), only the amounts (the left / right lines come from the neighbour columns) */
-                #mainTable .fam-cell { border-top: none; border-bottom: none; }
-                #mainTable .fam-cell.fam-end { border-bottom: 1px solid #999; }
+                /* Family Advance: Received is one cell centred over the family rows, Spent is one cell per student with no line between the rows of a family */
+                #mainTable .fam-rec { text-align: left; vertical-align: middle; font-weight: 600; border-right: none; }
+                #mainTable .fam-spent { border-top: none; border-bottom: none; border-left: none; }
+                #mainTable .fam-spent.fam-end { border-bottom: 1px solid #999; }
                 .mode-merge { vertical-align: middle; font-weight: 700; }
                 .print-footer { margin-top: 11px; padding-top: 7px; font-size: 9px; color: #000; text-align: center; font-weight: 700; }
 
@@ -732,15 +733,17 @@ const buildReport = () => {
                 <table id="mainTable">
                     <thead>
                         <tr class="table-head-row">
-                            <th class="table-head-cell">Sr #</th>
-                            <th class="table-head-cell">Reg #</th>
-                            <th class="table-head-cell">Student Name</th>
-                            <th class="table-head-cell">Paying Date</th>
+                            <th class="table-head-cell" rowspan="2">Sr #</th>
+                            <th class="table-head-cell" rowspan="2">Reg #</th>
+                            <th class="table-head-cell" rowspan="2">Student Name</th>
+                            <th class="table-head-cell" rowspan="2">Paying Date</th>
                             ${payableTh}
-                            <th class="table-head-cell right">Discount</th>
-                            <th class="table-head-cell">Family Advance<div class="adv-row"><span>Received</span><span>Spent</span></div></th>
-                            <th class="table-head-cell right">Total Received</th>
+                            <th class="table-head-cell right" rowspan="2">Discount</th>
+                            <th class="table-head-cell" colspan="2">Family Advance</th>
+                            <th class="table-head-cell right" rowspan="2">Fee Received</th>
                             ${duesTh}
+</tr><tr class="table-head-row">
+<th class="table-head-cell">Received</th><th class="table-head-cell right">Spent</th>
                         </tr>
                     </thead>
                     <tbody>
