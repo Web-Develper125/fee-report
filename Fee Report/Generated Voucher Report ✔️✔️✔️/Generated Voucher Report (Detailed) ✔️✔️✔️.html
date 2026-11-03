@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generated Voucher Report (Detailed)</title>
+</head>
+<body>
+<script>
+    /* Preview of the Print Detailed Report of Generated Voucher Report.jsx (handlePrintReport).
+       Only the DUMMY DATA below is made up: getFeeRowMetrics and the print template are the SAME CODE as the page. */
+
+    /* ================= DUMMY DATA (rows like /transportFee/getFeeDefaultersNewFast: further discount history, fine discount history, partial payments) ================= */
+    var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var type_name = "All", fee_month = "", fee_year = 2026, custom_fee_name = "";
+    var campus_name = "All", class_name = "All", section_name = "All";
+    var names = [["Ali Raza", "Raza Khan"], ["Ayesha Noor", "Noor Ahmed"], ["Hamza Tariq", "Tariq Mehmood"], ["Fatima Zahra", "Zahid Hussain"], ["Usman Ghani", "Abdul Ghani"], ["Bilal Ahmed", "Ahmed Siddique"], ["Sana Malik", "Malik Aslam"], ["Zain Abbas", "Abbas Ali"], ["Hira Fatima", "Shahid Iqbal"], ["Omar Farooq", "Farooq Hassan"]];
+    var classes = ["Class 5", "Class 6", "Class 7", "Class 8", "Class 9"], sections = ["A", "B", "C"];
+    var titles = ["September 2026", "Transport September 2026", "Annual Fund", "Trip Fee", "October 2026"];
+    var discounts = [0, 0, 10, 0, 25, 50];
+    var DAY = 86400000;
+    var rawFeeData = [];
+    for (var i = 0; i < 30; i++) {
+        var notYetDue = (i % 6 === 5);                                                  // every 6th fee is not overdue yet
+        var dueMs = notYetDue ? Date.UTC(2027, 0, 5 + (i % 10)) : Date.UTC(2026, 8, 1 + (i % 10));
+        var actual = 3000 + (i % 5) * 500, disc = discounts[i % discounts.length];
+        var furtherHist = (i % 7 === 0) ? [{ date: "2026-09-12T11:20:00.000Z", amount: 200, discount_by: "admin" }, { date: "2026-09-20T15:05:00.000Z", amount: 100, discount_by: "accountant1" }] : [];
+        var furtherTotal = furtherHist.reduce(function (t, d) { return t + d.amount; }, 0);
+        var afterAll = Math.round(actual * (100 - disc) / 100) - furtherTotal;           // fee after every discount (further discount already removed)
+        var status = notYetDue ? "Unpaid" : ["Paid", "Unpaid", "Clear", "Paid", "Unpaid", "Paid"][i % 6];
+        var dayShift = (i % 3) * 3 - 1;                                                 // days after (or before) the due date
+        var payingMs = dueMs + dayShift * DAY + (9 + (i % 6)) * 3600000 + ((i * 7) % 60) * 60000;
+        var fineDisc = (i % 4 === 1 && !notYetDue) ? 20 : 0;
+        var lateFine = 50 - fineDisc;                                                   // the applied (current) fine
+        var paid = 0, partial = [];
+        if (status === "Paid") paid = afterAll + (dayShift > 0 ? lateFine : 0);
+        else if (status === "Clear") paid = Math.round(afterAll * 0.6);
+        else if (status === "Unpaid" && !notYetDue && i % 2 === 0) {
+            var p1 = Math.round(afterAll / 3), p2 = Math.round(afterAll / 4);
+            partial = [{ amount: p1, date: "2026-09-08T10:15:00.000Z" }, { amount: p2, date: "2026-09-18T13:45:00.000Z" }];
+            paid = p1 + p2;
+        }
+        rawFeeData.push({
+            general_registration_code: "DPS-STD-" + String(i + 1).padStart(3, "0"), student_name: names[i % names.length][0], student_father_name: names[i % names.length][1],
+            class_name: classes[i % classes.length], section_name: sections[i % sections.length], title: titles[i % titles.length],
+            due_date: new Date(dueMs).toISOString(), actual_fee: actual, fee_discount: disc, fee_after_discount: afterAll, further_discount_history: furtherHist,
+            late_fine: lateFine, late_fee_fine_discount_history: fineDisc ? [{ date: "2026-10-03T10:40:00.000Z", amount: fineDisc, discount_by: "admin" }] : [],
+            fee_status: status, paying_date: (status === "Paid" || status === "Clear") ? new Date(payingMs).toISOString() : null, clear_fee_date: status === "Clear" ? new Date(dueMs).toISOString() : null,
+            paid_amount: paid, partial_payment_history: partial
+        });
+    }
+
+    /* ================= SAME CODE AS Generated Voucher Report.jsx ================= */
+    const getFeeRowMetrics = (item, today) => {
+        const feeAfterDiscount = Number(item.fee_after_discount) || 0;
+        const actualFee = Number(item.actual_fee) || 0;
+        const lateFine = Number(item.late_fine) || 0;
+
+        const dueDate = new Date(item.due_date).toLocaleDateString("en-CA");
+        const payingDate = item.paying_date ? new Date(item.paying_date).toLocaleDateString("en-CA") : null;
+        const clearDate = item.clear_fee_date ? new Date(item.clear_fee_date).toLocaleDateString("en-CA") : null;
+
+        const isOverdue =
+            item.fee_status === "Paid"
+                ? payingDate > dueDate
+                : item.fee_status === "Clear"
+                    ? clearDate > dueDate
+                    : today > dueDate;
+
+        const totalFeeForRow = isOverdue ? feeAfterDiscount + lateFine : feeAfterDiscount;
+
+        const paidAmt = Number(item.paid_amount) || 0;
+        const partialSum = item.partial_payment_history?.length > 0
+            ? item.partial_payment_history.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+            : 0;
+        const effectivePaid = paidAmt > 0 ? paidAmt : partialSum;
+        const rowDues = item.fee_status === "Clear" ? 0 : totalFeeForRow - effectivePaid;
+
+        // Summary report columns (same rules as the Detailed report)
+        const further = (item.further_discount_history || []).reduce((sum, d) => sum + (Number(d?.amount) || 0), 0);
+
+        return {
+            feeAfterDiscount,
+            actualFee,
+            discount: actualFee - feeAfterDiscount,
+            effectivePaid,
+            rowDues,
+            isOverdue,
+            totalFeeForRow,
+            further,                                                              // further discounts given
+            feeAfterDisc: feeAfterDiscount + further,                             // fee after the normal discount (before the further discount)
+            fineApplied: isOverdue ? lateFine : 0,                                // fine only for an overdue fee
+            netReceivable: item.fee_status === "Clear" ? effectivePaid : totalFeeForRow, // a cleared fee counts only what was paid
+        };
+    };
+
+    const buildClassWiseData = (allData) => {
+        const today = new Date().toLocaleDateString("en-CA");
+        const sectionSummary = {};
+
+        allData.forEach(item => {
+            const metrics = getFeeRowMetrics(item, today);
+            const sectionKey = item.section_id || `${item.class_id}-${item.section_name}`;
+
+            if (!sectionSummary[sectionKey]) {
+                sectionSummary[sectionKey] = {
+                    section_id: item.section_id,
+                    campus_name: item.campus_name || "--",
+                    class_name: item.class_name || "--",
+                    section_name: item.section_name || "--",
+                    campus_class_section: `${item.campus_name || "--"} / ${item.class_name || "--"} / ${item.section_name || "--"}`,
+                    voucherCount: 0,
+                    actualAmount: 0,
+                    feeAfterDisc: 0,
+                    furtherDiscount: 0,
+                    fineApplied: 0,
+                    netReceivable: 0,
+                    received: 0,
+                    outstanding: 0,
+                };
+            }
+
+            const row = sectionSummary[sectionKey];
+            row.voucherCount += 1;
+            row.actualAmount += metrics.actualFee;
+            row.feeAfterDisc += metrics.feeAfterDisc;
+            row.furtherDiscount += metrics.further;
+            row.fineApplied += metrics.fineApplied;
+            row.netReceivable += metrics.netReceivable;
+            row.received += metrics.effectivePaid;
+            row.outstanding += metrics.rowDues > 0 ? metrics.rowDues : 0;
+        });
+
+        return Object.values(sectionSummary).sort((a, b) => {
+            const by = (x, y) => (x || '').localeCompare(y || '', undefined, { numeric: true }); // natural order: Class 2 before Class 10
+            return by(a.campus_name, b.campus_name) || by(a.class_name, b.class_name) || by(a.section_name, b.section_name);
+        });
+    };
+
+    /* ================= handlePrintReport ================= */
+        const today = new Date().toLocaleDateString("en-CA");
+        const n = (value) => (Number(value) || 0).toLocaleString();
+        const dash = '<span class="zero-dash">-</span>';
+        const amountOrDash = (value) => (Number(value || 0) !== 0 ? Number(value).toLocaleString() : dash);
+        const sumHistory = (list) => (list || []).reduce((sum, d) => sum + (Number(d?.amount) || 0), 0);
+        const grNumber = (code) => { const match = String(code ?? "").match(/\d+(?!.*\d)/); return match ? match[0] : "-"; };
+        const formatLedgerDate = (value) => {
+            if (!value) return "-";
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        };
+        const formatTime12 = (value) => {
+            if (!value) return "";
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return "";
+            if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) return ""; // no time stored
+            return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+        };
+        const formatPayingDate = (value) => {
+            if (!value) return dash;
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return dash;
+            const time = formatTime12(value);
+            return `<span class="dt"><span>${formatLedgerDate(value)}</span>${time ? ` <span>${time}</span>` : ''}</span>`;
+        };
+
+        const filtersHtml = (arr) =>
+            `<div class="filters-row">${arr.map(([label, value]) => `${label}: <b>${value}</b>`).join(' <span class="sep">||</span> ')}</div>`;
+        const filtersRow1 = [["Fee Type", type_name]];
+        if (type_name === "Monthly Fee" || type_name === "Transport Fee") {
+            filtersRow1.push(["Month", fee_month], ["Year", fee_year]);
+        } else if (type_name === "Custom Fee") {
+            filtersRow1.push(["Fee Name", custom_fee_name]);
+        }
+        const filtersRow2 = [["Campus", campus_name || "All"], ["Class", class_name || "All"], ["Section", section_name || "All"]];
+
+        // one row = one voucher; the money of a row comes from getFeeRowMetrics (the same rules as the Summary report)
+        const detailRows = (rawFeeData || []).map((item) => ({ item, m: getFeeRowMetrics(item, today) }));
+        const st = detailRows.reduce((acc, { m }) => ({
+            actual: acc.actual + m.actualFee,
+            after: acc.after + m.feeAfterDisc,
+            further: acc.further + m.further,
+            fine: acc.fine + m.fineApplied,
+            total: acc.total + m.netReceivable,
+            paid: acc.paid + m.effectivePaid,
+            dues: acc.dues + (m.rowDues > 0 ? m.rowDues : 0),
+            net: acc.net + m.feeAfterDiscount,
+        }), { actual: 0, after: 0, further: 0, fine: 0, total: 0, paid: 0, dues: 0, net: 0 });
+
+        const tableRowsHtml = detailRows.length > 0 ? detailRows.map(({ item, m }, index) => {
+            // fine only for an overdue fee: the current (applied) fine, after any fine discount
+            const fineHtml = m.isOverdue ? amountOrDash(item.late_fine) : dash;
+            const dueDateHtml = item.due_date ? (m.isOverdue ? `<u>${formatLedgerDate(item.due_date)}</u>` : formatLedgerDate(item.due_date)) : dash;
+            return `
+                <tr>
+                    <td class="table-cell center">${index + 1}</td>
+                    <td class="table-cell center">${grNumber(item.general_registration_code)}</td>
+                    <td class="table-cell center nowrap">${item.class_name}/${item.section_name}</td>
+                    <td class="table-cell wrap"><span class="student-name">${item.student_name}</span> <span class="student-father">${item.student_father_name}</span></td>
+                    <td class="table-cell center wrap">${item.title}</td>
+                    <td class="table-cell center nowrap">${dueDateHtml}</td>
+                    <td class="table-cell">${formatPayingDate(item.paying_date)}</td>
+                    <td class="table-cell right">${n(item.actual_fee)}</td>
+                    <td class="table-cell right">${n(m.feeAfterDisc)}</td>
+                    <td class="table-cell right">${amountOrDash(m.further)}</td>
+                    <td class="table-cell right">${fineHtml}</td>
+                    <td class="table-cell right strong">${n(m.netReceivable)}</td>
+                    <td class="table-cell right strong">${amountOrDash(m.effectivePaid)}</td>
+                    <td class="table-cell right strong">${amountOrDash(m.rowDues > 0 ? m.rowDues : 0)}</td>
+                </tr>`;
+        }).join('') + `<tr class="grand-total-row"><td class="grand-total-label" colspan="7">Grand Total:</td>`
+            + `<td class="grand-total-cell right">${n(st.actual)}</td><td class="grand-total-cell right">${n(st.after)}</td>`
+            + `<td class="grand-total-cell right">${amountOrDash(st.further)}</td>`
+            + `<td class="grand-total-cell right">${amountOrDash(st.fine)}</td>`
+            + `<td class="grand-total-cell right">${n(st.total)}</td><td class="grand-total-cell right">${n(st.paid)}</td><td class="grand-total-cell right">${n(st.dues)}</td></tr>`
+            : `<tr><td class="no-records" colspan="14">No Records Found!</td></tr>`;
+
+        const reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Generated Voucher Report (Detailed)</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 landscape; margin: 6mm; }
+                html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:3px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it (compact) */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #000; padding:0 0 5px; }
+                .header-section h1 { font-size:15px; font-weight:700; margin-bottom:1px; color:#000; }
+                .header-section h2 { font-size:11px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-side { flex:0 0 40px; }
+                .header-logo { width:40px; height:40px; object-fit:contain; border-radius:4px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.3; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 5px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Dues in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(6,1fr); border:1.5px solid #000; margin-bottom:5px; }
+                .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.5px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:12px; font-weight:800; color:#000; white-space:nowrap; }
+                .section-title { font-size:11px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:3px; }
+                /* Table: black outer lines, grey header, no stripes (compact rows) */
+                table { width:100%; border-collapse:collapse; font-size:8.5px; font-variant-numeric:tabular-nums; }   /* auto layout: every column is as wide as its content, so the rows keep one line */
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:2px 2px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:7.5px; text-transform:uppercase; border:1px solid #000; white-space:nowrap; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:2px 4px; vertical-align:middle; font-size:8.5px; border:1px solid #999; font-weight:500; color:#000; white-space:nowrap; }
+                .table-cell.wrap { white-space:normal; }   /* only the names may use a second line, when the page is too narrow */
+                .table-cell.right { text-align:right; }
+                .table-cell.left { text-align:left; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .nowrap { white-space:nowrap; }
+                .student-name { font-weight:700; font-size:9px; }
+                .student-father { font-weight:500; font-size:8px; color:#555; }
+                .zero-dash { color:#999; font-size:9px; font-weight:400; }
+                .dt span { white-space:nowrap; }
+                .dt span + span { margin-left:2px; }
+                .no-records { text-align:center; padding:12px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:2px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:9px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:2px 3px; font-weight:700; font-size:9px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                .print-footer { margin-top:8px; padding-top:4px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSetting?.school_name || 'School Management System'}</h1>
+                            <h2>Generated Voucher Report (Detailed)</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                            </div>
+                        </div>
+                        <div class="header-side"></div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Vouchers</div><div class="stat-value">${n(detailRows.length)}</div></div>
+                        <div class="stat"><div class="stat-label">Actual Fee</div><div class="stat-value">Rs. ${n(st.actual)}</div></div>
+                        <div class="stat"><div class="stat-label">Discount Applied</div><div class="stat-value">Rs. ${n(st.actual - st.net)}</div></div>
+                        <div class="stat"><div class="stat-label">Total Payable</div><div class="stat-value">Rs. ${n(st.total)}</div></div>
+                        <div class="stat"><div class="stat-label">Paid</div><div class="stat-value">Rs. ${n(st.paid)}</div></div>
+                        <div class="stat net"><div class="stat-label">Dues</div><div class="stat-value">Rs. ${n(st.dues)}</div></div>
+                    </div>
+
+                    <div class="section-title">Generated Voucher Breakdown</div>
+                    <table>
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Sr #</th>
+                                <th class="table-head-cell">Reg #</th>
+                                <th class="table-head-cell">Class/ Section</th>
+                                <th class="table-head-cell">Student Name</th>
+                                <th class="table-head-cell">Fee Name</th>
+                                <th class="table-head-cell">Due Date</th>
+                                <th class="table-head-cell">Paying Date</th>
+                                <th class="table-head-cell right">Actual Fee</th>
+                                <th class="table-head-cell right">Fee After Disc</th>
+                                <th class="table-head-cell right">Further Fee Disc</th>
+                                <th class="table-head-cell right">Fine</th>
+                                <th class="table-head-cell right">Total</th>
+                                <th class="table-head-cell right">Paid</th>
+                                <th class="table-head-cell right">Fee Dues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var stl = document.createElement("style");
+        stl.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(stl);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>
