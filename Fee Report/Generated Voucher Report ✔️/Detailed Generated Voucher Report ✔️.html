@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generated Voucher Report (Detail)</title>
+</head>
+<body>
+<script>
+    /* ================= DUMMY DATA (fee rows like the ledger report: further discount history, fine discount history, partial payments) ================= */
+    var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
+    var type_name = "All", fee_month = "", fee_year = 2026, custom_fee_name = "";
+    var campus_name = "All", class_name = "All", section_name = "All";
+    var names = [["Ali Raza", "Raza Khan"], ["Ayesha Noor", "Noor Ahmed"], ["Hamza Tariq", "Tariq Mehmood"], ["Fatima Zahra", "Zahid Hussain"], ["Usman Ghani", "Abdul Ghani"], ["Bilal Ahmed", "Ahmed Siddique"], ["Sana Malik", "Malik Aslam"], ["Zain Abbas", "Abbas Ali"], ["Hira Fatima", "Shahid Iqbal"], ["Omar Farooq", "Farooq Hassan"]];
+    var classes = ["Class 5", "Class 6", "Class 7", "Class 8", "Class 9"], sections = ["A", "B", "C"];
+    var titles = ["September 2026", "Transport September 2026", "Annual Fund", "Trip Fee", "October 2026"];
+    var modes = ["Cash", "Bank / HBL", "Easypaisa", "Cash"], users = ["admin", "accountant1", "cashier2"];
+    var discounts = [0, 0, 10, 0, 25, 50];
+    var iso = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+    var at = function (d, h, m) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0).toISOString(); };
+    var today = iso(new Date());
+    var rawFeeData = [];
+    for (var i = 0; i < 30; i++) {
+        var notYetDue = (i % 6 === 5);                                    // every 6th fee is not overdue yet
+        var due = notYetDue ? new Date(2027, 0, 5 + (i % 10)) : new Date(2026, 8, 1 + (i % 10));
+        var actual = 3000 + (i % 5) * 500, disc = discounts[i % discounts.length];
+        var furtherHist = (i % 7 === 0) ? [{ date: at(new Date(2026, 8, 12), 11, 20), amount: 200, discount_by: users[i % 3] }, { date: at(new Date(2026, 8, 20), 15, 5), amount: 100, discount_by: users[(i + 1) % 3] }] : [];
+        var furtherTotal = furtherHist.reduce(function (s, d) { return s + d.amount; }, 0);
+        var afterAll = Math.round(actual * (100 - disc) / 100) - furtherTotal;            // fee after every discount (further discount already removed)
+        var status = notYetDue ? "Unpaid" : ["Paid", "Unpaid", "Clear", "Paid", "Unpaid", "Paid"][i % 6];
+        var paying = new Date(due.getTime() + ((i % 3) * 3 - 1) * 86400000);
+        var fineHist = (i % 4 === 1 && !notYetDue) ? [{ date: at(new Date(2026, 9, 3), 10, 40), amount: 20, discount_by: users[i % 3] }] : [];
+        var lateFine = 50, fine = lateFine - fineHist.reduce(function (s, d) { return s + d.amount; }, 0);   // current fine
+        var paid = 0, partial = [], quickMode = null;
+        if (status === "Paid") { paid = afterAll + (!notYetDue && paying > due ? fine : 0); quickMode = modes[i % modes.length]; }
+        else if (status === "Clear") { paid = Math.round(afterAll * 0.6); quickMode = modes[(i + 1) % modes.length]; }
+        else if (status === "Unpaid" && !notYetDue && i % 2 === 0) {
+            var p1 = Math.round(afterAll / 3), p2 = Math.round(afterAll / 4);
+            partial = [{ amount: p1, date: at(new Date(2026, 8, 6 + (i % 5)), 10, 15), mode: "Cash", user: users[i % 3] }, { amount: p2, date: at(new Date(2026, 8, 18), 13, 45), mode: "Bank / HBL", user: users[(i + 1) % 3] }];
+            paid = p1 + p2;
+        }
+        rawFeeData.push({
+            general_registration_code: "DPS-STD-" + String(i + 1).padStart(3, "0"), student_name: names[i % names.length][0], student_father_name: names[i % names.length][1],
+            class_name: classes[i % classes.length], section_name: sections[i % sections.length], title: titles[i % titles.length],
+            due_date: iso(due), actual_fee: actual, fee_after_discount: afterAll, further_discount_history: furtherHist,
+            late_fine: lateFine, fine: fine, late_fee_fine_discount_history: fineHist,
+            fee_status: status, paying_date: (status === "Paid" || (status === "Clear")) ? at(paying, 9 + (i % 6), (i * 7) % 60) : null, clear_fee_date: status === "Clear" ? iso(due) : null,
+            paid_amount: paid, partial_payment_history: partial, quick_mode: quickMode, quick_user: users[i % 3]
+        });
+    }
+
+    var n = function (v) { return (Number(v) || 0).toLocaleString(); };
+    var dash = '<span class="zero-dash">-</span>';
+    var amountOrDash = function (v) { return Number(v || 0) !== 0 ? Number(v).toLocaleString() : dash; };
+    var sumHistory = function (h) { return (h || []).reduce(function (s, d) { return s + Number(d.amount || 0); }, 0); };
+    var grNumber = function (code) { var m = String(code == null ? "" : code).match(/\d+(?!.*\d)/); return m ? m[0] : "-"; };
+
+    /* ---------- same helpers as feeLedgerReport.js (detailed report) ---------- */
+    var formatLedgerDate = function (v) { if (!v) return "-"; var d = new Date(v); return isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
+    var formatTime12 = function (v) {
+        if (!v) return ""; var d = new Date(v); if (isNaN(d.getTime())) return "";
+        if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) return "";   // no time stored
+        return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    };
+    var formatPayingDate = function (v) {
+        if (!v) return dash;
+        var d = new Date(v); if (isNaN(d.getTime())) return dash;
+        var time = formatTime12(v);
+        return '<span class="dt"><span>' + formatLedgerDate(v) + '</span>' + (time ? ' <span>' + time + '</span>' : '') + '</span>';
+    };
+
+    /* ---------- row maths (same rules as the ledger: overdue, fine, cleared fee waives the rest) ---------- */
+    var rowMoney = function (item) {
+        var dueDate = item.due_date;
+        var overdue = item.fee_status === "Paid" ? iso(new Date(item.paying_date)) > dueDate : item.fee_status === "Clear" ? item.clear_fee_date > dueDate : today > dueDate;
+        var cleared = item.fee_status === "Clear";
+        var total = item.fee_after_discount + (overdue ? Number(item.fine || 0) : 0);
+        var rowTotal = cleared ? item.paid_amount : total;
+        return { due: overdue, cleared: cleared, total: rowTotal, dues: cleared ? 0 : Math.max(0, total - item.paid_amount) };
+    };
+    var money = rawFeeData.map(rowMoney);
+
+    var st = { actual: 0, after: 0, further: 0, fine: 0, fineDisc: 0, total: 0, paid: 0, dues: 0, net: 0 };
+    rawFeeData.forEach(function (it, ix) {
+        var m = money[ix], fd = sumHistory(it.further_discount_history), fnd = m.due ? sumHistory(it.late_fee_fine_discount_history) : 0;
+        st.actual += it.actual_fee; st.after += it.fee_after_discount + fd; st.further += fd;
+        st.fine += m.due ? Number(it.fine || 0) : 0; st.fineDisc += fnd;
+        st.total += m.total; st.paid += it.paid_amount; st.dues += m.dues;
+        st.net += it.fee_after_discount;
+    });
+    var totalGeneratedVouchers = rawFeeData.length;
+    var totalDiscountedAmount = st.actual - st.net;
+
+    /* ================= PRINT TEMPLATE (landscape - 14 columns, fixed widths - same design as the other reports) ================= */
+    var filtersRow1 = [["Fee Type", type_name]];
+    if (type_name === "Monthly Fee" || type_name === "Transport Fee") { filtersRow1.push(["Month", fee_month]); filtersRow1.push(["Year", fee_year]); }
+    else if (type_name === "Custom Fee") filtersRow1.push(["Fee Name", custom_fee_name]);
+    var filtersRow2 = [["Campus", campus_name || "All"], ["Class", class_name || "All"], ["Section", section_name || "All"]];
+    var filtersHtml = function (arr) {
+        return '<div class="filters-row">' + arr.map(function (f) { return f[0] + ': <b>' + f[1] + '</b>'; }).join(' <span class="sep">||</span> ') + '</div>';
+    };
+
+    var tableRowsHtml = rawFeeData.length > 0 ? rawFeeData.map(function (item, index) {
+        var m = money[index];
+        var fdHist = item.further_discount_history || [];
+        var furtherTotal = sumHistory(fdHist);
+        // fine only for an overdue fee: with a fine discount the original fine is struck through at the left and the current (applied) fine is at the right
+        var currentFine = Number(item.fine || 0), fineDiscount = sumHistory(item.late_fee_fine_discount_history);
+        var fineHtml = (!m.due || (currentFine === 0 && fineDiscount === 0)) ? dash
+            : (fineDiscount > 0 ? '<span class="fine-split"><s>' + n(currentFine + fineDiscount) + '</s><span>' + n(currentFine) + '</span></span>' : n(currentFine));
+        var dueDateHtml = item.due_date ? (m.due ? '<u>' + formatLedgerDate(item.due_date) + '</u>' : formatLedgerDate(item.due_date)) : dash;
+        return '<tr>' +
+            '<td class="table-cell center">' + (index + 1) + '</td>' +
+            '<td class="table-cell center">' + grNumber(item.general_registration_code) + '</td>' +
+            '<td class="table-cell center nowrap">' + item.class_name + '/' + item.section_name + '</td>' +
+            '<td class="table-cell"><span class="student-name">' + item.student_name + '</span> <span class="student-father">' + item.student_father_name + '</span></td>' +
+            '<td class="table-cell center">' + item.title + '</td>' +
+            '<td class="table-cell center nowrap">' + dueDateHtml + '</td>' +
+            '<td class="table-cell">' + formatPayingDate(item.paying_date) + '</td>' +
+            '<td class="table-cell right">' + n(item.actual_fee) + '</td>' +
+            '<td class="table-cell right">' + n(item.fee_after_discount + furtherTotal) + '</td>' +
+            '<td class="table-cell right">' + amountOrDash(furtherTotal) + '</td>' +
+            '<td class="table-cell right">' + fineHtml + '</td>' +
+            '<td class="table-cell right strong">' + n(m.total) + '</td>' +
+            '<td class="table-cell right strong">' + amountOrDash(item.paid_amount) + '</td>' +
+            '<td class="table-cell right strong">' + amountOrDash(m.dues) + '</td>' +
+            '</tr>';
+    }).join('') + '<tr class="grand-total-row"><td class="grand-total-label" colspan="7">Grand Total:</td>' +
+        '<td class="grand-total-cell right">' + n(st.actual) + '</td><td class="grand-total-cell right">' + n(st.after) + '</td>' +
+        '<td class="grand-total-cell right">' + amountOrDash(st.further) + '</td>' +
+        '<td class="fine-pair-cell"><div class="fine-pair"><div><span>Disc</span><b>' + n(st.fineDisc) + '</b></div><div><span>Apl</span><b>' + n(st.fine) + '</b></div></div></td>' +
+        '<td class="grand-total-cell right">' + n(st.total) + '</td><td class="grand-total-cell right">' + n(st.paid) + '</td><td class="grand-total-cell right">' + n(st.dues) + '</td></tr>'
+        : '<tr><td class="no-records" colspan="14">No Records Found!</td></tr>';
+
+    var reportContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Generated Voucher Report (Detail)</title>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+                * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",Arial,sans-serif !important; }
+                @page { size: A4 landscape; margin: 6mm; }
+                html, body { background:#fff; color:#000; font-size:9px; line-height:1.2; padding:3px; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+                /* Header: logo | school name, title and filters | spacer, one black line under it (compact) */
+                .header-section { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #000; padding:0 0 5px; }
+                .header-section h1 { font-size:15px; font-weight:700; margin-bottom:1px; color:#000; }
+                .header-section h2 { font-size:11px; font-weight:700; margin-bottom:2px; color:#000; }
+                .header-side { flex:0 0 40px; }
+                .header-logo { width:40px; height:40px; object-fit:contain; border-radius:4px; }
+                .filters { font-size:9px; font-weight:600; line-height:1.3; color:#444; }
+                .filters-row { display:flex; justify-content:center; flex-wrap:wrap; gap:0 5px; }
+                .filters b { font-weight:700; color:#000; }
+                .filters .sep { color:#999; }
+                /* Stats: one horizontal strip under the header, Dues in a grey box */
+                .stats-strip { display:grid; grid-template-columns:repeat(6,1fr); border:1.5px solid #000; margin-bottom:5px; }
+                .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
+                .stat:last-child { border-right:none; }
+                .stat.net { background:#d9d9d9 !important; }
+                .stat-label { font-size:7.5px; font-weight:600; text-transform:uppercase; letter-spacing:.2px; color:#000; }
+                .stat-value { font-size:12px; font-weight:800; color:#000; white-space:nowrap; }
+                .section-title { font-size:11px; font-weight:700; color:#000; text-transform:uppercase; margin-bottom:3px; }
+                /* Table: black outer lines, grey header, no stripes (compact rows) */
+                table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:8.5px; font-variant-numeric:tabular-nums; }
+                thead { display:table-header-group; }
+                tr { page-break-inside:avoid; }
+                thead tr.table-head-row { background:#c4c4c4; }
+                .table-head-cell { padding:2px 2px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:7.5px; text-transform:uppercase; border:1px solid #000; }
+                .table-head-cell.right { text-align:right; }
+                .table-cell { padding:2px 3px; vertical-align:middle; font-size:8.5px; border:1px solid #999; font-weight:500; color:#000; overflow:hidden; }
+                .table-cell.right { text-align:right; }
+                .table-cell.left { text-align:left; }
+                .table-cell.center { text-align:center; }
+                .table-cell.strong { font-weight:700; }
+                .nowrap { white-space:nowrap; }
+                .student-name { font-weight:700; font-size:9px; }
+                .student-father { font-weight:500; font-size:8px; color:#555; }
+                .zero-dash { color:#999; font-size:9px; font-weight:400; }
+                .dt span { white-space:nowrap; }   /* the date and the time stay whole, the time moves to the next line when the cell is too narrow */
+                .dt span + span { margin-left:2px; }
+                .no-records { text-align:center; padding:12px; font-size:9px; border:1px solid #999; }
+                .grand-total-row { background:#f0f0f0; }
+                .grand-total-label { padding:2px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:9px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell { padding:2px 3px; font-weight:700; font-size:9px; color:#000; background-color:#f0f0f0 !important; text-align:center; border:1px solid #999; border-top:2px solid #999; }
+                .grand-total-cell.right { text-align:right; }
+                .fine-split { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:3px; }
+                .fine-split > s, .fine-split > span { white-space:nowrap; }
+                .fine-split > span { margin-left:auto; }
+                .fine-split > s { text-decoration:none; position:relative; font-weight:400; }   /* the waived (original) fine is crossed with a diagonal line */
+                .fine-split > s::after { content:""; position:absolute; left:0; right:0; top:1.5px; bottom:1px; background:linear-gradient(to bottom right, transparent calc(50% - 0.35px), #000 calc(50% - 0.35px), #000 calc(50% + 0.35px), transparent calc(50% + 0.35px)); }
+                td.fine-pair-cell { padding:0 !important; border:1px solid #999; border-top:2px solid #999; background:#f0f0f0 !important; }
+                .fine-pair { display:flex; }
+                .fine-pair > div { flex:1; display:flex; flex-direction:column; align-items:stretch; text-align:center; }
+                .fine-pair > div + div { border-left:1px solid #999; }
+                .fine-pair span { font-size:7px; font-weight:600; text-transform:uppercase; border-bottom:1px solid #999; padding:1px 2px; background:#e6e6e6; }
+                .fine-pair b { font-size:9px; font-weight:400; padding:2px; white-space:nowrap; }
+                .print-footer { margin-top:8px; padding-top:4px; font-size:9px; color:#000; text-align:center; font-weight:700; }
+                @media print { html, body { padding:0 !important; } }
+                </style>
+            </head>
+            <body>
+                <div class="page">
+                    <div class="header-section">
+                        <div class="header-side">
+                            ${systemSetting?.school_logo ? `<img src="${systemSetting.school_logo}" class="header-logo" alt="Logo" />` : ''}
+                        </div>
+                        <div style="text-align: center; flex: 1;">
+                            <h1>${systemSetting?.school_name || 'School Management System'}</h1>
+                            <h2>Generated Voucher Report (Detail)</h2>
+                            <div class="filters">
+                                ${filtersHtml(filtersRow1)}
+                                ${filtersHtml(filtersRow2)}
+                            </div>
+                        </div>
+                        <div class="header-side"></div>
+                    </div>
+
+                    <div class="stats-strip">
+                        <div class="stat"><div class="stat-label">Vouchers</div><div class="stat-value">${n(totalGeneratedVouchers)}</div></div>
+                        <div class="stat"><div class="stat-label">Expected Fee</div><div class="stat-value">Rs. ${n(st.actual)}</div></div>
+                        <div class="stat"><div class="stat-label">Discount Applied</div><div class="stat-value">Rs. ${n(totalDiscountedAmount)}</div></div>
+                        <div class="stat"><div class="stat-label">Total Payable</div><div class="stat-value">Rs. ${n(st.total)}</div></div>
+                        <div class="stat"><div class="stat-label">Paid</div><div class="stat-value">Rs. ${n(st.paid)}</div></div>
+                        <div class="stat net"><div class="stat-label">Dues</div><div class="stat-value">Rs. ${n(st.dues)}</div></div>
+                    </div>
+
+                    <div class="section-title">Generated Voucher Breakdown</div>
+                    <table>
+                        <colgroup>
+                            <col style="width:2.5%"><col style="width:3.5%"><col style="width:5.5%"><col style="width:13.5%"><col style="width:9%"><col style="width:8%"><col style="width:9.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:7%"><col style="width:7%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:6.5%">
+                        </colgroup>
+                        <thead>
+                            <tr class="table-head-row">
+                                <th class="table-head-cell">Sr #</th>
+                                <th class="table-head-cell">Reg #</th>
+                                <th class="table-head-cell">Class/ Section</th>
+                                <th class="table-head-cell">Student Name</th>
+                                <th class="table-head-cell">Fee Name</th>
+                                <th class="table-head-cell">Due Date</th>
+                                <th class="table-head-cell">Paying Date</th>
+                                <th class="table-head-cell right">Expected Fee</th>
+                                <th class="table-head-cell right">Fee After Disc</th>
+                                <th class="table-head-cell right">Further Fee Disc</th>
+                                <th class="table-head-cell right">Fine</th>
+                                <th class="table-head-cell right">Total</th>
+                                <th class="table-head-cell right">Paid</th>
+                                <th class="table-head-cell right">Fee Dues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="print-footer">
+                        Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+    /* ================= RENDER: the report is written as the whole page ================= */
+    window.addEventListener("load", function () {
+        document.open();
+        document.write(reportContent);
+        document.close();
+        // preview only
+        var stl = document.createElement("style");
+        stl.textContent = ".print-btn { position: fixed; top: 12px; right: 16px; z-index: 10; background: #000; color: #fff; border: 1px solid #000; padding: 7px 16px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: Poppins, sans-serif; } @media print { .print-btn { display: none !important; } }";
+        document.head.appendChild(stl);
+        var b = document.createElement("button");
+        b.className = "print-btn"; b.textContent = "Print"; b.onclick = function () { window.print(); };
+        document.body.appendChild(b);
+    });
+</script>
+</body>
+</html>

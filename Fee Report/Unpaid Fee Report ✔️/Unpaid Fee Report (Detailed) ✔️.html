@@ -60,6 +60,14 @@
             '<div class="stat"><div class="stat-label"># Of Invoices</div><div class="stat-value">' + n(s.invoices) + '</div></div>' +
             '<div class="stat net"><div class="stat-label">Total Dues</div><div class="stat-value">Rs. ' + n(s.dues) + '</div></div></div>';
     };
+    // Section title: shown above the summary boxes, and again as the first row of the table header so it repeats on every page the section continues on
+    var sectionTitle = function (students) {
+        var s = sectionStats(students);
+        return '<div class="section-card-head"><span>Section <b>' + students[0].section_name + '</b></span></div>';
+    };
+    var sectionHeadRows = function (students) {
+        return '<tr><th colspan="6" class="section-head-cell">' + sectionTitle(students) + '</th></tr>';
+    };
     var buildTable = function (students) {
         var rows = students.map(function (i, index) {
             return '<tr>' +
@@ -73,7 +81,7 @@
         }).join('');
         var s = sectionStats(students);
         return '<table><colgroup><col style="width:6%"><col style="width:9%"><col style="width:35%"><col style="width:18%"><col style="width:14%"><col style="width:18%"></colgroup>' +
-            '<thead><tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Reg #</th><th class="table-head-cell">Student Name</th><th class="table-head-cell">Phone</th><th class="table-head-cell"># Of Invoices</th><th class="table-head-cell right">Total Dues</th></tr></thead>' +
+            '<thead>' + sectionHeadRows(students) + '<tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Reg #</th><th class="table-head-cell">Student Name</th><th class="table-head-cell">Phone</th><th class="table-head-cell"># Of Invoices</th><th class="table-head-cell right">Total Dues</th></tr></thead>' +
             '<tbody>' + (rows || '<tr><td class="no-records" colspan="6">No Records Found!</td></tr>') +
             '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Section Total:</td><td class="grand-total-cell">' + n(s.invoices) + '</td><td class="grand-total-cell right">' + n(s.dues) + '</td></tr></tbody></table>';
     };
@@ -85,13 +93,10 @@
         classGroups[groupIndex[key]].sections.push(students);
     });
     var classHeading = function (g) {
-        var s = sectionStats([].concat.apply([], g.sections));
-        return '<div class="class-head"><span class="class-name">' + g.cls.toUpperCase() + '</span><span class="class-meta">' + g.campus + ' &nbsp;-&nbsp; ' + g.sections.length + (g.sections.length === 1 ? ' section' : ' sections') + ' &nbsp;-&nbsp; ' + n(s.students) + ' students &nbsp;-&nbsp; Rs. ' + n(s.dues) + '</span></div>';
+        return '<div class="class-head"><span class="class-name">' + g.cls.toUpperCase() + '</span></div>';
     };
     var sectionCard = function (students) {
-        var s = sectionStats(students);
-        return '<div class="section-card"><div class="section-card-head"><span>Section <b>' + students[0].section_name + '</b></span><span class="muted">' + n(s.students) + ' students - Rs. ' + n(s.dues) + '</span></div>' +
-            statsHtml(s) + buildTable(students) + '</div>';
+        return '<div class="section-card">' + sectionTitle(students) + statsHtml(sectionStats(students)) + buildTable(students) + '</div>';
     };
     var sectionBlocks = classGroups.map(function (g) {
         return '<div class="class-block">' + classHeading(g) + g.sections.map(sectionCard).join('') + '</div>';
@@ -123,11 +128,14 @@
                 .class-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; border-bottom:2.5px solid #000; padding:0 0 2px; margin:0 0 6px; page-break-after:avoid; }
                 .class-name { font-size:15px; font-weight:800; letter-spacing:.6px; }
                 .class-meta { font-size:9px; font-weight:600; color:#444; }
-                .section-card { border:1px solid #888; border-radius:3px; margin:0 0 9px; page-break-inside:avoid; }
-                .section-card-head { display:flex; justify-content:space-between; align-items:center; background:#ececec !important; padding:3px 8px; font-size:10.5px; font-weight:600; border-bottom:1px solid #888; page-break-after:avoid; }
+                .section-card { border:1px solid #888; border-radius:3px; margin:0 0 9px; }   /* may break across pages so no blank space is left at the bottom */
+                .section-card-head { height:22px; box-sizing:border-box; display:flex; justify-content:space-between; align-items:center; background:#ececec !important; padding:3px 8px; font-size:10.5px; font-weight:600; border-bottom:1px solid #888; page-break-after:avoid; }
                 .section-card-head b { font-weight:800; font-size:12px; }
                 .section-card-head .muted { font-size:9px; color:#444; font-weight:600; }
-                .section-card .stats-strip { border:none; border-bottom:1px solid #888; margin:0; page-break-after:avoid; }
+                .section-card .stats-strip { position:relative; z-index:2; background:#fff; border:none; border-bottom:1px solid #888; margin:0; page-break-after:avoid; }
+                .section-head-cell { padding:0; border:none; background:transparent; text-align:left; font-weight:inherit; font-size:inherit; text-transform:none; }
+                /* The table starts 22px (= one title row) higher, so on the first page its own title row hides under the title + boxes above; on the next pages the repeated title row shows normally */
+                .section-card table { margin-top:-22px; }
                 /* Stats: one horizontal strip, Total Dues in a grey box */
                 .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); border:1.5px solid #000; margin-bottom:5px; }
                 .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
