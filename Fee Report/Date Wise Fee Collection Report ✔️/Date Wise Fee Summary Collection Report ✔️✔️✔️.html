@@ -390,6 +390,84 @@ var selectedUsersLabel = selectedUsers.indexOf("All") > -1 ? "All" : selectedUse
         `;
     };
 
+    // same table as the Detailed report: Fee Receiving = received - the part paid from the family advance, Net Receiving = Fee Receiving + advance received
+    const getModeSourcePrintTableHtml = () => {
+        const modeMap = new Map();
+        const labelOf = (modeId, sourceId) => `${modeId ? getModeName(modeId) : '-'}${sourceId ? ` / ${getSourceName(sourceId)}` : ''}`;
+        const entryFor = (label) => {
+            if (!modeMap.has(label)) modeMap.set(label, { amount: 0, advance: 0, spent: 0 });
+            return modeMap.get(label);
+        };
+        (totalData || []).forEach((item) => {
+            getSegmentsInRange(item).forEach((segment) => {
+                if (!isSelectedReceiver(segment.receivedBy)) return;
+                const entry = entryFor(labelOf(segment.modeId, segment.sourceId));
+                entry.amount += segment.amount;
+                if (isFamilyCreditPayment(segment.modeId)) entry.spent += segment.amount;
+            });
+        });
+        const b = getRangeBounds();
+        (feeDefaulterDataFilter?.familyAdvanceTransactions || []).forEach((t) => {
+            if (!isDateInRange(getAdvanceDate(t), b.start_date, b.end_date) || !isSelectedReceiver(getAdvanceBy(t))) return;
+            entryFor(labelOf(t?.payment_mode_id, t?.payment_mode_source_id)).advance += getAdvanceAmount(t);
+        });
+        const modeGroups = new Map();
+        modeMap.forEach((entry, label) => {
+            if (entry.amount - entry.spent === 0 && entry.advance === 0) return;   // nothing to show (e.g. Family Credit, whose payments are not fee receiving)
+            const parts = String(label).split(' / ');
+            const mode = parts[0] || '-';
+            const source = parts.slice(1).join(' / ');
+            if (!modeGroups.has(mode)) modeGroups.set(mode, { mode, total: 0, sources: new Map() });
+            const group = modeGroups.get(mode);
+            group.total += entry.amount + entry.advance;
+            const prev = group.sources.get(source) || { amount: 0, advance: 0, spent: 0 };
+            group.sources.set(source, { amount: prev.amount + entry.amount, advance: prev.advance + entry.advance, spent: prev.spent + entry.spent });
+        });
+        const modeList = [...modeGroups.values()].sort((x, y) => y.total - x.total);
+        const modeTotals = modeList.reduce((acc, g) => [...g.sources.values()].reduce((t, v) => ({
+            advance: t.advance + v.advance,
+            receiving: t.receiving + (v.amount - v.spent),
+            net: t.net + (v.amount - v.spent) + v.advance,
+        }), acc), { advance: 0, receiving: 0, net: 0 });
+        const modeRowsHtml = modeList.length > 0
+            ? modeList.map((g) => {
+                const sources = [...g.sources.entries()].sort((x, y) => (y[1].amount + y[1].advance) - (x[1].amount + x[1].advance));
+                return sources.map(([source, v], i) => `
+                    <tr>
+                        ${i === 0 ? `<td class="table-cell mode-merge" rowspan="${sources.length}">${g.mode}</td>` : ""}
+                        <td class="table-cell">${source}</td>
+                        <td class="table-cell right">${amountBlank(v.advance)}</td>
+                        <td class="table-cell right">${amountBlank(v.amount - v.spent)}</td>
+                        <td class="table-cell right strong">${amountBlank(v.amount - v.spent + v.advance)}</td>
+                    </tr>`).join('');
+            }).join('')
+            : `<tr><td colspan="5" class="no-records">No Records Found!</td></tr>`;
+        return `
+            <div class="section-title" style="margin-top: 14px;">Mode / Source Wise Breakdown</div>
+            <table>
+                <thead>
+                    <tr class="table-head-row">
+                        <th class="table-head-cell">Mode</th>
+                        <th class="table-head-cell">Source</th>
+                        <th class="table-head-cell right">Advance Received</th>
+                        <th class="table-head-cell right">Fee Receiving</th>
+                        <th class="table-head-cell right">Net Receiving</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${modeRowsHtml}
+                    ${modeList.length > 0 ? `
+                    <tr class="grand-total-row">
+                        <td class="grand-total-label" colspan="2">Grand Total:</td>
+                        <td class="grand-total-cell right">${amountBlank(modeTotals.advance)}</td>
+                        <td class="grand-total-cell right">${amountBlank(modeTotals.receiving)}</td>
+                        <td class="grand-total-cell right">${amountBlank(modeTotals.net)}</td>
+                    </tr>` : ""}
+                </tbody>
+            </table>
+        `;
+    };
+
     const buildReportHtml = () => {
         const summaryRows = buildDateWiseSummaryRows();
 
@@ -517,6 +595,7 @@ var selectedUsersLabel = selectedUsers.indexOf("All") > -1 ? "All" : selectedUse
                 .grand-total-cell.right { text-align:right; }
                 /* Family Advance column: one plain column, Received / Spent in the same cell */
                 .adv-row { display:flex; justify-content:space-between; gap:14px; }
+                .mode-merge { vertical-align:middle; font-weight:700; }
                 .print-footer { margin-top:11px; padding-top:7px; font-size:9px; color:#000; text-align:center; font-weight:700; }
                 /* preview only */
                 .print-btn { position:fixed; top:12px; right:16px; background:#000; color:#fff; border:1px solid #000; padding:7px 16px; font-size:11px; font-weight:600; cursor:pointer; }
@@ -588,6 +667,7 @@ var selectedUsersLabel = selectedUsers.indexOf("All") > -1 ? "All" : selectedUse
                     <div id="pageSpacer"></div>
                     <div class="bottom" id="bottomBlock">
                         ${getUserWisePrintTableHtml()}
+                        ${getModeSourcePrintTableHtml()}
                         <div class="print-footer">
                             Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
                         </div>
