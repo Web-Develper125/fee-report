@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Daily Closing Report</title>
+<title>Daily Closing Report (Summary)</title>
 </head>
 <body>
 <script>
@@ -222,7 +222,7 @@ const splitWeeks = (days) => {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Daily Closing Report</title>
+                <title>Daily Closing Report (Summary)</title>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
                     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", Arial, sans-serif !important; }
@@ -274,7 +274,7 @@ const splitWeeks = (days) => {
                         <div class="logo-box">${logo}</div>
                         <div class="school-header">
                             <div class="school-title">${escapeHtml(systemSettings?.school_name || 'School Management System')}</div>
-                            <div class="report-title">Daily Closing Report</div>
+                            <div class="report-title">Daily Closing Report (Summary)</div>
                             <div class="header-row">
                                 <span>Date: <strong><u>${escapeHtml(displayDate(start_date))}</u> TO <u>${escapeHtml(displayDate(end_date))}</u></strong></span>
                             </div>
