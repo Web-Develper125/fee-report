@@ -289,7 +289,7 @@ var rawItems = [], studentRows = [], totalStudents = 0, totalPayable = 0, totalP
         if (!groups.has(id)) {
             groups.set(id, {
                 student_id: id, gr: item.general_registration_code, name: item.student_name, fname: item.student_father_name,
-                payable: 0, paid: 0, discount: 0, userLines: [], discountLines: [], modeLines: new Map(), modeUserLines: new Map(), paymenthistoryLine: new Map(), latestDate: null,
+                payable: 0, paid: 0, discount: 0, userLines: [], discountLines: [], modeLines: new Map(), modeHistory: [], paymenthistoryLine: new Map(), latestDate: null,
             });
         }
         return groups.get(id);
@@ -314,10 +314,7 @@ var rawItems = [], studentRows = [], totalStudents = 0, totalPayable = 0, totalP
             const label = `${segment.mode_id ? getModeName(segment.mode_id) : '-'}${segment.source_id ? ` / ${getSourceName(segment.source_id)}` : ''}`;
             if (!group.modeLines.has(key)) group.modeLines.set(key, { label, amount: 0 });
             group.modeLines.get(key).amount += segment.amount;
-            {
-                const modeUserLabel = `${label}${segment.receivedBy ? ` (${segment.receivedBy})` : ''}`;
-                group.modeUserLines.set(modeUserLabel, (group.modeUserLines.get(modeUserLabel) || 0) + (isFamilyCreditPayment(segment.mode_id) ? -segment.amount : segment.amount));
-            }
+            group.modeHistory.push({ date: segment.date, amount: isFamilyCreditPayment(segment.mode_id) ? -segment.amount : segment.amount, label, by: segment.receivedBy });
             group.paymenthistoryLine.set(`${group.paymenthistoryLine.size}`, { amount: segment.amount, label, user: segment.receivedBy || "Unknown", date: segment.date });
             if (segment.date && (!group.latestDate || segment.date > group.latestDate)) group.latestDate = segment.date;
         });
@@ -529,12 +526,10 @@ const buildReport = () => {
         const key = String(t?.family_code || '');
         const amount = getAdvanceAmount(t);
         const date = getAdvanceDate(t) ? new Date(getAdvanceDate(t)) : null;
-        if (!advanceReceivedByFamily.has(key)) advanceReceivedByFamily.set(key, { amount: 0, date: null, name: t?.family_name || t?.father_name || '', modes: new Map() });
+        if (!advanceReceivedByFamily.has(key)) advanceReceivedByFamily.set(key, { amount: 0, date: null, name: t?.family_name || t?.father_name || '', items: [] });
         const entry = advanceReceivedByFamily.get(key);
         entry.amount += amount;
-        const advBy = getAdvanceBy(t);
-        const advLabel = `${t?.payment_mode_id ? getModeName(t.payment_mode_id) : '-'}${t?.payment_mode_source_id ? ` / ${getSourceName(t.payment_mode_source_id)}` : ''}${advBy ? ` (${advBy})` : ''}`;
-        entry.modes.set(advLabel, (entry.modes.get(advLabel) || 0) + amount);
+        entry.items.push({ date: getAdvanceDate(t), amount, label: `${t?.payment_mode_id ? getModeName(t.payment_mode_id) : '-'}${t?.payment_mode_source_id ? ` / ${getSourceName(t.payment_mode_source_id)}` : ''}`, by: getAdvanceBy(t) });
         if (date && (!entry.date || date > entry.date)) entry.date = date;
         advanceReceivedTotal += amount;
     });
@@ -553,6 +548,10 @@ const buildReport = () => {
     });
 
     const printRows = studentRows.map((row) => ({ ...row, famKey: familyKeyOfStudent.get(String(row.student_id)) || `__${row.student_id}` }));
+    // brothers / sisters of one family sit together (the family stays where its newest paying date is), so the Family Advance cell is ONE merged cell over all of them
+    const famFirstIndex = new Map();
+    printRows.forEach((row, i) => { if (!famFirstIndex.has(row.famKey)) famFirstIndex.set(row.famKey, i); });
+    printRows.sort((a, b) => famFirstIndex.get(a.famKey) - famFirstIndex.get(b.famKey));
     const familyOrder = new Map();
     printRows.forEach((row) => { if (!familyOrder.has(row.famKey)) familyOrder.set(row.famKey, familyOrder.size); });
     // rows stay in paying-date order (newest first); a family advance cell is merged only over the siblings that sit next to each other
@@ -570,13 +569,29 @@ const buildReport = () => {
         row.advSpent = advanceSpentByStudent.get(String(row.student_id)) || 0;
         row.netPaid = row.paid - (advanceSpentByStudent.get(String(row.student_id)) || 0);
     });
+    // Net Received is ONE merged cell over the siblings of a run: their Fee Received + the Family Advance Received
+    printRows.forEach((row, index) => {
+        if (!row.runStart) return;
+        let net = 0;
+        for (let k = index; k < index + row.runSize; k++) net += printRows[k].netPaid + printRows[k].advRec;
+        row.runNet = net;
+    });
     const depositOnlyRows = [...advanceReceivedByFamily.entries()]
         .filter(([key]) => !familyOrder.has(key))
         .map(([key, entry]) => ({ key, ...entry }));
 
-    const modeLinesHtml = (lines, prefix = '') => [...(lines || new Map()).entries()].map(([label, amount]) => `<div>${prefix}${label} = ${amount.toLocaleString()}</div>`).join('');
-    // the advance deposit joins the same Mode / Source (User) line when it is the same one (Cash / General (DEMO) 36,000 + 1,000 = 37,000)
-    const mergeLines = (a, b) => { const merged = new Map(a || []); (b || new Map()).forEach((amount, label) => merged.set(label, (merged.get(label) || 0) + amount)); return merged; };
+    // Mode / Source (User) column: one step per Mode / Source (User) with its total (a single one has no dot) -> "o  37,000 = Cash / General (DEMO)"
+    const historyHtml = (items) => [...items.reduce((map, item) => {
+        const key = item.label + '|' + (item.by || '');
+        const prev = map.get(key);
+        if (!prev) map.set(key, { ...item });
+        else prev.amount += item.amount;
+        return map;
+    }, new Map()).values()]
+        .map((item, index, all) => all.length === 1 ? `<div>${item.amount.toLocaleString()} = ${item.label}${item.by ? ` (${item.by})` : ''}</div>` : `<div class="hist-item"><span class="hist-dot"></span><span>${item.amount.toLocaleString()} = ${item.label}${item.by ? ` (${item.by})` : ''}</span></div>`
+        ).join('');
+    const discountLinesHtml = (lines) => { const byUser = new Map(); (lines || []).forEach((l) => byUser.set(l.by, (byUser.get(l.by) || 0) + l.amount)); return [...byUser.entries()].map(([by, amount]) => `<div>${amount.toLocaleString()} = ${by}</div>`).join(''); };
+    const netTd = (row) => row.runStart ? `<td class="table-cell right strong" rowspan="${row.runSize}" style="vertical-align: middle;">${amountBlank(row.runNet)}</td>` : '';
     const receivedTd = (row) => row.runStart ? `<td class="table-cell fam-rec" rowspan="${row.runSize}">${amountBlank(row.advRec)}</td>` : "";
 
     const payableTh = showPayableDues ? `<th class="table-head-cell right" rowspan="2">Receivable</th>` : "";
@@ -590,12 +605,12 @@ const buildReport = () => {
             <tr>
                 <td class="table-cell center">${row.sr}</td>
                 <td class="table-cell center">${getPlainGr(row.gr)}</td>
-                <td class="table-cell col-name"><b>${row.name}</b><span class="sub">${row.fname}</span></td>
-                <td class="table-cell col-mode">${modeLinesHtml(mergeLines(row.modeUserLines, row.famFirst ? advanceReceivedByFamily.get(row.famKey)?.modes : null))}</td>
+                <td class="table-cell col-name"><b>${row.name}</b></td>
+                <td class="table-cell col-mode">${historyHtml([...row.modeHistory, ...(row.famFirst ? (advanceReceivedByFamily.get(row.famKey)?.items || []) : [])])}</td>
                 ${payableTd(row)}
-                <td class="table-cell right">${amountBlank(row.discount)}</td>
-                ${receivedTd(row)}${spentTd(row)}
+                <td class="table-cell right" style="white-space:nowrap">${discountLinesHtml(row.discountLines)}</td>
                 <td class="table-cell right strong">${amountBlank(row.netPaid)}</td>
+                ${receivedTd(row)}${netTd(row)}
                 ${duesTd(row)}
             </tr>`).join('');
     const depositOnlyRowsHtml = depositOnlyRows.map((entry) => `
@@ -603,11 +618,11 @@ const buildReport = () => {
                 <td class="table-cell center"></td>
                 <td class="table-cell center"></td>
                 <td class="table-cell col-name"><b>Family Advance : ${entry.key}</b></td>
-                <td class="table-cell col-mode">${modeLinesHtml(entry.modes)}</td>
+                <td class="table-cell col-mode">${historyHtml(entry.items)}</td>
                 ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
                 <td class="table-cell right"></td>
-                <td class="table-cell fam-rec">${amountBlank(entry.amount)}</td><td class="table-cell right fam-spent fam-end"></td>
                 <td class="table-cell right strong"></td>
+                <td class="table-cell fam-rec">${amountBlank(entry.amount)}</td><td class="table-cell right strong">${amountBlank(entry.amount)}</td>
                 ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
             </tr>`).join('');
     const rowsHtml = (printRows.length > 0 || depositOnlyRows.length > 0)
@@ -619,8 +634,8 @@ const buildReport = () => {
                 <td class="grand-total-label" colspan="4">Grand Total:</td>
                 ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalPayable)}</td>` : ""}
                 <td class="grand-total-cell right">${amountBlank(totalDiscount)}</td>
-                <td class="grand-total-cell">${amountBlank(advanceReceivedTotal)}</td><td class="grand-total-cell right">${amountBlank(advanceSpentTotal)}</td>
                 <td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal)}</td>
+                <td class="grand-total-cell right">${amountBlank(advanceReceivedTotal)}</td><td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal + advanceReceivedTotal)}</td>
                 ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalDues)}</td>` : ""}
             </tr>` : "";
 
@@ -651,7 +666,6 @@ const buildReport = () => {
                 .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #000; padding: 0 0 8px; }
                 .header-section h1 { font-size: 17px; font-weight: 700; margin-bottom: 2px; color: #000; }
                 .header-section h2 { font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #000; }
-                .header-side { flex: 0 0 190px; }
                 .header-logo { width: 56px; height: 56px; object-fit: contain; border-radius: 5px; }
                 .filters { font-size: 9px; font-weight: 600; line-height: 1.5; color: #444; }
                 .filters-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 6px; }
@@ -693,12 +707,17 @@ const buildReport = () => {
                 #mainTable .table-cell { padding: 2.5px 6px; font-size: 10.5px; line-height: 1.2; }
                 #mainTable .table-cell.sm { font-size: 9.5px; white-space: nowrap; }
                 #mainTable .col-name { white-space: nowrap; }
-                #mainTable .col-mode { white-space: nowrap; font-size: 9.5px; }
+                #mainTable .col-mode { white-space: nowrap; font-size: 10px; }
+                /* history: small date, dot and a line joining the dots */
+                .hist-item { position: relative; display: flex; gap: 4px; align-items: flex-start; padding-bottom: 6px; }
+                .hist-item:last-child { padding-bottom: 0; }
+                            .hist-dot { flex: none; width: 5px; height: 5px; border-radius: 50%; background: #000; margin-top: 3px; position: relative; z-index: 1; }
+                .hist-item:not(:last-child)::after { content: ""; position: absolute; left: 2px; top: 8px; bottom: -3px; width: 1px; background: #000; }
                 #mainTable .col-name .sub { display: inline; font-size: 8px; margin-left: 5px; color: #333; }
                 #mainTable .adv-row { gap: 12px; }
                 .fam-merge { vertical-align: middle; }
                 /* Family Advance: Received is one cell centred over the family rows, Spent is one cell per student with no line between the rows of a family */
-                #mainTable .fam-rec { text-align: left; vertical-align: middle; font-weight: 600; border-right: none; }
+                #mainTable .fam-rec { text-align: right; vertical-align: middle; font-weight: 600; }
                 #mainTable .fam-spent { border-top: none; border-bottom: none; border-left: none; }
                 #mainTable .fam-spent.fam-end { border-bottom: 1px solid #999; }
                 .mode-merge { vertical-align: middle; font-weight: 700; }
@@ -744,18 +763,16 @@ const buildReport = () => {
                 <table id="mainTable">
                     <thead>
                         <tr class="table-head-row">
-                            <th class="table-head-cell" rowspan="2">Sr #</th>
-                            <th class="table-head-cell" rowspan="2">Reg #</th>
+                            <th class="table-head-cell" rowspan="2">Sr</th>
+                            <th class="table-head-cell" rowspan="2">Reg</th>
                             <th class="table-head-cell" rowspan="2">Student Name</th>
                             <th class="table-head-cell" rowspan="2">Mode / Source (User)</th>
                             ${payableTh}
                             <th class="table-head-cell right" rowspan="2">Discount</th>
-                            <th class="table-head-cell" colspan="2">Family Advance</th>
                             <th class="table-head-cell right" rowspan="2">Fee Received</th>
+                            <th class="table-head-cell right" rowspan="2">Family Advance</th><th class="table-head-cell right" rowspan="2">Net Received</th>
                             ${duesTh}
-</tr><tr class="table-head-row">
-<th class="table-head-cell">Received</th><th class="table-head-cell right">Spent</th>
-                        </tr>
+</tr>
                     </thead>
                     <tbody>
                         ${rowsHtml}
