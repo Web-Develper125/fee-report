@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Class Wise Arrear Report (Summary)</title>
+<title>Student Wise Arrear Report (Detailed)</title>
 </head>
 <body>
 <script>
     /* ================= SETTINGS (the only difference between the Student Wise and the Class Wise report) ================= */
-    var reportTitle = "Class Wise Arrear Report (Summary)";
-    var pagePerSection = true;    // every section starts on its own page (false in the Student Wise Arrear Report)
+    var reportTitle = "Student Wise Arrear Report (Detailed)";
+    var pagePerSection = false;   // true = every section starts on its own page (Class Wise Arrear Report)
 
     /* ================= DUMMY DATA (same shape as the page's totalData: students with unpaidFees[] {title, dues, isDue}, grouped by section) ================= */
     var systemSetting = { school_name: "Dummy Public School", school_logo: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2271%22%20height%3D%2271%22%3E%3Ccircle%20cx%3D%2235.5%22%20cy%3D%2235.5%22%20r%3D%2233%22%20fill%3D%22%23f0f0f0%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%2F%3E%3Ctext%20x%3D%2235.5%22%20y%3D%2243%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%20font-family%3D%22Arial%22%3EAI%3C%2Ftext%3E%3C%2Fsvg%3E" };
@@ -70,10 +70,18 @@
             '<div class="stat"><div class="stat-label"># Of Invoices</div><div class="stat-value">' + n(s.invoices) + '</div></div>' +
             '<div class="stat"><div class="stat-label">Arrears Due Dated</div><div class="stat-value">' + n(s.dueDated) + '</div></div>' +
             '<div class="stat"><div class="stat-label">Within Due Date</div><div class="stat-value">' + n(s.within) + '</div></div>' +
-            '<div class="stat net"><div class="stat-label">Total Dues</div><div class="stat-value">Rs. ' + n(s.total) + '</div></div></div>';
+            '<div class="stat net"><div class="stat-label">Total</div><div class="stat-value">Rs. ' + n(s.total) + '</div></div></div>';
     };
     var chips = function (fees) {
         return fees.length ? '<div class="fee-chips">' + fees.map(function (f) { return '<span class="fee-chip">' + f.title + ' = <b>' + n(f.dues) + '</b></span>'; }).join('') + '</div>' : '-';
+    };
+    // Section title: shown above the summary boxes, and again as the first row of the table header so it repeats on every page the section continues on
+    var sectionTitle = function (students) {
+        var s = sectionStats(students);
+        return '<div class="section-card-head"><span>Section <b>' + students[0].section_name + '</b></span></div>';
+    };
+    var sectionHeadRows = function (students) {
+        return '<tr><th colspan="7" class="section-head-cell">' + sectionTitle(students) + '</th></tr>';
     };
     var buildTable = function (students) {
         var rows = students.map(function (i, index) {
@@ -82,17 +90,16 @@
                 '<td class="table-cell center">' + grNumber(i.general_registration_code) + '</td>' +
                 '<td class="table-cell"><span class="student-name">' + i.student_name + '</span> <span class="student-father">' + (i.student_father_name || '') + '</span></td>' +
                 '<td class="table-cell center nowrap">' + (i.student_father_phone || '') + '</td>' +
-                '<td class="table-cell center">' + i.unpaidFees.length + '</td>' +
-                '<td class="table-cell fee-details">' + chips(i.unpaidFees.filter(function (f) { return f.isDue; })) + '</td>' +
+                                '<td class="table-cell fee-details">' + chips(i.unpaidFees.filter(function (f) { return f.isDue; })) + '</td>' +
                 '<td class="table-cell fee-details">' + chips(i.unpaidFees.filter(function (f) { return !f.isDue; })) + '</td>' +
                 '<td class="table-cell right strong">' + n(i.totalArrears) + '</td>' +
                 '</tr>';
         }).join('');
         var s = sectionStats(students);
-        return '<table><colgroup><col style="width:3.5%"><col style="width:5%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:25%"><col style="width:23%"><col style="width:10.5%"></colgroup>' +
-            '<thead><tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Reg #</th><th class="table-head-cell">Student Name</th><th class="table-head-cell">Phone</th><th class="table-head-cell"># Of Invoices</th><th class="table-head-cell">Arrears - (Due Dated)</th><th class="table-head-cell">Within Due Date</th><th class="table-head-cell right">Total Dues</th></tr></thead>' +
-            '<tbody>' + (rows || '<tr><td class="no-records" colspan="8">No Records Found!</td></tr>') +
-            '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Section Total:</td><td class="grand-total-cell">' + n(s.invoices) + '</td><td class="grand-total-cell"></td><td class="grand-total-cell"></td><td class="grand-total-cell right">' + n(s.total) + '</td></tr></tbody></table>';
+        return '<table><colgroup><col style="width:3.5%"><col style="width:5%"><col style="width:19%"><col style="width:11%"><col style="width:27%"><col style="width:24%"><col style="width:10.5%"></colgroup>' +
+            '<thead>' + sectionHeadRows(students) + '<tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Reg #</th><th class="table-head-cell">Student Name</th><th class="table-head-cell">Phone</th><th class="table-head-cell">Arrears - (Due Dated)</th><th class="table-head-cell">Within Due Date</th><th class="table-head-cell right">Total</th></tr></thead>' +
+            '<tbody>' + (rows || '<tr><td class="no-records" colspan="7">No Records Found!</td></tr>') +
+            '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Section Total:</td><td class="grand-total-cell"></td><td class="grand-total-cell"></td><td class="grand-total-cell right">' + n(s.total) + '</td></tr></tbody></table>';
     };
 
     var classGroups = [], groupIndex = {};
@@ -102,13 +109,10 @@
         classGroups[groupIndex[key]].sections.push(students);
     });
     var classHeading = function (g) {
-        var s = sectionStats([].concat.apply([], g.sections));
-        return '<div class="class-head"><span class="class-name">' + g.cls.toUpperCase() + '</span><span class="class-meta">' + g.campus + ' &nbsp;-&nbsp; ' + g.sections.length + (g.sections.length === 1 ? ' section' : ' sections') + ' &nbsp;-&nbsp; ' + n(s.students) + ' students &nbsp;-&nbsp; Rs. ' + n(s.total) + '</span></div>';
+        return '<div class="class-head"><span class="class-name">' + g.cls.toUpperCase() + '</span></div>';
     };
     var sectionCard = function (students) {
-        var s = sectionStats(students);
-        return '<div class="section-card"><div class="section-card-head"><span>Section <b>' + students[0].section_name + '</b></span><span class="muted">' + n(s.students) + ' students - Rs. ' + n(s.total) + '</span></div>' +
-            statsHtml(s) + buildTable(students) + '</div>';
+        return '<div class="section-card">' + sectionTitle(students) + statsHtml(sectionStats(students)) + buildTable(students) + '</div>';
     };
     var sectionBlocks = classGroups.map(function (g) {
         if (pagePerSection) {   // every section on its own page, with the class heading repeated on top
@@ -117,15 +121,6 @@
         return '<div class="class-block">' + classHeading(g) + g.sections.map(sectionCard).join('') + '</div>';
     }).join('');
 
-    var summaryRows = sections.map(function (students, idx) {
-        var s = sectionStats(students);
-        return '<tr><td class="table-cell center">' + (idx + 1) + '</td><td class="table-cell center">' + students[0].campus_name + '</td><td class="table-cell center">' + students[0].class_name + '</td><td class="table-cell center">' + students[0].section_name + '</td><td class="table-cell center">' + s.students + '</td><td class="table-cell center">' + s.invoices + '</td><td class="table-cell right">' + n(s.dueDated) + '</td><td class="table-cell right">' + n(s.within) + '</td><td class="table-cell right strong">' + n(s.total) + '</td></tr>';
-    }).join('');
-    var summaryPage = '<div class="summary-page">' + headerHtml + statsHtml(all) +
-        '<div class="section-title">Class Wise Arrear Report</div>' +
-        '<table><colgroup><col style="width:5%"><col style="width:16%"><col style="width:12%"><col style="width:9%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:13%"><col style="width:12%"></colgroup>' +
-        '<thead><tr class="table-head-row"><th class="table-head-cell">Sr #</th><th class="table-head-cell">Campus</th><th class="table-head-cell">Class</th><th class="table-head-cell">Section</th><th class="table-head-cell">Total Students</th><th class="table-head-cell"># Of Invoices</th><th class="table-head-cell right">Arrears Due Dated</th><th class="table-head-cell right">Within Due Date</th><th class="table-head-cell right">Total Dues</th></tr></thead>' +
-        '<tbody>' + summaryRows + '<tr class="grand-total-row"><td class="grand-total-label" colspan="4">Grand Total:</td><td class="grand-total-cell">' + n(all.students) + '</td><td class="grand-total-cell">' + n(all.invoices) + '</td><td class="grand-total-cell right">' + n(all.dueDated) + '</td><td class="grand-total-cell right">' + n(all.within) + '</td><td class="grand-total-cell right">' + n(all.total) + '</td></tr></tbody></table></div>';
 
     var reportContent = `
             <!DOCTYPE html>
@@ -153,11 +148,14 @@
                 .class-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; border-bottom:2.5px solid #000; padding:0 0 2px; margin:0 0 6px; page-break-after:avoid; }
                 .class-name { font-size:15px; font-weight:800; letter-spacing:.6px; }
                 .class-meta { font-size:9px; font-weight:600; color:#444; }
-                .section-card { border:1px solid #888; border-radius:3px; margin:0 0 9px; page-break-inside:avoid; }
-                .section-card-head { display:flex; justify-content:space-between; align-items:center; background:#ececec !important; padding:3px 8px; font-size:10.5px; font-weight:600; border-bottom:1px solid #888; page-break-after:avoid; }
+                .section-card { border:1px solid #888; border-radius:3px; margin:0 0 9px; }   /* may break across pages so no blank space is left at the bottom */
+                .section-card-head { height:22px; box-sizing:border-box; display:flex; justify-content:space-between; align-items:center; background:#ececec !important; padding:3px 8px; font-size:10.5px; font-weight:600; border-bottom:1px solid #888; page-break-after:avoid; }
                 .section-card-head b { font-weight:800; font-size:12px; }
                 .section-card-head .muted { font-size:9px; color:#444; font-weight:600; }
-                .section-card .stats-strip { border:none; border-bottom:1px solid #888; margin:0; page-break-after:avoid; }
+                .section-card .stats-strip { position:relative; z-index:2; background:#fff; border:none; border-bottom:1px solid #888; margin:0; page-break-after:avoid; }
+                .section-head-cell { padding:0; border:none; background:transparent; text-align:left; font-weight:inherit; font-size:inherit; text-transform:none; }
+                /* The table starts 22px (= one title row) higher, so on the first page its own title row hides under the title + boxes above; on the next pages the repeated title row shows normally */
+                .section-card table { margin-top:-22px; }
                 /* Stats: one horizontal strip, Total in a grey box */
                 .stats-strip { display:grid; grid-template-columns:repeat(5,1fr); border:1.5px solid #000; margin-bottom:5px; }
                 .stat { padding:2px 4px; text-align:center; border-right:1px solid #000; }
@@ -173,7 +171,7 @@
                 thead tr.table-head-row { background:#c4c4c4; }
                 .table-head-cell { padding:2px 2px; text-align:center; color:#000; background-color:#c4c4c4 !important; font-weight:700; font-size:8.5px; text-transform:uppercase; border:1px solid #000; }
                 .table-head-cell.right { text-align:right; }
-                .table-cell { padding:3px 4px; vertical-align:middle; font-size:9.5px; border:1px solid #999; font-weight:500; color:#000; }
+                .table-cell { padding:1px 4px; vertical-align:middle; font-size:9.5px; border:1px solid #999; font-weight:500; color:#000; }
                 .table-cell.right { text-align:right; }
                 .table-cell.center { text-align:center; }
                 .table-cell.strong { font-weight:700; }
@@ -183,7 +181,7 @@
                 .fee-chip { display:inline-block; border:1px solid #b5b5b5; border-radius:2px; background:#f6f6f6 !important; padding:1px 4px; font-size:8.5px; line-height:1.3; font-weight:500; white-space:nowrap; }
                 .fee-chip b { font-weight:800; margin-left:1px; }
                 .student-name { font-weight:700; font-size:10px; }
-                .student-father { font-weight:500; font-size:9px; color:#555; }
+                .student-father { display:block; font-weight:500; font-size:7.5px; line-height:1.1; color:#555; }
                 .no-records { text-align:center; padding:12px; font-size:9px; border:1px solid #999; }
                 .grand-total-row { background:#f0f0f0; }
                 .grand-total-label { padding:2px 4px; text-align:right; color:#000; background-color:#f0f0f0 !important; font-weight:700; font-size:10px; text-transform:uppercase; border:1px solid #999; border-top:2px solid #999; }
@@ -194,7 +192,8 @@
                 </style>
             </head>
             <body>
-                ${summaryPage}
+                ${headerHtml}
+                ${sectionBlocks}
                 <div class="print-footer">
                     Generated on: ${new Date().toLocaleDateString("pt-PT")} | Powered by Ai Schooling System.com
                 </div>
