@@ -1,7 +1,0 @@
-INCOMPLETE REPORTS LIST
-=======================
-
-1. Date Wise Fee Detailed Transaction Report
-   Folder : Fee Report\Date Wise Fee Detailed Transaction Report
-   Status : SKIPPED
-   Reason : The report looking too much complex (design issue)
