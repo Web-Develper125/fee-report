@@ -610,8 +610,8 @@ const buildReport = () => {
                 ${payableTd(row)}
                 <td class="table-cell right" style="white-space:nowrap">${discountLinesHtml(row.discountLines)}</td>
                 <td class="table-cell right strong">${amountBlank(row.netPaid)}</td>
+                    ${duesTd(row)}
                 ${receivedTd(row)}${netTd(row)}
-                ${duesTd(row)}
             </tr>`).join('');
     const depositOnlyRowsHtml = depositOnlyRows.map((entry) => `
             <tr>
@@ -622,8 +622,8 @@ const buildReport = () => {
                 ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
                 <td class="table-cell right"></td>
                 <td class="table-cell right strong"></td>
+                    ${showPayableDues ? `<td class="table-cell right"></td>` : ''}
                 <td class="table-cell fam-rec">${amountBlank(entry.amount)}</td><td class="table-cell right strong">${amountBlank(entry.amount)}</td>
-                ${showPayableDues ? `<td class="table-cell right"></td>` : ""}
             </tr>`).join('');
     const rowsHtml = (printRows.length > 0 || depositOnlyRows.length > 0)
         ? studentRowsHtml + depositOnlyRowsHtml
@@ -635,8 +635,8 @@ const buildReport = () => {
                 ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalPayable)}</td>` : ""}
                 <td class="grand-total-cell right">${amountBlank(totalDiscount)}</td>
                 <td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal)}</td>
+                    ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalDues)}</td>` : ''}
                 <td class="grand-total-cell right">${amountBlank(advanceReceivedTotal)}</td><td class="grand-total-cell right">${amountBlank(totalPaid - advanceSpentTotal + advanceReceivedTotal)}</td>
-                ${showPayableDues ? `<td class="grand-total-cell right">${amountBlank(totalDues)}</td>` : ""}
             </tr>` : "";
 
     const feeReceiving = totalPaid - advanceSpentTotal;
@@ -769,9 +769,8 @@ const buildReport = () => {
                             <th class="table-head-cell" rowspan="2">Mode / Source (User)</th>
                             ${payableTh}
                             <th class="table-head-cell right" rowspan="2">Discount</th>
-                            <th class="table-head-cell right" rowspan="2">Fee Received</th>
+                            <th class="table-head-cell right" rowspan="2">Fee Received</th>${duesTh}
                             <th class="table-head-cell right" rowspan="2">Family Advance</th><th class="table-head-cell right" rowspan="2">Net Received</th>
-                            ${duesTh}
 </tr>
                     </thead>
                     <tbody>
